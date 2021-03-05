@@ -17,7 +17,7 @@ BASALT -al assembly1.fa,assembly2.fa,assembly3.fa -ds dataset1_read1.fq,dataset1
 **Input data**:
 
 `-al` &nbsp;&nbsp; Multiple assembly files for binning. Assembly files can be short reads assembled fasta, long reads assembled fasta or hybrid assembled fasta. Fasta files are separated by comma.  
-`-ds` &nbsp;&nbsp; Sequence files for binning. Only short read sequences are valid. Default sequence files are pair-end library. Sequence files within pair-end library are separated by comma, and different pair-end library are separated by “\;” 
+`-ds` &nbsp;&nbsp; Sequence files for binning. Only short read sequences are valid. Default sequence files are pair-end library. Sequence files within pair-end library are separated by comma, and different pair-end library are separated by "\\;" 
 
 **Optional parameters**:  
 `-t` &nbsp;&nbsp; Number of threads. For example, -t 120. Default thread is set at 2.  
