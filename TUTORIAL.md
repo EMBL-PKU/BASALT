@@ -1,6 +1,13 @@
 ### TUTORIAL
 #### A guide to analyzing metagenomic data with BASALT
-
+To activate this environment, use  
+```
+conda activate BASALT
+```
+To deactivate an active environment, use  
+```
+conda deactivate  
+```
 ##### Simple command:
 ```
 BASALT -al assembly1.fa,assembly2.fa,assembly3.fa -ds dataset1_read1.fq, dataset1_read2.fq\;dataset2_read1.fq,dataset2_read2.fq
