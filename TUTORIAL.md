@@ -10,7 +10,7 @@ conda deactivate
 ```
 ##### Simple command:
 ```
-BASALT -al assembly1.fa,assembly2.fa,assembly3.fa -ds dataset1_read1.fq, dataset1_read2.fq\;dataset2_read1.fq,dataset2_read2.fq
+BASALT -al assembly1.fa,assembly2.fa,assembly3.fa -ds dataset1_read1.fq,dataset1_read2.fq\;dataset2_read1.fq,dataset2_read2.fq
 ```
 
 ##### Required parameters:
