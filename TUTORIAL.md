@@ -28,7 +28,7 @@ BASALT -al assembly1.fa,assembly2.fa,assembly3.fa -ds dataset1_read1.fq,dataset1
 `--autobinning` &nbsp;&nbsp; Autobinning options. Available options are “quick” (default), “sensitive” and “more-sensitive”. The computational time will increase if later options were selected, but more high-quality bins are expected to be recovered.  
 `--reassembly` &nbsp;&nbsp; Reassembly options. Available options are “quick-refinement” (default) and “reassembly”. If reassembly was needed, please use option --reassembly. BASALT will perform short reads assembly if only short read sequences were provided. Alternatively, BASALT will perform hybrid assembly if both short read and long read sequences were provided.  
 `--max-ctn` &nbsp;&nbsp; Contamination cutoff in the refinement step. Default cutoff is set at 20, which means BASALT will only refine those bins with contamination at 20 or below.  
-`--min-cpn` &nbsp;&nbsp; Completeness cutoff in the refinement step. Default cutoff is set at 35, which means BASALT will only refine those bins with completeness at 35 or above.   
+`--min-cpn` &nbsp;&nbsp; Completeness cutoff in the refinement step. Default cutoff is set at 35, which means BASALT will only refine those bins with completeness at 35 or above.  
 
 **Detailed case**:
 ```
