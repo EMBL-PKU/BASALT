@@ -10,7 +10,7 @@ As there are many required dependencies needed to install, we highly recommend t
 
 1 Download this basalt_env.yml.
 
-2 (Optional) You can also use mirroring to increase the download speed of BASALT dependent software. For example,if you are in China, you can do this:
+2 (Optional) You can also use mirrors to increase the download speed of BASALT dependent software. For example,if you are in China, you can do this:
 
 
 ```
