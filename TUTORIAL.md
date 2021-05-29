@@ -16,7 +16,8 @@ BASALT -al assembly1.fa,assembly2.fa,assembly3.fa -ds dataset1_read1.fq,dataset1
 ##### Required parameters:
 **Input data**:
 
-`-al` &nbsp;&nbsp; Multiple assembly files for binning. Assembly files can be short reads assembled fasta, long reads assembled fasta or hybrid assembled fasta. Fasta files are separated by comma.  
+`-al` &nbsp;&nbsp; Multiple assembly files for binning. Assembly files can be short reads assembled fasta, long reads assembled fasta or hybrid assembled fasta. Fasta files are separated by comma.  Note: BASALT now only supports multiple assembly files.
+
 `-ds` &nbsp;&nbsp; Sequence files for binning. Only short read sequences are valid. Default sequence files are pair-end library. Sequence files within pair-end library are separated by comma, and different pair-end library are separated by "\\;".
 
 **Optional parameters**:  
@@ -33,3 +34,8 @@ BASALT -al assembly1.fa,assembly2.fa,assembly3.fa -ds dataset1_read1.fq,dataset1
 **Detailed case**:
 ```
 BASALT -al assembly1.fa,assembly2.fa,assembly3.fa -ds dataset1_read1.fq,dataset1_read2.fq\;dataset2_read1.fq,dataset2_read2.fq --long-reads ont1.fq,ont2.fq -t 120 -r 750 --autobinning more-sensitive --reassembly --max-ctn 20 --mix-cpn 35
+```
+
+**Note**:
+
+If you encounter an error during use the BASALT, try to resubmit the task.
