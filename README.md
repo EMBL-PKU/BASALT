@@ -39,3 +39,5 @@ Move BASALT files to your conda BASALT environment. In general, your conda BASAL
 ```
 mv BASALT/* /home/anaconda2/envs/BASALT/bin
 ```
+##### SAMPLE FILES
+We have also prepared sample files (see Sample_data.tar.gz) for testing whether the BASALT script can be successfully performed and the bins can be generated. The sample files contain two assembly files and two fastq datasets. Please refer to the tutorial for how to execute the BASALT scripts.
