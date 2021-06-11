@@ -33,7 +33,7 @@ The step 3 will take a while.
 4 Download this BASALT.zip. Then upload this file to your Linux directory.
 ```
 unzip BASALT.zip
-chmod -R 750 BASALT
+chmod -R 777 BASALT
 ```
 Move BASALT files to your conda BASALT environment. In general, your conda BASALT environment is located in the subdirectory envs of the conda installation (e.g. /home/anaconda2/envs/).
 ```
