@@ -141,7 +141,7 @@ dependencies:
   - scipy=1.6.0=py37h14a347d_0
   - setuptools=49.6.0=py37h89c1867_3
   - six=1.15.0=pyh9f0ad1d_0
-  - spades=3.14.1=h2d02072_0
+  - spades=3.15.2=h95f258a_1
   - sqlite=3.34.0=h74cdb3f_0
   - tbb=2020.2=h4bd325d_3
   - threadpoolctl=2.1.0=pyh5ca1d4c_0
