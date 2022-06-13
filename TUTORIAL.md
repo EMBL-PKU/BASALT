@@ -22,20 +22,29 @@ BASALT -a assembly.fasta -s short.R1.fq,short.R2.fq -l nanopore.fastq -t 60 -m 2
 
 `-l` &nbsp;&nbsp; LONG_DATASETS, --longreads LONG_DATASETS&nbsp;&nbsp; List of long reads, e.g.: lr1.fq,lr2.fq
 
-**Optional parameters**: 
+**Optional parameters**:
+
 `-h` &nbsp;&nbsp; show this help message and exit
-`-t` &nbsp;&nbsp; Number of threads. For example, -t 120. Default thread is set at 2.  
+
+`-t` &nbsp;&nbsp; Number of threads. For example, -t 120. Default thread is set at 2. 
+
 `-m` &nbsp;&nbsp; Maximum memory limit at gigabytes (GB). For example, -r 750. Default memory limit is set at 64GB. The maximum memory limit is critical for reassembly.  
-`--continue` &nbsp;&nbsp; Continue run from the last available check-point. BASALT will check the checkpoints and start from the last checkpoint. The default of this parameter is on.  
-`--new` &nbsp;&nbsp; Restart binning step.  
-`--autobinning` &nbsp;&nbsp; Autobinning options. Available options are “quick” (default), “sensitive” and “more-sensitive”. The computational time will increase if later options were selected, but more high-quality bins are expected to be recovered.  
-`--reassembly` &nbsp;&nbsp; Reassembly options. Available options are “quick-refinement” (default) and “reassembly”. If reassembly was needed, please use option --reassembly. BASALT will perform short reads assembly if only short read sequences were provided. Alternatively, BASALT will perform hybrid assembly if both short read and long read sequences were provided.  
-`--max-ctn` &nbsp;&nbsp; Contamination cutoff in the refinement step. Default cutoff is set at 20, which means BASALT will only refine those bins with contamination at 20 or below.  
+
+`--mode` &nbsp;&nbsp; RUNNING_MODE&nbsp;&nbsp;   Start a new project (new) or continue to run (continue). e.g. --mode continue / --mode new
+
+`--module`  &nbsp;&nbsp; FUNCTIONAL_MODULE&nbsp;&nbsp;  Three modules: 1. autobinning; 2. refinement; 3. reassembly. Default will run all modules. But you could set the only perform modle. e.g. --module reassembly  
+
+`--autopara` &nbsp;&nbsp; AUTOBINING_PARAMETERS&nbsp;&nbsp; Three parameters to chose: 1. more-sensitive; 2.sensitive; 3. quick. Default: more-sensitive. e.g. --autopara sensitive  
+
+`--refinepara` &nbsp;&nbsp; REFINEMENT_PARAMTER&nbsp;&nbsp; Two refinement parameters to chose: 1. deep; 2. quick. Default: deep. e.g. --refinepara quick
+
+`--max-ctn` &nbsp;&nbsp; Contamination cutoff in the refinement step. Default cutoff is set at 20, which means BASALT will only refine those bins with contamination at 20 or below. 
+
 `--min-cpn` &nbsp;&nbsp; Completeness cutoff in the refinement step. Default cutoff is set at 35, which means BASALT will only refine those bins with completeness at 35 or above.  
 
 **Detailed case**:
 ```
-BASALT -al assembly1.fa,assembly2.fa,assembly3.fa -ds dataset1_read1.fq,dataset1_read2.fq\;dataset2_read1.fq,dataset2_read2.fq --long-reads ont1.fq,ont2.fq -t 120 -r 750 --autobinning more-sensitive --reassembly --max-ctn 20 --mix-cpn 35
+BASALT -a assembly.fasta -s short.R1.fq,short.R2.fq -l nanopore.fastq -t 60 -m 230
 ```
 
 **Note**:
