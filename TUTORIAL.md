@@ -10,20 +10,22 @@ conda deactivate
 ```
 ##### Simple command:
 ```
-BASALT -al assembly1.fa,assembly2.fa,assembly3.fa -ds dataset1_read1.fq,dataset1_read2.fq\;dataset2_read1.fq,dataset2_read2.fq
+BASALT -a assembly.fasta -s short.R1.fq,short.R2.fq -l nanopore.fastq -t 60 -m 230
 ```
 
 ##### Required parameters:
 **Input data**:
 
-`-al` &nbsp;&nbsp; Multiple assembly files for binning. Assembly files can be short reads assembled fasta, long reads assembled fasta or hybrid assembled fasta. Fasta files are separated by comma.  Note: BASALT now only supports multiple assembly files.
+`-a` &nbsp;&nbsp; ASSEMBLIES, --assemblies ASSEMBLIES &nbsp;&nbsp; List of assemblies, e.g.: as1.fa,as2.fa
 
-`-ds` &nbsp;&nbsp; Sequence files for binning. Only short read sequences are valid. Default sequence files are pair-end library. Sequence files within pair-end library are separated by comma, and different pair-end library are separated by "\\;".
+`-s` &nbsp;&nbsp; --shortreads SR_DATASETS&nbsp;&nbsp;List of paired-end reads, e.g.:r1_1.fq,r1_2.fq/r2_1.fq,r2_2.fq (paried_ends reads need '/' to seperate)
 
-**Optional parameters**:  
+`-l` &nbsp;&nbsp; LONG_DATASETS, --longreads LONG_DATASETS&nbsp;&nbsp; List of long reads, e.g.: lr1.fq,lr2.fq
+
+**Optional parameters**: 
+`-h` &nbsp;&nbsp; show this help message and exit
 `-t` &nbsp;&nbsp; Number of threads. For example, -t 120. Default thread is set at 2.  
-`-r` &nbsp;&nbsp; Maximum memory limit at gigabytes (GB). For example, -r 750. Default memory limit is set at 64GB. The maximum memory limit is critical for reassembly.  
-`--long-reads` &nbsp;&nbsp; Long read sequences. Sequences are separated by “,”.  
+`-m` &nbsp;&nbsp; Maximum memory limit at gigabytes (GB). For example, -r 750. Default memory limit is set at 64GB. The maximum memory limit is critical for reassembly.  
 `--continue` &nbsp;&nbsp; Continue run from the last available check-point. BASALT will check the checkpoints and start from the last checkpoint. The default of this parameter is on.  
 `--new` &nbsp;&nbsp; Restart binning step.  
 `--autobinning` &nbsp;&nbsp; Autobinning options. Available options are “quick” (default), “sensitive” and “more-sensitive”. The computational time will increase if later options were selected, but more high-quality bins are expected to be recovered.  
