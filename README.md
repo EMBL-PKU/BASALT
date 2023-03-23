@@ -40,7 +40,11 @@ Move BASALT files to your conda BASALT environment. In general, your conda BASAL
 mv BASALT/* /home/anaconda2/envs/BASALT/bin
 ```
 ##### SAMPLE FILES
-We have also prepared sample files (see Sample_data.tar.gz) for testing whether the BASALT script can be successfully performed and the bins can be generated. The sample files contain two assembly files and two fastq datasets. Please refer to the tutorial for how to execute the BASALT scripts.
+We have also prepared sample demo files (see BASALT demo files) for testing whether the BASALT script can be successfully performed and the bins can be generated. The demo files contain Data.tar.gz,Final_bestbinset.tar.gz and basalt.sh.  
+Data.tar.gz - short read and long read raw sequence files and an OPERA-MS assembled contig file.
+Final_bestbinset.tar.gz - expected output of final bins.
+basalt.sh - script running this demo
+A workstation with a configuration of Intel(R) Xeon(R) Gold 5218 CPU @ 2.30GHz with 32 cores is expected to complete processing of this demo dataset within 6 hours.
 
 ##### PUBLICATIONS
 Yu, K., Qiu, Z., Mu, R., Qiao, X., Zhang, L., Lian, C. A., ... & Zhuang, W. (2021). Recovery of high-qualitied Genomes from a deep-inland Salt Lake Using BASALT. bioRxiv.
