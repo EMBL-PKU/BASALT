@@ -30,14 +30,14 @@ conda env create -n BASALT --file basalt_env.yml
 ```
 The step 3 will take a while.
 
-4 Download this BASALT.zip. Then upload this file to your Linux directory.
+4 Download this BASALT_script.zip. Then upload this file to your Linux directory.
 ```
-unzip BASALT.zip
-chmod -R 777 BASALT
+unzip BASALT_script.zip
+chmod -R 777 BASALT_script
 ```
-Move BASALT files to your conda BASALT environment. In general, your conda BASALT environment is located in the subdirectory envs of the conda installation (e.g. /home/anaconda2/envs/).
+Move BASALT_script files to your conda BASALT environment. In general, your conda BASALT environment is located in the subdirectory envs of the conda installation (e.g. /home/anaconda2/envs/).
 ```
-mv BASALT/* /home/anaconda2/envs/BASALT/bin
+mv BASALT_script/* /home/anaconda2/envs/BASALT/bin
 ```
 ##### SAMPLE FILES
 We have also prepared sample demo files (see BASALT demo files) for testing whether the BASALT script can be successfully performed and the bins can be generated. The demo files contain Data.tar.gz,Final_bestbinset.tar.gz and basalt.sh. 
