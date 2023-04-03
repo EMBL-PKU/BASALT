@@ -5,11 +5,17 @@ BASALT is a versatile toolkit that recovers, compares and optimizes MAGs across 
 ##### SYSTEM REQUIREMENTS
 Required dependencies:
 •	Linux x64 systems
+
 •	Python (>=3) modules: biopython, pandas, numpy, scikit-learn, copy, multiprocessing, collections，pytorch, tensorboardx
+
 •	Perl
+
 •	Java (>= v1.7)
+
 •	Binning tools: MetaBAT2, MaxBin2, CONCOCT
+
 •	Sequences processing tools: Bowtie2, BWA, SAMtools, CheckM, BLAST, Prodigal, HMMER
+
 •	Sequences assembly and polishing tools: SPAdes, IDBA-UD, Pilon, Unicycler (optional)
 
 Please see basalt_env.yml for details. The resource requirements for this pipeline will be based on the amount of data being processed. However, due to large memory requirements of many softwares used (e.g. SPAdes), 8+ cores and 125GB+ RAM are recommended. BASALT officially supports only Linux x64 systems.
