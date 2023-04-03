@@ -4,6 +4,7 @@ BASALT is a versatile toolkit that recovers, compares and optimizes MAGs across 
 
 ##### SYSTEM REQUIREMENTS
 Required dependencies:
+
 •	Linux x64 systems
 
 •	Python (>=3) modules: biopython, pandas, numpy, scikit-learn, copy, multiprocessing, collections，pytorch, tensorboardx
