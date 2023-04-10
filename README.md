@@ -70,7 +70,7 @@ https://figshare.com/ndownloader/files/39948115
 Then rename 39948115 to BASALT.zip.
 or Tencent Weiyun from a web browser:
 ```
-https://share.weiyun.com/vmWoo2UK
+https://share.weiyun.com/SLLPQIwA
 ```
 When finish downloading, copy downloaded files to .cache folder:
 ```
