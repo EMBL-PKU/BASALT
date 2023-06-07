@@ -7,7 +7,7 @@ def download_model(local_dir=None):
     if local_dir is None:
         user_dir = os.path.expanduser('~')
         # url = "https://github.com/LinB203/test/releases/download/v1/pytorch_model.bin" 
-        url = "https://figshare.com/ndownloader/files/39880714"
+        url = "https://figshare.com/ndownloader/files/41093033"
         local_dir = f"{user_dir}/.cache"
     local_path = f"{local_dir}/BASALT.zip"
 
