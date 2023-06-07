@@ -65,9 +65,9 @@ conda deactivate
 If you encounter an error when downloading the models, one possible reason could be the issue of network connections. Please use a VPN to retry or use the manual downloads instead.
 For manual downloads, you can download directly from Figshare:
 ```
-https://figshare.com/ndownloader/files/39948115
+https://figshare.com/ndownloader/files/41093033
 ```
-Then rename 39948115 to BASALT.zip.
+Then rename 41093033 to BASALT.zip.
 or Tencent Weiyun from a web browser:
 ```
 https://share.weiyun.com/r33c2gqa
