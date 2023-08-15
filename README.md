@@ -78,9 +78,7 @@ mv BASALT_script/* your_conda/envs/BASALT/bin
 ##### 5 Download the Trained Models for Neural Networks (You can execute this step beforehand, since the neural network model is a foundational requirement for the BASALT operation) 
 Download prerequisite script ‘BASALT_models_download.py’ and run the python script:
 ```
-source/conda activate BASALT
 python BASALT_models_download.py
-conda deactivate
 ```
 If you encounter an error when downloading the models, one possible reason could be the issue of network connections. Please use a VPN to retry or use the manual downloads instead.
 For manual downloads, you can download directly from Figshare:
