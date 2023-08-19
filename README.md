@@ -22,9 +22,9 @@ Required dependencies:
 Please see basalt_env.yml for details. The resource requirements for this pipeline will be based on the amount of data being processed. However, due to large memory requirements of many softwares used (e.g. SPAdes), 8+ cores and 125GB+ RAM are recommended. BASALT officially supports only Linux x64 systems.
 
 ### INSTALLATION
-As there are many required dependencies needed to install, we highly recommend that you install and manage BASALT with conda. Once you have Miniconda or Anaconda installed, create a conda environment and install the BASALT within the specific environment. Please contact us (yuke.sz@pku.edu.cn) if you have an issue when installing BASALT.
+As there are many required dependencies needed to install, we highly recommend that you install and manage BASALT with conda. Once you have Miniconda or Anaconda installed, create a conda environment and install the BASALT within the specific environment. There is three ways to install the package. Please refer to the following description and contact us (yuke.sz@pku.edu.cn) if you have an issue when installing BASALT.
 
-#### Installation in one step with the conda command:
+#### Option 1: Installation in one step with the conda command:
 ```
 git clone https://github.com/EMBL-PKU/BASALT.git
 cd BASALT 
@@ -32,7 +32,7 @@ conda env create -n BASALT --file basalt_env.yml
 ```
 Please remain patient, as the installation process may take an extended period.
 
-#### Installation with BASALT_setup.py (one step):
+#### Option 2: Installation with BASALT_setup.py (one step):
 
 1 Download this BASALT_setup.py.
 
@@ -42,7 +42,7 @@ python BASALT_setup.py
 ```
 Please remain patient, as the installation process may take an extended period.
 
-#### Manual installation (this is best, if you are comfortable):
+#### Option 3: Manual installation (this is best, if you are comfortable):
 
 1 Download this basalt_env.yml.
 
