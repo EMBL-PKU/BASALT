@@ -9,9 +9,16 @@ To deactivate an active environment, use
 conda deactivate  
 ```
 ##### Simple command:
+
+if you have a single assembly:
 ```
 BASALT -a assembly.fasta -s short.R1.fq,short.R2.fq -l nanopore.fastq -t 60 -m 230
 ```
+if you have multiple assemblies:
+```
+BASALT -a assembly1.fasta,assembly2.fasta -s short1.R1.fq,short1.R2.fq/short2.R1.fq,short2.R2.fq -l nanopore1.fastq,nanopore2.fastq -t 60 -m 230
+```
+You may enter as mang assemblies as you wish, or as many short-reads or long-rads as you wish.
 
 ##### Required parameters:
 **Input data**:
@@ -45,11 +52,6 @@ BASALT -a assembly.fasta -s short.R1.fq,short.R2.fq -l nanopore.fastq -t 60 -m 2
 `--max-ctn` &nbsp;&nbsp; Contamination cutoff in the refinement step. Default cutoff is set at 20, which means BASALT will only refine those bins with contamination at 20 or below. 
 
 `--min-cpn` &nbsp;&nbsp; Completeness cutoff in the refinement step. Default cutoff is set at 35, which means BASALT will only refine those bins with completeness at 35 or above.  
-
-**Detailed case**:
-```
-BASALT -a assembly.fasta -s short.R1.fq,short.R2.fq -l nanopore.fastq -t 60 -m 230
-```
 
 **Note**:
 
