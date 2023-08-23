@@ -109,10 +109,10 @@ A workstation with a configuration of Intel(R) Xeon(R) Gold 5218 CPU @ 2.30GHz w
 ### USAGE
 1) If you install with Conda or BASALT_setup.py, use the following command to run BASALT:
 BASALT [-h] [-a ASSEMBLIES] [-s SR_DATASETS] [-l LONG_DATASETS] [-c HI_C_DATASET] [-t THREADS] [-m RAM]
-                 [-e EXTRA_BINNER] [--min-cpn MIN_COMPLETENESS] [--max-ctn MAX_CONTAMINATION] [--mode RUNNING_MODE]
-                 [--module FUNCTIONAL_MODULE] [--autopara AUTOBINING_PARAMETERS] [--refinepara REFINEMENT_PARAMTER]
+       [-e EXTRA_BINNER] [--min-cpn MIN_COMPLETENESS] [--max-ctn MAX_CONTAMINATION] [--mode RUNNING_MODE]
+       [--module FUNCTIONAL_MODULE] [--autopara AUTOBINING_PARAMETERS] [--refinepara REFINEMENT_PARAMTER]
 
-2) If you use stanalone version of BASALT:
+3) If you use stanalone version of BASALT:
 python BASALT.py [-h] [-a ASSEMBLIES] [-s SR_DATASETS] [-l LONG_DATASETS] [-c HI_C_DATASET] [-t THREADS] [-m RAM]
                  [-e EXTRA_BINNER] [--min-cpn MIN_COMPLETENESS] [--max-ctn MAX_CONTAMINATION] [--mode RUNNING_MODE]
                  [--module FUNCTIONAL_MODULE] [--autopara AUTOBINING_PARAMETERS] [--refinepara REFINEMENT_PARAMTER]
@@ -153,14 +153,14 @@ optional arguments:
 Example:
 Short-reads is essential for current version of BASALT. We will update BASALT once we found accurate way to use only long-read datasets for binning.
 1) If you have both short-read datasets and long-read datasets:
-   # BASALT -a assembly1.fa,assembly2.fa,assembly3.fa -s SR1_r1.fq,SR1_r2.fq/SR2_r1.fq,SR2_r2.fq -l lr1.fq,lr2.fq -t 60 -m 250
+   BASALT -a assembly1.fa,assembly2.fa,assembly3.fa -s SR1_r1.fq,SR1_r2.fq/SR2_r1.fq,SR2_r2.fq -l lr1.fq,lr2.fq -t 60 -m 250
    You may put as many assemblies as you have, and as many SR or LR datasets as you have
 2) If you have both short-read datasets only:
-   # BASALT -a assembly1.fa,assembly2.fa,assembly3.fa -s SR1_r1.fq,SR1_r2.fq/SR2_r1.fq,SR2_r2.fq -t 60 -m 250
+   BASALT -a assembly1.fa,assembly2.fa,assembly3.fa -s SR1_r1.fq,SR1_r2.fq/SR2_r1.fq,SR2_r2.fq -t 60 -m 250
 3) If you have short-read datasets and Hi-C datasets:
-   # BASALT -a assembly1.fa,assembly2.fa,assembly3.fa -s SR1_r1.fq,SR1_r2.fq/SR2_r1.fq,SR2_r2.fq -c hc1.fq,hc2.fq -t 60 -m 250
+   BASALT -a assembly1.fa,assembly2.fa,assembly3.fa -s SR1_r1.fq,SR1_r2.fq/SR2_r1.fq,SR2_r2.fq -c hc1.fq,hc2.fq -t 60 -m 250
 4）If you have short-read datasets, long-read datasets and Hi-C datasets:
-   # BASALT -a assembly1.fa,assembly2.fa,assembly3.fa -s SR1_r1.fq,SR1_r2.fq/SR2_r1.fq,SR2_r2.fq -l lr1.fq,lr2.fq -c hc1.fq,hc2.fq -t 60 -m 250
+   BASALT -a assembly1.fa,assembly2.fa,assembly3.fa -s SR1_r1.fq,SR1_r2.fq/SR2_r1.fq,SR2_r2.fq -l lr1.fq,lr2.fq -c hc1.fq,hc2.fq -t 60 -m 250
 
 ### PUBLICATIONS
 Yu, K., Qiu, Z., Mu, R., Qiao, X., Zhang, L., Lian, C. A., ... & Zhuang, W. (2021). Recovery of high-qualitied Genomes from a deep-inland Salt Lake Using BASALT. bioRxiv.
