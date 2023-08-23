@@ -108,14 +108,14 @@ A workstation with a configuration of Intel(R) Xeon(R) Gold 5218 CPU @ 2.30GHz w
 
 ### USAGE
 1) If you install with Conda or BASALT_setup.py, use the following command to run BASALT:
-BASALT [-h] [-a ASSEMBLIES] [-s SR_DATASETS] [-l LONG_DATASETS] [-c HI_C_DATASET] [-t THREADS] [-m RAM]
+   BASALT [-h] [-a ASSEMBLIES] [-s SR_DATASETS] [-l LONG_DATASETS] [-c HI_C_DATASET] [-t THREADS] [-m RAM]
        [-e EXTRA_BINNER] [--min-cpn MIN_COMPLETENESS] [--max-ctn MAX_CONTAMINATION] [--mode RUNNING_MODE]
        [--module FUNCTIONAL_MODULE] [--autopara AUTOBINING_PARAMETERS] [--refinepara REFINEMENT_PARAMTER]
 
 3) If you use stanalone version of BASALT:
-python BASALT.py [-h] [-a ASSEMBLIES] [-s SR_DATASETS] [-l LONG_DATASETS] [-c HI_C_DATASET] [-t THREADS] [-m RAM]
-                 [-e EXTRA_BINNER] [--min-cpn MIN_COMPLETENESS] [--max-ctn MAX_CONTAMINATION] [--mode RUNNING_MODE]
-                 [--module FUNCTIONAL_MODULE] [--autopara AUTOBINING_PARAMETERS] [--refinepara REFINEMENT_PARAMTER]
+   python BASALT.py [-h] [-a ASSEMBLIES] [-s SR_DATASETS] [-l LONG_DATASETS] [-c HI_C_DATASET] [-t THREADS] [-m RAM]
+                    [-e EXTRA_BINNER] [--min-cpn MIN_COMPLETENESS] [--max-ctn MAX_CONTAMINATION] [--mode RUNNING_MODE]
+                    [--module FUNCTIONAL_MODULE] [--autopara AUTOBINING_PARAMETERS] [--refinepara REFINEMENT_PARAMTER]
 
 BASALT
 
