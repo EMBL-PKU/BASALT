@@ -177,4 +177,4 @@ Short-reads is essential for current version of BASALT. We will update BASALT on
    ```
 
 ### PUBLICATIONS
-Qiu, Z.*, Lian, C. A., Yuan, L., ... & Yu, K.*# (2023). BASALT refines binning from metagenomic data and increases resolution of genome-resolved metagenomic analysis, Research Square. https://www.researchsquare.com/article/rs-2563876/v1
+Qiu, Z.*, Lian, C. A., Yuan, L., ... & Yu, K.*# (2023). BASALT refines binning from metagenomic data and increases resolution of genome-resolved metagenomic analysis, In Review. https://www.researchsquare.com/article/rs-2563876/v1
