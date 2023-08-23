@@ -177,4 +177,4 @@ Short-reads is essential for current version of BASALT. We will update BASALT on
    ```
 
 ### PUBLICATIONS
-Yu, K., Qiu, Z., Mu, R., Qiao, X., Zhang, L., Lian, C. A., ... & Zhuang, W. (2021). Recovery of high-qualitied Genomes from a deep-inland Salt Lake Using BASALT. bioRxiv.
+Qiu, Z.*, Lian, C. A., Yuan, L., ... & Yu, K.*# (2021). BASALT refines binning from metagenomic data and increases resolution of genome-resolved metagenomic analysis. Research Square. https://www.researchsquare.com/article/rs-2563876/v1
