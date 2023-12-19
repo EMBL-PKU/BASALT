@@ -109,15 +109,15 @@ A workstation with a configuration of Intel(R) Xeon(R) Gold 5218 CPU @ 2.30GHz w
 ### USAGE
 1 If you install with Conda or BASALT_setup.py, use the following command to run BASALT:
 ```
-BASALT [-h] [-a ASSEMBLIES] [-s SR_DATASETS] [-l LONG_DATASETS] [-c HI_C_DATASET] [-t THREADS] [-m RAM]
-       [-e EXTRA_BINNER] [--min-cpn MIN_COMPLETENESS] [--max-ctn MAX_CONTAMINATION] [--mode RUNNING_MODE]
+BASALT [-h] [-a ASSEMBLIES] [-s SR_DATASETS] [-l LONG_DATASETS] [-hf HIFI_DATASET] [-c HI_C_DATASET] [-t THREADS] [-m RAM]
+       [-e EXTRA_BINNER] [-qc QC_SOFTWARE] [--min-cpn MIN_COMPLETENESS] [--max-ctn MAX_CONTAMINATION] [--mode RUNNING_MODE]
        [--module FUNCTIONAL_MODULE] [--autopara AUTOBINING_PARAMETERS] [--refinepara REFINEMENT_PARAMTER]
 ```
 2 If you use stanalone version of BASALT:
 ```
-python BASALT.py [-h] [-a ASSEMBLIES] [-s SR_DATASETS] [-l LONG_DATASETS] [-c HI_C_DATASET] [-t THREADS] [-m RAM]
-                 [-e EXTRA_BINNER] [--min-cpn MIN_COMPLETENESS] [--max-ctn MAX_CONTAMINATION] [--mode RUNNING_MODE]
-                 [--module FUNCTIONAL_MODULE] [--autopara AUTOBINING_PARAMETERS] [--refinepara REFINEMENT_PARAMTER]
+python BASALT.py [-h] [-a ASSEMBLIES] [-s SR_DATASETS] [-l LONG_DATASETS] [-hf HIFI_DATASET] [-c HI_C_DATASET] [-t THREADS]
+                 [-m RAM] [-qc QC_SOFTWARE] [-e EXTRA_BINNER] [--min-cpn MIN_COMPLETENESS] [--max-ctn MAX_CONTAMINATION]
+                 [--mode RUNNING_MODE] [--module FUNCTIONAL_MODULE] [--autopara AUTOBINING_PARAMETERS] [--refinepara REFINEMENT_PARAMTER]
 ```
 BASALT
 ```
@@ -130,11 +130,15 @@ optional arguments:
                         seperate)
   -l LONG_DATASETS, --longreads LONG_DATASETS
                         List of long reads, e.g.: lr1.fq,lr2.fq
+  -hf HIFI_DATASETS, --hifi HIFI_DATASETS
+                        List of hifi reads, e.g.: hifi1.fq,hifi2.fq
   -c HI_C_DATASET, --HIC HI_C_DATASET
                         List of Hi-C dataset(s), e.g.: hc1.fq,hc2.fq
   -t THREADS, --threads THREADS
                         Number of threads, e.g.: 64
   -m RAM, --ram RAM     Number of ram, minimum ram suggested: 32G
+  -qc QC_SOFTWARE, --quality-check QC_SOFTWARE
+                        Quality check software, default CHECKM, option CHECKM2. e.g.: -qc checkm2
   -e EXTRA_BINNER, --extra_binner EXTRA_BINNER
                         Extra binner for binning: m: metabinner, v: vamb; for instance: -e m, means BASALT will use
                         metabinner for binning besides metabat2, maxbin2, and concoct
@@ -174,6 +178,14 @@ Short-reads is essential for current version of BASALT. We will update BASALT on
 4 If you have short-read datasets, long-read datasets and Hi-C datasets:
    ```
    BASALT -a assembly1.fa,assembly2.fa,assembly3.fa -s SR1_r1.fq,SR1_r2.fq/SR2_r1.fq,SR2_r2.fq -l lr1.fq,lr2.fq -c hc1.fq,hc2.fq -t 60 -m 250
+   ```
+5 If you have hifi dataset only:
+   ```
+   BASALT -a assembly1.fa -hf hifi1.fq -t 60 -m 250
+   ```
+6 If you have both hifi dataset and short-reads only:
+   ```
+   BASALT -a assembly1.fa -hf hifi1.fq -s SR1_r1.fq,SR1_r2.fq -t 60 -m 250
    ```
 
 ### PUBLICATIONS
