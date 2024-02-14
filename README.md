@@ -13,7 +13,7 @@ Required dependencies:
 
 •	Java (>= v1.7)
 
-•	Binning tools: MetaBAT2, MaxBin2, CONCOCT
+•	Binning tools: MetaBAT2, MaxBin2, CONCOCT, Semibin2
 
 •	Sequences processing tools: Bowtie2, BWA, SAMtools, CheckM, BLAST, Prodigal, HMMER
 
