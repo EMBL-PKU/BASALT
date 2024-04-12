@@ -13,30 +13,49 @@ For any issue compiling and running BASALT, as well as bug report, please do not
 
 
 ### SYSTEM REQUIREMENTS
+
+### SYSTEM REQUIREMENTS
 1.	Required dependencies
+
 Linux x64 systems, 8+ cores, and 128GB+ RAM
+
 Python (>=3.0) modules: biopython, pandas, numpy, scikit-learn, copy, multiprocessing, collections，pytorch, tensorboardx
+
 Perl
+
 Java (>=1.7)
+
 Binning tools: MetaBAT2, Maxbin2, CONCOCT, Semibin2, Metabinner
+
 Note: VAMB was used to be implemented in BASALT, but due to the conflict of environment and unsatisfactory performance on environmental datasets, we temporarily removed VAMB from BASALT environment. However, bins generated using VAMB can still be imported to BASALT directly for post-binning refinements.
+
 Sequences processing tools: Bowtie2, BWA, SAMtools, Prodigal, BLAST+, HMMER, Minimap2
+
 Sequences assembly and polishing tools: SPAdes, IDBA-UD, Pilon, Racon, Unicycler
+
 Genome quality assessment tools: CheckM, CheckM2, pplacer
+
 Note: CheckM2 database is not compiled along with BASALT installation in v1.0.1. To setup CheckM2 database, please refer to CheckM2 user guide (https://github.com/chklovski/CheckM2).
 
 ### INSTALLATION
 1.	Quick installation
 	Download BASALT_setup.py and run:
+```
 python BASALT_setup.py
+```
 Please remain patient, as the installation process may take an extended period.
-	For users in China mainland who may experience a network issue, please download the alternative script BASALT_setup_China_mainland.py and run:
-中国内地且无法翻墙的用户推荐使用BASALT_setup_China_mainland.py安装
+	For users in China mainland who may experience a network issue, please download the alternative script ‘BASALT_setup_China_mainland.py’ and run:
+中国内地且无法翻墙的用户推荐使用‘BASALT_setup_China_mainland.py’安装
+```
 python BASALT_setup_China_mainland.py
+```
 Then, download the trained models for neural networks BASALT.zip from Tencent iCloud (https://share.weiyun.com/r33c2gqa) and run:
+```
 mv BASALT.zip ~/.cache
 cd ~/.cache
 unzip BASALT.zip
+```
+
 
 
 
