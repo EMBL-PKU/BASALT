@@ -39,25 +39,29 @@ Note: CheckM2 database is not compiled along with BASALT installation in v1.0.1.
 
 ### INSTALLATION
 1.	Quick installation
+
 Download ‘BASALT_setup.py’ and run:
 ```
 python BASALT_setup.py
 ```
 Please remain patient, as the installation process may take an extended period.
-	For users in China mainland who may experience a network issue, please download the alternative script ‘BASALT_setup_China_mainland.py’ and run:
+
+For users in China mainland who may experience a network issue, please download the alternative script ‘BASALT_setup_China_mainland.py’ and run:
+
 中国内地且无法翻墙的用户推荐使用‘BASALT_setup_China_mainland.py’安装
 ```
 python BASALT_setup_China_mainland.py
 ```
 Then, download the trained models for neural networks BASALT.zip from Tencent iCloud (https://share.weiyun.com/r33c2gqa) and run:
+
+中国国内用户下载神经网络训练模型：
+从腾讯微云下载BASALT.zip并上传至您的Linux路径：https://share.weiyun.com/r33c2gqa ，随后依次执行以下三个命令
+
 ```
 mv BASALT.zip ~/.cache
 cd ~/.cache
 unzip BASALT.zip
 ```
-
-
-
 
 #### Option 1: Installation in one step with the conda command:
 ```
