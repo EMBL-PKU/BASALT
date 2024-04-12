@@ -1,4 +1,4 @@
-## BASALT - Binning Across a Series of AssembLies Toolkit
+![image](https://github.com/EMBL-PKU/BASALT/assets/62051720/bc3bfc40-7b78-4cd9-b9f3-5d8afbfb5f34)<img width="253" alt="image" src="https://github.com/EMBL-PKU/BASALT/assets/62051720/d5a8b474-f98f-4e58-a2bf-78830487f85b">## BASALT - Binning Across a Series of AssembLies Toolkit
 
 ## Type of input data for BASALT
 BASALT is a versatile tool with high efficiency for binning and post-binning refinement. BASALT can generate high quality metagenome-assembled genomes (MAGs) from various input data types including: 1) assembly from short-read sequences (SRS); 2) assembly from long-read sequences (LRS); [Note: only PacBio-HiFi data is supported in v1.0.1 for long-read only assemblies, other types of LRS data will be available in v1.0.2.] 3) hybrid assembly from SRS + LRS. Specific features of BASALT are listed below:
@@ -11,8 +11,6 @@ BASALT can effectively identify and remove potential contamination sequences in 
 BASALT maximized the utilization of LRS in the post-binning refinement steps. Firstly, LRS will be used at Sequence retrieval step by recruiting unused sequences to target bins via pair-end tracking. After processing the Sequence retrieval function, an extra polishing step will be performed in the existence of LRS. Polishing at this step will save ~90% of the computation time than conducting at assembly step with same iterations, as the data size is largely reduced. Furthermore, LRS will be exploited again at reassembly step using the SPAdes Hybrid function (default). [Note: reassembly function is not applicable on LRS-alone dataset in v1.0.1, but will be available in later version.] Although reassembly may take a considerable amount of time, large augmentation of genome quality can be observed after reassembly.
 For any issue compiling and running BASALT, as well as bug report, please do not hesitate to contact us (yuke.sz@pku.edu.cn). Thanks for using BASALT!
 
-
-### SYSTEM REQUIREMENTS
 
 ### SYSTEM REQUIREMENTS
 1.	Required dependencies
@@ -38,52 +36,187 @@ Genome quality assessment tools: CheckM, CheckM2, pplacer
 Note: CheckM2 database is not compiled along with BASALT installation in v1.0.1. To setup CheckM2 database, please refer to CheckM2 user guide (https://github.com/chklovski/CheckM2).
 
 ### INSTALLATION
-1.	Quick installation
+## 1.	Quick installation
+   Download BASALT_setup.py and run:
+   ```
+   python BASALT_setup.py
+   ```
+   Please remain patient, as the installation process may take an extended period.
 
-Download ‘BASALT_setup.py’ and run:
-```
-python BASALT_setup.py
-```
-Please remain patient, as the installation process may take an extended period.
+   For users in China mainland who may experience a network issue, please download the alternative script ‘BASALT_setup_China_mainland.py’ and run:
 
-For users in China mainland who may experience a network issue, please download the alternative script ‘BASALT_setup_China_mainland.py’ and run:
+   中国内地且无法翻墙的用户推荐使用‘BASALT_setup_China_mainland.py’安装
+   ```
+   python BASALT_setup_China_mainland.py
+   ```
+   Then, download the trained models for neural networks BASALT.zip from Tencent iCloud (https://share.weiyun.com/r33c2gqa) and run:
+   ```
+   mv BASALT.zip ~/.cache
+   cd ~/.cache
+   unzip BASALT.zip
+   ```
 
-中国内地且无法翻墙的用户推荐使用‘BASALT_setup_China_mainland.py’安装
-```
-python BASALT_setup_China_mainland.py
-```
-Then, download the trained models for neural networks BASALT.zip from Tencent iCloud (https://share.weiyun.com/r33c2gqa) and run:
+## 2. Manual installation (recommended)
+   Install Miniconda (https://docs.anaconda.com/free/miniconda/miniconda-install/) or Anaconda (https://docs.anaconda.com/free/anaconda/install/index.html)
 
-中国国内用户下载神经网络训练模型：
-从腾讯微云下载BASALT.zip并上传至您的Linux路径：https://share.weiyun.com/r33c2gqa ，随后依次执行以下三个命令
+   Add mirrors to increase download speed of BASALT dependent software (optional):
+   ```
+   site=https://mirrors.tuna.tsinghua.edu.cn/anaconda
+   conda config --add channels ${site}/pkgs/free/
+   conda config --add channels ${site}/pkgs/main/
+   conda config --add channels ${site}/cloud/conda-forge/
+   conda config --add channels ${site}/cloud/bioconda/
+   ```
 
-```
-mv BASALT.zip ~/.cache
-cd ~/.cache
-unzip BASALT.zip
-```
+   Download the BASALT installation file and create a conda environment:
+   ```
+   git clone https://github.com/EMBL-PKU/BASALT.git
+   cd BASALT
+   conda env create -n BASALT --file basalt_env.yml
+   ```
+   
+   Please remain patient, as the installation process may take an extended period.
 
-#### Option 1: Installation in one step with the conda command:
-```
-git clone https://github.com/EMBL-PKU/BASALT.git
-cd BASALT 
-conda env create -n BASALT --file basalt_env.yml
-```
-Please remain patient, as the installation process may take an extended period.
+   If you have encountered an error, please download 'basalt_env.yml' from Tencent iCloud (https://share.weiyun.com/xXdRiDkl) and create a conda environment:
+   ```
+   conda env create -n BASALT --file basalt_env.yml
+   ```
 
-#### Option 2: Installation with BASALT_setup.py (one step):
+   After successfully creating the conda environment, change file permissions for BASALT script files:
+   ```  
+   chmod -R 777 <PATH_TO_CONDA>/envs/BASALT/bin/*
+   ```
+   Example: To easily find your path to conda environments, simply use:
+   ```
+   conda info --envs
+   ```
+   and you can find your path to BASALT environment, such as:
+   ```
+   # conda environments:
+   #
+   base     /home/emma/miniconda3
+   BASALT   /home/emma/miniconda3/envs/BASALT
+   ```
+   Then, change permission to BASALT script folders:
+   ```
+   chmod -R 777 /home/emma/miniconda/envs/BASALT/bin/*
+   ```
 
-1 Download this BASALT_setup.py.
+   Download the trained models for neural networks 'BASALT.zip' from FigShare:
+   ```
+   wget https://figshare.com/ndownloader/files/41093033
+   mv 41093033 BASALT.zip
+   mv BASALT.zip ~/.cache
+   cd ~/.cache
+   unzip BASALT.zip
+   ```
+   For users from China mainland, please download the models BASALT.zip from Tencent iCloud (https://share.weiyun.com/r33c2gqa) and run:
+   ```
+   mv BASALT.zip ~/.cache
+   cd ~/.cache
+   unzip BASALT.zip
+   ```
+## 3. Test files
+   Sample demo files (see BASALT demo files) are prepared for testing whether the BASALT script can be successfully performed, and the bins can be generated. The demo files contain Data.tar.gz, Final_bestbinset.tar.gz and basalt.sh.
+   ```
+   Data.tar.gz -> short read and long read raw sequence files and an OPERA-MS assembled contig file.
+   Final_bestbinset.tar.gz -> expected output of final bins.
+   basalt.sh -> script running this demo
+   ```
+   A workstation with a configuration of Intel(R) Xeon(R) Gold 5218 CPU @ 2.30GHz with 32 cores is expected to complete processing of this demo dataset within 6 hours.
 
-2 You can easily install the software using the command provided below.
-```
-python BASALT_setup.py
-```
-Please remain patient, as the installation process may take an extended period.
 
-#### Option 3: Manual installation (this is best, if you are comfortable):
+### USAGE
+## 1.	General usage
+   To run BASALT, use BASALT under conda environment, or use BASALT.py for standalone users:
+   ```
+   BASALT [-h] [-a ASSEMBLIES] [-s SR_DATASETS] [-l LONG_DATASETS] [-hf HIFI_DATASET] [-c HI_C_DATASET] [-t THREADS] [-m RAM] [-e EXTRA_BINNER] [-qc QC_SOFTWARE] [--min-cpn MIN_COMPLETENESS] [--max-ctn MAX_CONTAMINATION] [--mode RUNNING_MODE] [--module FUNCTIONAL_MODULE] [--autopara AUTOBINING_PARAMETERS] [--refinepara REFINEMENT_PARAMTER]![image](https://github.com/EMBL-PKU/BASALT/assets/62051720/61fb5b05-2844-4867-9598-f91e0709fa9a)
 
-1 Download this basalt_env.yml.
+   ```   
+## Required arguments
+   -a	list of assemblies, e.g., -a assembly1.fa,assembly2.fa
+   
+   Files ending with .fa, .fna, and .fasta are all supported. Additionally, compressed files ending with .gz, .tar.gz, and .zip are also supported.
+
+   -s	short-read datasets, e.g., -s d1_r1.fq,d1_r2.fq/d2_r1.fq,d2_r2.fq
+   
+   Please note, read files within each pair are separated with ‘,’, and read pairs are separated with ‘/’. Reads files ending with .gz, .tar.gz, and .zip are also supported.
+
+   -l		long-read datasets, e.g., -l lr1.fq,lr2.fq
+   
+   -hf	PacBio-HiFi datasets, e.g., -hf hifi1.fq,hifi2.fq
+   
+   -c	Hi-C datasets, e.g., -c hc1.fq,hc2.fq
+   
+   Read files within each pair are separated with ‘,’. Reads files ending with .gz, .tar.gz, and .zip are also supported.
+
+   -t	number of threads, e.g., -t 32
+   
+   -m	RAM, e.g., -m 128
+  
+   Suggested minimum RAM is 32G.
+
+## Optional arguments
+   --min-cpn		Minimum completeness cutoff, e.g., --min-cpn 30 (default: 35)
+   
+   --max-ctn		Maximum contamination cutoff, e.g., --max-ctn 25 (default: 20)
+   
+   --mode		Running mode. Start a new project from the beginning –-mode new or continue the previous run –-mode continue. (default: continue)
+   
+   --module		Running mode. Run only Autobinning + Bin Selection modules –-module autobinning, Refinement module –-module refinement, Gap filling module –-module reassembly, or running all modules –-module all. (default: all)
+   
+   --autopara		Autobinning parameters. 
+    
+   –-autopara more-sensitive Choose recommended binners with full parameters: Maxbin2 [0.3, 0.5, 0.7, 0.9], MetaBAT2 [200, 300, 400, 500], CONCOCT [2-3 flexible parameters based on result of MetaBAT2], and Semibin2 [100]
+   
+   –-autopara sensitive Partial binners with partial parameters: MetaBAT2 [200, 300, 400, 500], CONCOCT [1-2 flexible parameters based on result of MetaBAT2], and Semibin2 [100]
+   
+   –-autopara quick Limited binners: MetaBAT2 [200, 300, 400, 500] and Semibin2 [100]
+(default: more-sensitive)
+
+   --refinepara	Refinement parameters. 
+   
+   --refinepara deep will enable deep refinement at sequence retrieval step. Disable this function by setting the parameter with 
+   
+   –-refinepara quick. (default: deep)
+   
+   --hybrid_reassembly	Setting hybrid reassembly parameters. In reassembly function, BASALT uses SPAdes Hybrid function as default parameter
+   
+   –-hybrid_assembly n to process hybrid reassembly in the existence of SRS and LRS. Use –-hybrid_assembly y to use Unicycler for hybrid reassembly. Please note that it will take a considerable amount of time when using Unicycler for hybrid reassembly.
+
+   -qc			Selection of quality check software. Use CheckM by setting this parameter at –qc checkm , or use CheckM2 by setting with –qc checkm2.
+   
+   -e			Enable extra binners. We temporarily disabled VAMB in BASALT v1.0.1. To enable Metabinner, use –e m in addition to other binners
+   
+   -h 			Help documents.
+
+## 2.	Example
+   Run BASALT based on SRS datasets:
+   ```
+   BASALT\
+   -a as1.fa,as2.fa,as3.fa\
+   -s srs1_r1.fq,srs1_r2.fq/srs2_r1.fq,srs2_r2.fq\
+   -t 60 -m 250
+   ```
+
+   Run BASALT based on SRS + LRS datasets:
+   ```
+   BASALT\
+   -a as1.fa,as2.fa,as3.fa\
+   -s srs1_r1.fq,srs1_r2.fq/srs2_r1.fq,srs2_r2.fq\
+   -l lrs1.fq,lrs2.fq -t 60 -m 250
+   ```
+
+   Run BASALT based on customized parameters:
+   ```
+   BASALT\
+   -a as1.fa,as2.fa,as3.fa\
+   -s srs1_r1.fq,srs1_r2.fq/srs2_r1.fq,srs2_r2.fq\
+   -l lr1.fq,lr2.fq -hf hifi1.fq\
+   -t 60 -m 250\
+   --autopara sensitive --refinepara quick --min-cpn 40 --max-ctn 15 -qc checkm2
+   ```
+
 
 2 (Optional) You can also use mirrors to increase the download speed of BASALT dependent software. For example,if you are in China, you can do this:
 
