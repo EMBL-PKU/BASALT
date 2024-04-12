@@ -39,7 +39,7 @@ Note: CheckM2 database is not compiled along with BASALT installation in v1.0.1.
 
 ### INSTALLATION
 1.	Quick installation
-	Download BASALT_setup.py and run:
+Download ‘BASALT_setup.py’ and run:
 ```
 python BASALT_setup.py
 ```
