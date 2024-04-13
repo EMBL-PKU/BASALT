@@ -41,25 +41,27 @@ Download BASALT_setup.py and run:
    ```
    python BASALT_setup.py
    ```
-Please remain patient, as the installation process may take an extended period.
+   Please remain patient, as the installation process may take an extended period.
 
-For users in China mainland who may experience a network issue, please download the alternative script ‘BASALT_setup_China_mainland.py’ and run:
+2. Quick installation from China mainland 从中国内地快速安装BASALT
+   
+   For users in China mainland who may experience a network issue, please download the alternative script ‘BASALT_setup_China_mainland.py’ and run:
 
-中国内地且无法翻墙的用户推荐使用‘BASALT_setup_China_mainland.py’安装
+   中国内地且无法翻墙的用户推荐使用‘BASALT_setup_China_mainland.py’安装
    ```
    python BASALT_setup_China_mainland.py
    ```
-Then, download the trained models for neural networks BASALT.zip from Tencent iCloud (https://share.weiyun.com/r33c2gqa) and run:
+   Then, download the trained models for neural networks BASALT.zip from Tencent iCloud (https://share.weiyun.com/r33c2gqa) and run:
    ```
    mv BASALT.zip ~/.cache
    cd ~/.cache
    unzip BASALT.zip
    ```
 
-2. Manual installation (recommended)
-Install Miniconda (https://docs.anaconda.com/free/miniconda/miniconda-install/) or Anaconda (https://docs.anaconda.com/free/anaconda/install/index.html)
+3. Manual installation (recommended)
+   Install Miniconda (https://docs.anaconda.com/free/miniconda/miniconda-install/) or Anaconda (https://docs.anaconda.com/free/anaconda/install/index.html)
 
-Add mirrors to increase download speed of BASALT dependent software (optional):
+   Add mirrors to increase download speed of BASALT dependent software (optional):
    ```
    site=https://mirrors.tuna.tsinghua.edu.cn/anaconda
    conda config --add channels ${site}/pkgs/free/
@@ -68,41 +70,41 @@ Add mirrors to increase download speed of BASALT dependent software (optional):
    conda config --add channels ${site}/cloud/bioconda/
    ```
 
-Download the BASALT installation file and create a conda environment:
+   Download the BASALT installation file and create a conda environment:
    ```
    git clone https://github.com/EMBL-PKU/BASALT.git
    cd BASALT
    conda env create -n BASALT --file basalt_env.yml
    ```
 
-Please remain patient, as the installation process may take an extended period.
+   Please remain patient, as the installation process may take an extended period.
 
-If you have encountered an error, please download 'basalt_env.yml' from Tencent iCloud (https://share.weiyun.com/xXdRiDkl) and create a conda environment:
+   If you have encountered an error, please download 'basalt_env.yml' from Tencent iCloud (https://share.weiyun.com/xXdRiDkl) and create a conda environment:
    ```
    conda env create -n BASALT --file basalt_env.yml
    ```
 
-After successfully creating the conda environment, change file permissions for BASALT script files:
+   After successfully creating the conda environment, change file permissions for BASALT script files:
    ```  
    chmod -R 777 <PATH_TO_CONDA>/envs/BASALT/bin/*
    ```
-Example: To easily find your path to conda environments, simply use:
+   Example: To easily find your path to conda environments, simply use:
    ```
    conda info --envs
    ```
-and you can find your path to BASALT environment, such as:
+   and you can find your path to BASALT environment, such as:
    ```
    # conda environments:
    #
    base     /home/emma/miniconda3
    BASALT   /home/emma/miniconda3/envs/BASALT
    ```
-Then, change permission to BASALT script folders:
+   Then, change permission to BASALT script folders:
    ```
    chmod -R 777 /home/emma/miniconda/envs/BASALT/bin/*
    ```
 
-Download the trained models for neural networks 'BASALT.zip' from FigShare:
+   Download the trained models for neural networks 'BASALT.zip' from FigShare:
    ```
    wget https://figshare.com/ndownloader/files/41093033
    mv 41093033 BASALT.zip
@@ -110,7 +112,7 @@ Download the trained models for neural networks 'BASALT.zip' from FigShare:
    cd ~/.cache
    unzip BASALT.zip
    ```
-For users from China mainland, please download the models BASALT.zip from Tencent iCloud (https://share.weiyun.com/r33c2gqa) and run:
+   For users from China mainland, please download the models BASALT.zip from Tencent iCloud (https://share.weiyun.com/r33c2gqa) and run:
    ```
    mv BASALT.zip ~/.cache
    cd ~/.cache
@@ -133,7 +135,7 @@ For users from China mainland, please download the models BASALT.zip from Tencen
    ```
    BASALT [-h] [-a ASSEMBLIES] [-s SR_DATASETS] [-l LONG_DATASETS] [-hf HIFI_DATASET] [-c HI_C_DATASET] [-t THREADS] [-m RAM] [-e EXTRA_BINNER] [-qc QC_SOFTWARE] [--min-cpn MIN_COMPLETENESS] [--max-ctn MAX_CONTAMINATION] [--mode RUNNING_MODE] [--module FUNCTIONAL_MODULE] [--autopara AUTOBINING_PARAMETERS] [--refinepara REFINEMENT_PARAMTER]![image](https://github.com/EMBL-PKU/BASALT/assets/62051720/61fb5b05-2844-4867-9598-f91e0709fa9a)
    ```   
-Required arguments
+   Required arguments
    ```
    -a	list of assemblies, e.g., -a assembly1.fa,assembly2.fa
    Files ending with .fa, .fna, and .fasta are all supported. Additionally, compressed files ending with .gz, .tar.gz, and .zip are also supported.
@@ -153,7 +155,7 @@ Required arguments
    -m	RAM, e.g., -m 128
    Suggested minimum RAM is 32G.
    ```
-Optional arguments
+   Optional arguments
    ```
    --min-cpn		Minimum completeness cutoff, e.g., --min-cpn 30 (default: 35)
    
@@ -192,7 +194,7 @@ Optional arguments
    -t 60 -m 250
    ```
 
-Run BASALT based on SRS + LRS datasets:
+   Run BASALT based on SRS + LRS datasets:
    ```
    BASALT\
    -a as1.fa,as2.fa,as3.fa\
@@ -200,7 +202,7 @@ Run BASALT based on SRS + LRS datasets:
    -l lrs1.fq,lrs2.fq -t 60 -m 250
    ```
 
-Run BASALT based on customized parameters:
+   Run BASALT based on customized parameters:
    ```
    BASALT\
    -a as1.fa,as2.fa,as3.fa\
