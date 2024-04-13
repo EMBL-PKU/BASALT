@@ -134,6 +134,7 @@ Note: CheckM2 database is not compiled along with BASALT installation in v1.0.1.
 
    ```   
 ## Required arguments
+   ```
    -a	list of assemblies, e.g., -a assembly1.fa,assembly2.fa
    
    Files ending with .fa, .fna, and .fasta are all supported. Additionally, compressed files ending with .gz, .tar.gz, and .zip are also supported.
@@ -155,6 +156,7 @@ Note: CheckM2 database is not compiled along with BASALT installation in v1.0.1.
    -m	RAM, e.g., -m 128
   
    Suggested minimum RAM is 32G.
+   ```
 
 ## Optional arguments
    --min-cpn		Minimum completeness cutoff, e.g., --min-cpn 30 (default: 35)
