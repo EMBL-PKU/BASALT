@@ -1,6 +1,6 @@
 ## BASALT - Binning Across a Series of AssembLies Toolkit
 
-## Type of input data for BASALT
+### Type of input data for BASALT
 BASALT is a versatile tool with high efficiency for binning and post-binning refinement. BASALT can generate high quality metagenome-assembled genomes (MAGs) from various input data types including: 1) assembly from short-read sequences (SRS); 2) assembly from long-read sequences (LRS); [Note: only PacBio-HiFi data is supported in v1.0.1 for long-read only assemblies, other types of LRS data will be available in v1.0.2.] 3) hybrid assembly from SRS + LRS. Specific features of BASALT are listed below:
 
 1.	Multiple assemblies as input with dereplication function
@@ -12,32 +12,36 @@ BASALT maximized the utilization of LRS in the post-binning refinement steps. Fi
 For any issue compiling and running BASALT, as well as bug report, please do not hesitate to contact us (yuke.sz@pku.edu.cn). Thanks for using BASALT!
 
 
+
 ### SYSTEM REQUIREMENTS
 1.	Required dependencies
 
-   Linux x64 systems, 8+ cores, and 128GB+ RAM
+  	Linux x64 systems, 8+ cores, and 128GB+ RAM
 
-   Python (>=3.0) modules: biopython, pandas, numpy, scikit-learn, copy, multiprocessing, collections，pytorch, tensorboardx
+  	Python (>=3.0) modules: biopython, pandas, numpy, scikit-learn, copy, multiprocessing, collections，pytorch, tensorboardx
 
-   Perl
+  	Perl
 
-   Java (>=1.7)
+  	Java (>=1.7)
 
-   Binning tools: MetaBAT2, Maxbin2, CONCOCT, Semibin2, Metabinner
+  	Binning tools: MetaBAT2, Maxbin2, CONCOCT, Semibin2, Metabinner
 
-   Note: VAMB was used to be implemented in BASALT, but due to the conflict of environment and unsatisfactory performance on environmental datasets, we temporarily removed VAMB from BASALT environment. However, bins generated using VAMB can still be imported to BASALT directly for post-binning refinements.
+  	Note: VAMB was used to be implemented in BASALT, but due to the conflict of environment and unsatisfactory performance on environmental datasets, we temporarily removed VAMB from BASALT environment. However, bins generated using VAMB can still be imported to BASALT directly for post-binning refinements.
 
-   Sequences processing tools: Bowtie2, BWA, SAMtools, Prodigal, BLAST+, HMMER, Minimap2
+  	Sequences processing tools: Bowtie2, BWA, SAMtools, Prodigal, BLAST+, HMMER, Minimap2
 
-   Sequences assembly and polishing tools: SPAdes, IDBA-UD, Pilon, Racon, Unicycler
+  	Sequences assembly and polishing tools: SPAdes, IDBA-UD, Pilon, Racon, Unicycler
 
-   Genome quality assessment tools: CheckM, CheckM2, pplacer
+  	Genome quality assessment tools: CheckM, CheckM2, pplacer
 
-   Note: CheckM2 database is not compiled along with BASALT installation in v1.0.1. To setup CheckM2 database, please refer to CheckM2 user guide (https://github.com/chklovski/CheckM2).
+  	Note: CheckM2 database is not compiled along with BASALT installation in v1.0.1. To setup CheckM2 database, please refer to CheckM2 user guide (https://github.com/chklovski/CheckM2).
+
+
 
 ### INSTALLATION
 1.	Quick installation
-Download BASALT_setup.py and run:
+   
+  	Download BASALT_setup.py and run:
    ```
    python BASALT_setup.py
    ```
@@ -59,6 +63,7 @@ Download BASALT_setup.py and run:
    ```
 
 3. Manual installation (recommended)
+   
    Install Miniconda (https://docs.anaconda.com/free/miniconda/miniconda-install/) or Anaconda (https://docs.anaconda.com/free/anaconda/install/index.html)
 
    Add mirrors to increase download speed of BASALT dependent software (optional):
@@ -129,13 +134,16 @@ Download BASALT_setup.py and run:
    A workstation with a configuration of Intel(R) Xeon(R) Gold 5218 CPU @ 2.30GHz with 32 cores is expected to complete processing of this demo dataset within 6 hours.
 
 
+
 ### USAGE
 1.	General usage
-   To run BASALT, use BASALT under conda environment, or use BASALT.py for standalone users:
+
+  	To run BASALT, use BASALT under conda environment, or use BASALT.py for standalone users:
    ```
    BASALT [-h] [-a ASSEMBLIES] [-s SR_DATASETS] [-l LONG_DATASETS] [-hf HIFI_DATASET] [-c HI_C_DATASET] [-t THREADS] [-m RAM] [-e EXTRA_BINNER] [-qc QC_SOFTWARE] [--min-cpn MIN_COMPLETENESS] [--max-ctn MAX_CONTAMINATION] [--mode RUNNING_MODE] [--module FUNCTIONAL_MODULE] [--autopara AUTOBINING_PARAMETERS] [--refinepara REFINEMENT_PARAMTER]![image](https://github.com/EMBL-PKU/BASALT/assets/62051720/61fb5b05-2844-4867-9598-f91e0709fa9a)
-   ```   
+   ```
    Required arguments
+   
    ```
    -a	list of assemblies, e.g., -a assembly1.fa,assembly2.fa
    Files ending with .fa, .fna, and .fasta are all supported. Additionally, compressed files ending with .gz, .tar.gz, and .zip are also supported.
@@ -212,6 +220,8 @@ Download BASALT_setup.py and run:
    --autopara sensitive --refinepara quick --min-cpn 40 --max-ctn 15 -qc checkm2
    ```
 
+
+
 ## Troubleshooting
 1.	Error from SAMtools when installing BASALT:
    ```
@@ -255,7 +265,7 @@ Download BASALT_setup.py and run:
    ```
    This is because CheckM2 database is not installed. Users can simply download CheckM2 database from their official website (https://github.com/chklovski/CheckM2) to address this issue.
 
-5.	rror encountered when running BASALT:
+5.	Error encountered when running BASALT:
    ```
    BASALT: command not found!
    ```
@@ -288,25 +298,34 @@ Download BASALT_setup.py and run:
     for line in open('quality_report.tsv','r'):
 FileNotFoundError: [Errno 2] No such file or directory: 'quality_report.tsv'
    ```
-   This is possibly due to the insufficient number of bins generated due to the low coverage of datasets at the current step, which CheckM2 cannot generate quality file.
+	
+ This is possibly due to the insufficient number of bins generated due to the low coverage of datasets at the current step, which CheckM2 cannot generate quality file.
+
+
    
 ### FAQ
 1.	Q: Same contigs may be used multiple times in the single assembly + co-assembly mode. Does this strategy affect the final output?
-A: Redundant bins can be generated under single assembly + co-assembly mode when raw reads are used multiple times in the assembly step. For example, bin1 is clustered from single assembly A1, bin2 is clustered from co-assembly A1+A2+A3, where bin1 and bin2 are the same genome clustered with same contigs. This redundancy can be identified in the bin selection module, and redundant bins will be removed at this step. The final best binset is a non-redundant binset.
+   A: Redundant bins can be generated under single assembly + co-assembly mode when raw reads are used multiple times in the assembly step. For example, bin1 is clustered from single assembly A1, bin2 is clustered from co-assembly A1+A2+A3, where bin1 and bin2 are the same genome clustered with same contigs. This redundancy can be identified in the bin selection module, and redundant bins will be removed at this step. The final best binset is a non-redundant binset.
 
 2.	Q: BASALT takes longer time to finish compared to metaWRAP. Is there a way to reduce the computation time?
-A: Indeed, BASALT will take approximately doubled amount of time compared with metaWRAP, which computation time may even prolong with the increase of sample complexity. However, BASALT can obtain more MAGs with better quality than metaWRAP at similar computation time (i.e., running BASALT without gap filling module). Moreover, BASALT may save computation time on multiple assemblies because it only takes a single run to finish. If users wish to accelerate the entire procedure, we suggest using quick mode (--autopara quick) and skip deep refinement (--refinepara quick). This will significantly reduce the computation time.
 
-3.	Q: How do I process refinement with existing bins?
-A: To use refinement module only, users can feed their bin sequences with raw reads into BASALT using the script data_feeding.py.
+  	A: Indeed, BASALT will take approximately doubled amount of time compared with metaWRAP, which computation time may even prolong with the increase of sample complexity. However, BASALT can obtain more MAGs with better quality than metaWRAP at similar computation time (i.e., running BASALT without gap filling module). Moreover, BASALT may save computation time on multiple assemblies because it only takes a single run to finish. If users wish to accelerate the entire procedure, we suggest using quick mode (--autopara quick) and skip deep refinement (--refinepara quick). This will significantly reduce the computation time.
+
+4.	Q: How do I process refinement with existing bins?
+
+  	A: To use refinement module only, users can feed their bin sequences with raw reads into BASALT using the script data_feeding.py.
 Note: A new version of BASALT (v1.0.2) will be released around late May 2024. We will aim to optimize the above functions to make it more user-friendly.
 
-4.	Q: Is there an output parameter?
-A: No. BASALT will process and generate results under current working directory. We suggest users prepare a copy or generate soft links of raw reads and assembly files under the working directory to avoid error occurring.
+6.	Q: Is there an output parameter?
+
+  	A: No. BASALT will process and generate results under current working directory. We suggest users prepare a copy or generate soft links of raw reads and assembly files under the working directory to avoid error occurring.
+
 
    
 ### Cite our article
 Z Qiu, L Yuan, C Lian, B Lin, J Chen, R Mu, X Qiao, L Zhang, Z Xu, L Fan, Y Zhang, S Wang, J Li, H Cao, B Li, B Chen, C Song, Y Liu, L Shi, Y Tian, J Ni, T Zhang, J Zhou, W Zhuang, K Yu. BASALT refines binning from metagenomic data and increases resolution of genome-resolved metagenomic analysis. Nat. Commun. 2024, 15, 2179. https://doi.org/10.1038/s41467-024-46539-7
+
+
 
 ### References
 1. Uritskiy, G.V., DiRuggiero, J. & Taylor, J. MetaWRAP—a flexible pipeline for genome-resolved metagenomic data analysis. Microbiome 6, 1-13 (2018).
