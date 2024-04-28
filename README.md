@@ -124,7 +124,35 @@ For any issue compiling and running BASALT, as well as bug report, please do not
    unzip BASALT.zip
    ```
 
-3. Test files
+4. Another way to install BASALT in China mainland
+   以singularity的方式加载BASALT的sif镜像使用BASALT,可通过微云的以下网址获得BASALT.sif镜像文件
+   ```
+   https://share.weiyun.com/xKmoBmrF
+   ```
+      
+   将BASALT的singularity镜像（BASALT.sif）放置在服务器的home目录下。以执行singularity的命令运行，如
+   ```
+   singularity run BASALT.sif BASALT -a as1.fa -s S1_R1.fq,S1_R2.fq/S2_R1.fq,S2_R2.fq -t 32 -m 128
+   ```
+
+   如BASALT.sif不在home目录下运行需要添加 -B挂载，如
+   ```
+   singularity run -B /media/emma BASALT.sif BASALT -h
+   ```
+
+   需要后台挂载运行，nohup可能会出现意外，但是集群一般sbatch等提交命令的方式可以正常运行。实验室的服务器则考虑使用screen命令。
+请严格参考screen命令的执行方式（除非你很熟悉screen，切勿擅自修改命令执行方式）。如
+   ```
+    screen -dmS session_name bash -c 'bash basalt.sh >log_basalt'
+   ```
+   请注意session_name要起跟自己有辨识度唯一的名字，避免发生意外情况
+
+   BASALT.sif含有checkm1 checkm2 semibin  bowtie2 bwa等很多软件，均可以通过以下方式调用：
+   ```
+   singularity run BASALT.sif bowtie2 -h
+   ```
+   
+6. Test files
    Sample demo files (see BASALT demo files) are prepared for testing whether the BASALT script can be successfully performed, and the bins can be generated. The demo files contain Data.tar.gz, Final_bestbinset.tar.gz and basalt.sh.
    ```
    Data.tar.gz -> short read and long read raw sequence files and an OPERA-MS assembled contig file.
