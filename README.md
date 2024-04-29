@@ -124,8 +124,9 @@ For any issue compiling and running BASALT, as well as bug report, please do not
    unzip BASALT.zip
    ```
 
-4. Another way to install BASALT in China mainland
-   以singularity的方式加载BASALT的sif镜像使用BASALT,可通过微云的以下网址获得BASALT.sif镜像文件
+4. Another way to install BASALT in China mainland 以singularity的方式加载BASALT的sif镜像
+
+   使用BASALT,可通过微云的以下网址获得BASALT.sif镜像文件
    ```
    https://share.weiyun.com/xKmoBmrF
    ```
