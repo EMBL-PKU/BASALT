@@ -215,7 +215,7 @@ For any issue compiling and running BASALT, as well as bug report, please do not
    --hybrid_reassembly	Setting hybrid reassembly parameters. In reassembly function, BASALT uses SPAdes Hybrid function as default parameter
    –-hybrid_assembly n to process hybrid reassembly in the existence of SRS and LRS. Use –-hybrid_assembly y to use Unicycler for hybrid reassembly. Please note that it will take a considerable amount of time when using Unicycler for hybrid reassembly.
 
-   -qc			Selection of quality check software. Use CheckM by setting this parameter at –qc checkm , or use CheckM2 by setting with –qc checkm2.
+   -q			Selection of quality check software. Default: checkm. If you want to use CheckM2, by setting with –q checkm2.
    
    -e			Enable extra binners. We temporarily disabled VAMB in BASALT v1.0.1. To enable Metabinner, use –e m in addition to other binners
    
