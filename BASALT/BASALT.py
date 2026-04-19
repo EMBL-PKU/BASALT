@@ -259,6 +259,7 @@ def main():
             outlier_remover_main(refinement_binset, coverage_list, datasets, lr_list, hifi_list, assembly_list, pwd, num_threads)
 
         else:
+            pwd = os.getcwd()
             from BASALT_main_d import BASALT_main_d
             BASALT_main_d(
                 assembly_list, datasets, num_threads, lr_list, hifi_list,
