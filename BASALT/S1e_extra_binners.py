@@ -47,7 +47,7 @@ def metabinner(assembly_file, depth_file, num_threads, ram, pwd, QC_software):
 
     os.system('cat '+str(depth_file)+' | cut -f -1,4- > '+str(assembly_file)+'_coverage_profile.tsv')
     # os.system('python gen_kmer.py '+pwd+'/'+str(assembly_file)+' 1000 4')
-    os.system(str(path)+'scripts/gen_kmer.py '+pwd+'/'+str(assembly_file)+' 1000 4')
+    os.system('python '+str(path)+'gen_kmer.py '+pwd+'/'+str(assembly_file)+' 1000 4')
     assembly_name_list=assembly_file.split('.')
     assembly_name_list.remove(assembly_name_list[-1])
     assembly_name='.'.join(assembly_name_list)
