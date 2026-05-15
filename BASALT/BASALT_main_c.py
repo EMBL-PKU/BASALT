@@ -289,9 +289,25 @@ def BASALT_main_c(assembly_list, datasets, num_threads, lr_list, hifi_list,
                     for i in range(1,len(assembly_list)+1):
                         assembly_file=str(i)+'_'+str(assembly_list[i-1])
                         depth_file=str(i)+'_assembly.depth.txt'
-                        extra_bin_folder=extra_binner(binner, datasets, assembly_file, depth_file, num_threads, ram, pwd, QC_software)
-                        for item in extra_bin_folder:
-                            bins_folders_dic[str(assembly_list[i-1])].append(item)
+
+                        try:
+                            extra_bin_folder=extra_binner(binner, datasets, assembly_file, depth_file, num_threads, ram, pwd, QC_software)
+                            for item in extra_bin_folder:
+                                bins_folders_dic[str(assembly_list[i-1])].append(item)
+                            print(f"[SUCCESS] Extra binner '{binner}' completed for {assembly_file}")
+                            fx=open('Basalt_log.txt','a')
+                            fx.write(f"[SUCCESS] Extra binner '{binner}' completed for {assembly_file}\n")
+                            fx.close()
+                        except Exception as e:
+                            print(f"[WARNING] Extra binner '{binner}' failed for {assembly_file}. Skipping...")
+                            print(f"[ERROR DETAILS] {str(e)}")
+                            try:
+                                fx=open('Basalt_log.txt','a')
+                                fx.write(f"[WARNING] Extra binner '{binner}' failed for {assembly_file}: {str(e)}\n")
+                                fx.close()
+                            except:
+                                pass
+                            continue
 
             f1=open('Connections_total_dict.txt','w')
             for item in connections_total_dict.keys():
