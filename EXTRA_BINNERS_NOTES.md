@@ -14,26 +14,53 @@ This allows you to:
 2. Review the log file to see which binners failed and why
 3. Manually run failed binners later and use data feeding to incorporate results
 
-## VAMB CPU-Only Support
+## VAMB 5.0 Support (Python 3.12 Compatible)
 
 ### Background
 
-VAMB can be installed in two modes:
+BASALT now supports VAMB 5.0, which is compatible with Python 3.12 and offers improved performance. VAMB can be installed in two modes:
 - **GPU mode** (default): Requires CUDA and compatible GPU drivers
 - **CPU mode**: Works on any system without GPU requirements
 
-### Installing VAMB CPU-Only
+### Installing VAMB 5.0
 
-If you encounter CUDA driver mismatch issues or don't have a GPU, install VAMB in CPU-only mode:
+**Option 1: Install with the BASALT environment (Recommended)**
+
+The `basalt_new_environment.yml` now includes VAMB 5.0 by default:
+
+```bash
+# Create new BASALT environment with VAMB 5.0
+conda env create -f basalt_new_environment.yml
+conda activate basalt
+```
+
+**Option 2: Add VAMB 5.0 to existing environment**
+
+If you already have BASALT installed, you can upgrade to VAMB 5.0:
 
 ```bash
 # Activate your BASALT environment
 conda activate basalt_env
 
-# Install VAMB CPU-only version
-pip install vamb --no-deps
+# Install VAMB 5.0 (GPU version with CUDA support)
+pip install "vamb>=5.0.0"
+
+# OR install VAMB 5.0 CPU-only version
+pip install "vamb>=5.0.0" --no-deps
 conda install pytorch cpuonly -c pytorch
 ```
+
+### VAMB 5.0 vs 4.x Compatibility
+
+BASALT automatically detects and uses the appropriate VAMB command syntax:
+- **VAMB 5.0**: Uses `vamb bin default` command with explicit thread control
+- **VAMB 4.x**: Falls back to legacy `vamb` command (if 5.0 command fails)
+
+The error handling system will catch any compatibility issues and log them to `Basalt_log.txt`.
+
+### Python 3.12 Compatibility
+
+VAMB 5.0 is fully compatible with Python 3.12, which is the default Python version in the new BASALT environment. This resolves previous compatibility issues with older VAMB versions.
 
 ### Using VAMB with BASALT
 

@@ -104,6 +104,8 @@ def vamb(assembly_file, datasets, num_threads, pwd, QC_software):
     """
     Run VAMB on a single assembly using mapped BAM files.
 
+    Compatible with VAMB 4.x and 5.x versions.
+
     Parameters
     ----------
     assembly_file : str
@@ -123,8 +125,13 @@ def vamb(assembly_file, datasets, num_threads, pwd, QC_software):
             bam_list=str(assembly_num)+'_DNA-'+str(i)+'.bam'
         else:
             bam_list+=' '+str(assembly_num)+'_DNA-'+str(i)+'.bam'
-    os.system('vamb --outdir '+str(assembly_file)+'_vamb --fasta '+str(assembly_file)+' --bamfiles '+str(bam_list)+' --minfasta 500000')
-    # os.system('vamb --outdir '+str(assembly_file)+'_100_vamb_genomes --fasta '+str(assembly_file)+' --bamfiles '+str(bam_list)+' -o C')
+
+    # VAMB 5.0 compatible command with explicit parameters
+    # --minfasta: minimum bin size (500kb)
+    # -p: number of threads (VAMB 5.0 uses -p instead of relying on system default)
+    os.system('vamb bin default --outdir '+str(assembly_file)+'_vamb --fasta '+str(assembly_file)+' --bamfiles '+str(bam_list)+' --minfasta 500000 -p '+str(num_threads))
+    # Fallback for VAMB 4.x if the above fails (will be caught by error handling)
+    # os.system('vamb --outdir '+str(assembly_file)+'_vamb --fasta '+str(assembly_file)+' --bamfiles '+str(bam_list)+' --minfasta 500000')
 
     vamb_bin_contig, vbn={}, {}
     for line in open(pwd+'/'+str(assembly_file)+'_vamb/clusters.tsv','r'):

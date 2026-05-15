@@ -40,6 +40,7 @@ dependencies:
   - uv                 
   # --- Pip Dependencies ---
   - pip:
+      - vamb>=5.0.0        # VAMB 5.0+ for Python 3.12 compatibility
       - tensorflow
       - torch
       - torchvision
