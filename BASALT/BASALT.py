@@ -229,6 +229,7 @@ def main():
         Side effects include running the end-to-end BASALT pipeline and
         writing results to the specified output folder.
     """
+    global output_folder
     # Main execution: select quality check implementation and functional module
     if QC_software == 'checkm2':
         if len(data_feeding_folder) != 0:
