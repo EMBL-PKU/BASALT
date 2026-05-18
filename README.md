@@ -2,6 +2,7 @@
 
 ## 📣 News
 
+* **[2026/04/16]**:🤗 We release **BASALT-Air V1.0.0**(https://github.com/PKU-EMBL/BASALT-Air) under MIT LICENSE.
 * **[2025/12/16]**:🤗 We release **BASALT V1.2.0** under MIT LICENSE.
 
 > 1. Upgrade the python version from 3.8 to 3.12 with new friendly installation script
