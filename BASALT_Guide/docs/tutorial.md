@@ -1,373 +1,212 @@
-# Tutorial for BASALT
+# Tutorial
 
-## ⏬ BASALT v1.2.0 INSTALLATION
-1. BASALT 1.2.0 installation
+A step-by-step guide for running BASALT with demo data.
 
-   Please refer to the installation guide of BASALT v1.2.0:
-   ```
-   git clone https://github.com/EMBL-PKU/BASALT.git
+---
 
-   cd BASALT
+## Prerequisites
 
-   conda create -n basalt_env -c conda-forge -c bioconda \     python=3.12 \     megahit metabat2 maxbin2 concoct prodigal semibin \     bedtools blast bowtie2 diamond checkm2 \     unicycler spades samtools racon pplacer pilon \     ncbi-vdb minimap2 miniasm idba hmmer entrez-direct \     biopython uv --yes
+- BASALT installed and environment activated (see [Installation](installation.md))
+- Demo data downloaded from the repository
+- At least 32 cores and 128 GB RAM recommended
 
-   conda activate basalt_env
+---
 
-   uv pip install tensorflow torch torchvision tensorboard tensorboardx \     lightgbm scikit-learn numpy==1.26.4 python-igr
-   aph scipy pandas matplotlib \     cython biolib joblib tqdm requests checkm-genome
-   ```
+## Demo Files
 
-   Download BASALT Deep Learning Model Weights:
+The `BASALT demo files/` directory contains:
 
-   ```
-   # please chanage the download path according to your computer environment
-    
-   python BASALT_models_download.py --path "my_model_folder"
-   ```
-   
-   Download BASALT script files and change permission:
+| File | Description |
+|---|---|
+| `Data.tar.gz` | Short-read, long-read FASTQ files and an OPERA-MS assembled contig file |
+| `Final_bestbinset.tar.gz` | Expected final output bins for validation |
+| `basalt.sh` | Shell script to run the demo |
 
-   ```
-   chmod +x install.sh
+Extract the data:
 
-   bash install.sh
+```bash
+tar -zxf BASALT\ demo\ files/Data.tar.gz
+```
 
-   chmod +x /path/to/basalt/bin/*
-   ```
+A 32-core workstation with 128 GB RAM is expected to complete the demo in ~6 hours.
 
-   Set environment variables by adding the following lines to your ~/.bashrc file:
-   ```
-   nano ~/.bashrc
+---
 
-   export CHECKM2DB=/path/to/checkm2db/CheckM2_database/uniref100.KO.1.dmnd
-   export CHECKM_DATA_PATH=/path/to/checkmdb
-   export BASALT_WEIGHT=/path/to/BASALT
+## Example 1: Short-Read Only, Single Assembly
 
-   source ~/.bashrc
-   ```
-   The below Google Drive link provide the essential files for checkm_db, checkm2_db and newest **singularity image**.
-   
-   ```
-   https://drive.google.com/drive/folders/1d0e_2FpYRBAZLwKXl8fA-yDK4b5PBA_E?usp=sharing
-   ```
+### Step 1: Prepare Working Directory
 
-   ⚠️: **Another way** to install BASALT in China mainland 以singularity的方式加载BASALT的sif镜像
-      
-   将BASALT的singularity镜像（basalt.sif）放置在服务器的home目录下。以执行singularity的命令运行，如
-   ```
-   singularity run basalt.sif BASALT -a as1.fa -s S1_R1.fq,S1_R2.fq/S2_R1.fq,S2_R2.fq -t 32 -m 128
-   ```
+```bash
+mkdir basalt_test && cd basalt_test
+ln -s /path/to/assembly.fasta .
+ln -s /path/to/sample_R1.fq .
+ln -s /path/to/sample_R2.fq .
+```
 
-   如basalt.sif不在home目录下运行需要添加 -B挂载，如
-   ```
-   # please change /meida/emma according to your path
-   singularity run -B /media/emma basalt.sif BASALT -h
-   ```
+### Step 2: Activate Environment
 
-   需要后台挂载运行，nohup可能会出现意外，但是集群一般sbatch等提交命令的方式可以正常运行。实验室的服务器则考虑使用screen命令。
-请严格参考screen命令的执行方式（除非你很熟悉screen，切勿擅自修改命令执行方式）。如
-   ```
-    screen -dmS session_name bash -c 'bash basalt.sh >log_basalt'
-   ```
-   请注意session_name要起跟自己有辨识度唯一的名字，避免发生意外情况
+```bash
+conda activate basalt_env
+```
 
-   basalt.sif含有checkm1 checkm2 semibin  bowtie2 bwa等很多软件，均可以通过以下方式调用：
-   ```
-   singularity run basalt.sif bowtie2 -h
-   ```
+### Step 3: Run BASALT
 
-## ⏬ BASALT v1.1.0 INSTALLATION
+```bash
+BASALT -a assembly.fasta \
+    -s sample_R1.fq,sample_R2.fq \
+    -t 60 -m 250
+```
 
-1.	Quick installation 
-   
-   Download BASALT_setup.py and run:
-   ```
-   python BASALT_setup.py
-   ```
-   Please remain patient, as the installation process may take an extended period.
+### Step 4: Check Results
 
-2. Quick installation from China mainland 从中国内地快速安装BASALT
-   
-   For users in China mainland who may experience a network issue, please download the alternative script ‘BASALT_setup_China_mainland.py’ and run:
+```bash
+ls Final_binset_final_binset/
+# List of MAG FASTA files
+```
 
-   中国内地且无法翻墙的用户推荐使用‘BASALT_setup_China_mainland.py’安装
-   ```
-   python BASALT_setup_China_mainland.py
-   ```
-   Then, download the trained models for neural networks BASALT.zip from Tencent iCloud (https://share.weiyun.com/r33c2gqa) and run:
-   ```
-   mv BASALT.zip ~/.cache
-   cd ~/.cache
-   unzip BASALT.zip
-   ```
+---
 
-3. Manual installation (recommended)
-   
-   Install Miniconda (https://docs.anaconda.com/free/miniconda/miniconda-install/) or Anaconda (https://docs.anaconda.com/free/anaconda/install/index.html)
+## Example 2: Multi-Assembly with Short + Long Reads
 
-   Add mirrors to increase download speed of BASALT dependent software (optional):
-   ```
-   site=https://mirrors.tuna.tsinghua.edu.cn/anaconda
-   conda config --add channels ${site}/pkgs/free/
-   conda config --add channels ${site}/pkgs/main/
-   conda config --add channels ${site}/cloud/conda-forge/
-   conda config --add channels ${site}/cloud/bioconda/
-   ```
+### Step 1: Run
 
-   Download the BASALT installation file and create a conda environment:
-   ```
-   git clone https://github.com/EMBL-PKU/BASALT.git
-   cd BASALT
-   conda env create -n BASALT --file basalt_env.yml
-   ```
+```bash
+BASALT -a as1.fa,as2.fa,as3.fa \
+    -s s1_R1.fq,s1_R2.fq/s2_R1.fq,s2_R2.fq/s3_R1.fq,s3_R2.fq \
+    -l lr1.fastq,lr2.fastq,lr3.fastq \
+    -t 64 -m 256
+```
 
-   Please remain patient, as the installation process may take an extended period.
+### Step 2: What happens
 
-   If you have encountered an error, please download 'basalt_env.yml' from Tencent iCloud (https://share.weiyun.com/xXdRiDkl) and create a conda environment:
-   ```
-   conda env create -n BASALT --file basalt_env.yml
-   ```
+1. **Autobinning**: MetaBAT2, CONCOCT, Semibin2 (sensitive preset) run on all 3 assemblies.
+2. **Bin Selection**: Within each assembly, the best bins are selected. Then cross-assembly dereplication removes redundancies.
+3. **Refinement**: DL model removes contamination. Paired-end tracking and long-read connections retrieve missed contigs. Long reads also trigger polishing (Racon).
+4. **Reassembly**: SPAdes reassembles each bin to improve contiguity.
 
-   After successfully creating the conda environment, change file permissions for BASALT script files:
-   ```  
-   chmod -R 777 <PATH_TO_CONDA>/envs/BASALT/bin/*
-   ```
-   Example: To easily find your path to conda environments, simply use:
-   ```
-   conda info --envs
-   ```
-   and you can find your path to BASALT environment, such as:
-   ```
-   # conda environments:
-   #
-   base     /home/emma/miniconda3
-   BASALT   /home/emma/miniconda3/envs/BASALT
-   ```
-   Then, change permission to BASALT script folders:
-   ```
-   chmod -R 777 /home/emma/miniconda/envs/BASALT/bin/*
-   ```
+---
 
-   Download the trained models for neural networks 'BASALT.zip' from FigShare:
+## Example 3: Quick Mode
 
-   > You can also find the BASALT v1.1.0 version BASALT.zip file the previous released version and download it
-   
-   ```
-   wget https://figshare.com/ndownloader/files/41093033
-   mv 41093033 BASALT.zip
-   mv BASALT.zip ~/.cache
-   cd ~/.cache
-   unzip BASALT.zip
-   ```
-   For users from China mainland, please download the models BASALT.zip from Tencent iCloud (https://share.weiyun.com/r33c2gqa) and run:
-   ```
-   mv BASALT.zip ~/.cache
-   cd ~/.cache
-   unzip BASALT.zip
-   ```
+For large or complex datasets where runtime is a concern:
 
-5. Another way to install BASALT in China mainland 以singularity的方式加载BASALT的sif镜像
+```bash
+BASALT -a as1.fa,as2.fa \
+    -s s1_R1.fq,s1_R2.fq/s2_R1.fq,s2_R2.fq \
+    -t 64 -m 256 \
+    --sensitive quick \
+    --refinepara quick
+```
 
-   使用BASALT,可通过微云的以下网址获得BASALT.sif镜像文件
-   ```
-   https://share.weiyun.com/xKmoBmrF
-   ```
-      
-   将BASALT的singularity镜像（BASALT.sif）放置在服务器的home目录下。以执行singularity的命令运行，如
-   ```
-   singularity run BASALT.sif BASALT -a as1.fa -s S1_R1.fq,S1_R2.fq/S2_R1.fq,S2_R2.fq -t 32 -m 128
-   ```
+This uses fewer binners and parameter combinations, and skips deep contig retrieval.
 
-   如BASALT.sif不在home目录下运行需要添加 -B挂载，如
-   ```
-   singularity run -B /media/emma BASALT.sif BASALT -h
-   ```
+---
 
-   需要后台挂载运行，nohup可能会出现意外，但是集群一般sbatch等提交命令的方式可以正常运行。实验室的服务器则考虑使用screen命令。
-请严格参考screen命令的执行方式（除非你很熟悉screen，切勿擅自修改命令执行方式）。如
-   ```
-    screen -dmS session_name bash -c 'bash basalt.sh >log_basalt'
-   ```
-   请注意session_name要起跟自己有辨识度唯一的名字，避免发生意外情况
+## Example 4: Only Run Refinement on Existing Bins
 
-   BASALT.sif含有checkm1 checkm2 semibin  bowtie2 bwa等很多软件，均可以通过以下方式调用：
-   ```
-   singularity run BASALT.sif bowtie2 -h
-   ```
-   
-6. Test files
-   Sample demo files (see BASALT demo files) are prepared for testing whether the BASALT script can be successfully performed, and the bins can be generated. The demo files contain Data.tar.gz, Final_bestbinset.tar.gz and basalt.sh.
-   ```
-   Data.tar.gz -> short read and long read raw sequence files and an OPERA-MS assembled contig file.
-   Final_bestbinset.tar.gz -> expected output of final bins.
-   basalt.sh -> script running this demo
-   ```
-   A workstation with a configuration of Intel(R) Xeon(R) Gold 5218 CPU @ 2.30GHz with 32 cores is expected to complete processing of this demo dataset within 6 hours.
+If you already have bins from another tool and want to use BASALT's deep-learning refinement:
 
+```bash
+BASALT -a assembly.fa \
+    -s sample_R1.fq,sample_R2.fq \
+    -r My_Bins_Folder \
+    -c Coverage_matrix_for_binning_assembly.fa.txt \
+    -t 32 -m 128
+```
 
+---
 
-## 🧪 USAGE
-1.	General usage
+## Example 5: Data Feeding (Multiple External Binsets)
 
-  	To run BASALT, use BASALT under conda environment, or use BASALT.py for standalone users:
-   ```
-   BASALT [-h] [-a ASSEMBLIES] [-s SR_DATASETS] [-l LONG_DATASETS] [-hf HIFI_DATASET] [-c HI_C_DATASET] [-t THREADS] [-m RAM] [-e EXTRA_BINNER] [-qc QC_SOFTWARE] [--min-cpn MIN_COMPLETENESS] [--max-ctn MAX_CONTAMINATION] [--mode RUNNING_MODE] [--module FUNCTIONAL_MODULE] [--autopara AUTOBINING_PARAMETERS] [--refinepara REFINEMENT_PARAMTER]![image](https://github.com/EMBL-PKU/BASALT/assets/62051720/61fb5b05-2844-4867-9598-f91e0709fa9a)
-   ```
-   Required arguments
-   
-   ```
-   -a	list of assemblies, e.g., -a assembly1.fa,assembly2.fa
-   Files ending with .fa, .fna, and .fasta are all supported. Additionally, compressed files ending with .gz, .tar.gz, and .zip are also supported.
-   
-   -s	short-read datasets, e.g., -s d1_r1.fq,d1_r2.fq/d2_r1.fq,d2_r2.fq
-   Please note, read files within each pair are separated with ‘,’, and read pairs are separated with ‘/’. Reads files ending with .gz, .tar.gz, and .zip are also supported.
-   
-   -l		long-read datasets, e.g., -l lr1.fq,lr2.fq
-   
-   -hf	PacBio-HiFi datasets, e.g., -hf hifi1.fq,hifi2.fq
-   
-   -c	Hi-C datasets, e.g., -c hc1.fq,hc2.fq
-   Read files within each pair are separated with ‘,’. Reads files ending with .gz, .tar.gz, and .zip are also supported.
-   
-   -t	number of threads, e.g., -t 32
-   
-   -m	RAM, e.g., -m 128
-   Suggested minimum RAM is 32G.
-   ```
-   Optional arguments
-   ```
-   --min-cpn		Minimum completeness cutoff, e.g., --min-cpn 30 (default: 35)
-   
-   --max-ctn		Maximum contamination cutoff, e.g., --max-ctn 25 (default: 20)
-   
-   --mode		Running mode. Start a new project from the beginning –-mode new or continue the previous run –-mode continue. (default: continue)
-   
-   --module		Running mode. Run only Autobinning + Bin Selection modules –-module autobinning, Refinement module –-module refinement, Gap filling module –-module reassembly, or running all modules –-module all. (default: all)
-   
-   --autopara		Autobinning parameters. 
-   –-autopara more-sensitive Choose recommended binners with full parameters: Maxbin2 [0.3, 0.5, 0.7, 0.9], MetaBAT2 [200, 300, 400, 500], CONCOCT [2-3 flexible parameters based on result of MetaBAT2], and Semibin2 [100]
-   –-autopara sensitive Partial binners with partial parameters: MetaBAT2 [200, 300, 400, 500], CONCOCT [1-2 flexible parameters based on result of MetaBAT2], and Semibin2 [100]
-   –-autopara quick Limited binners: MetaBAT2 [200, 300, 400, 500] and Semibin2 [100]
-(default: more-sensitive)
+Import bins from VAMB, manual curation, or other tools for refinement:
 
-   --refinepara	Refinement parameters. 
-   --refinepara deep will enable deep refinement at sequence retrieval step. Disable this function by setting the parameter with 
-   –-refinepara quick. (default: deep)
-   
-   --hybrid_reassembly	Setting hybrid reassembly parameters. In reassembly function, BASALT uses SPAdes Hybrid function as default parameter
-   –-hybrid_assembly n to process hybrid reassembly in the existence of SRS and LRS. Use –-hybrid_assembly y to use Unicycler for hybrid reassembly. Please note that it will take a considerable amount of time when using Unicycler for hybrid reassembly.
+```bash
+BASALT -s sample_R1.fq,sample_R2.fq \
+    -d vamb_output,my_curated_bins \
+    --binset-index 1 \
+    -t 32 -m 128
+```
 
-   -q			Selection of quality check software. Default: checkm. If you want to use CheckM2, by setting with –q checkm2.
-   
-   -e			Enable extra binners. We temporarily disabled VAMB in BASALT v1.0.1. To enable Metabinner, use –e m in addition to other binners
-   
-   -h 			Help documents.
-   ```
+This will:
+1. Reindex bins from both folders
+2. Recompute coverage matrices
+3. Generate paired-end connections
+4. Run CheckM2 quality assessment
+5. Proceed to Refinement
 
-2.	Example
-   Run BASALT based on SRS datasets:
-   ```
-   BASALT\
-   -a as1.fa,as2.fa,as3.fa\
-   -s srs1_r1.fq,srs1_r2.fq/srs2_r1.fq,srs2_r2.fq\
-   -t 60 -m 250
-   ```
+---
 
-   Run BASALT based on SRS + LRS datasets:
-   ```
-   BASALT\
-   -a as1.fa,as2.fa,as3.fa\
-   -s srs1_r1.fq,srs1_r2.fq/srs2_r1.fq,srs2_r2.fq\
-   -l lrs1.fq,lrs2.fq -t 60 -m 250
-   ```
+## Running on HPC Clusters
 
-   Run BASALT based on customized parameters:
-   ```
-   BASALT\
-   -a as1.fa,as2.fa,as3.fa\
-   -s srs1_r1.fq,srs1_r2.fq/srs2_r1.fq,srs2_r2.fq\
-   -l lr1.fq,lr2.fq -hf hifi1.fq\
-   -t 60 -m 250\
-   --autopara sensitive --refinepara quick --min-cpn 40 --max-ctn 15 -qc checkm2
-   ```
+### SLURM Example
 
+```bash
+#!/bin/bash
+#SBATCH --job-name=basalt
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=64
+#SBATCH --mem=256G
+#SBATCH --time=48:00:00
 
+source ~/.bashrc
+conda activate basalt_env
 
-## 🙋 Troubleshooting
-1.	Error from SAMtools when installing BASALT:
-   ```
-   samtools: error while loading shared libraries: libcrypto.so1.0.0: cannot open shared object file: No such file or directory
-   ```
-   Troubleshooting: Check the file libcrypto.so1.0.0:
-   ```
-   ls <PATH_TO_CONDA>/envs/BASALT/lib/libcry*
-   ```
-   If libcrypto.so.1.1 was found instead of libcrypto.so.1.0.0, create a soft link of libcrypto.so.1.1 to libcrypto.so.1.0.0:
-   ```
-   cd <PATH_TO_CONDA>/envs/BASALT/lib
-   ln -s libcrypto.so.1.1 libcrypto.so.1.0.0
-   ```
-   Then check if SAMtools is available:
-   ```
-   samtools -help
-   ```
-2.	Error encountered when running BASALT:
-   ```
-   Traceback (most recent call last):
-   File "/users/.conda/envs/BASALT/bin/BASALT", line 57, in
-   datasets[str(n)].append(pr[1].strip())
-   IndexError: list index out of range
-   ```
-   This is because BASALT does not support reading files with absolute path. To address this issue, simply move/copy corresponding files to the working directory or establish soft links under the working directory.
-   
-3.	Error encountered when running BASALT:
-   ```
-   Traceback (most recent call last):
-   File "/users/.conda/envs/BASALT/bin/BASALT", line 53, in 
-   datasets_list=sr_datasets.split('/')
-   ```
-   This is because BASALT does not support LRS only mode except PacBio-HiFi reads in v1.0.1. Please use SRS + LRS instead of LRS only. LRS only mode for Nanopore/PacBio long reads will be available in v1.0.2.
+BASALT -a as1.fa,as2.fa \
+    -s s1_R1.fq,s1_R2.fq/s2_R1.fq,s2_R2.fq \
+    -t 64 -m 250 \
+    --mode new
+```
 
-4.	Error encountered when running BASALT:
-   ```
-   INFO: Running CheckM2 version 1.0.1
-   [03/13/2024 12:56:34 PM] INFO: Running quality prediction workflow with 30 threads.
-   [03/13/2024 12:56:34 PM] ERROR: DIAMOND database not found. Please download database using <checkm2 database --download>
-   ```
-   This is because CheckM2 database is not installed. Users can simply download CheckM2 database from their official website (https://github.com/chklovski/CheckM2) to address this issue.
+### Singularity with SLURM
 
-5.	Error encountered when running BASALT:
-   ```
-   BASALT: command not found!
-   ```
-   This issue occurred because BASALT scripts cannot be found or administrated. Please firstly check if BASALT has been successfully installed, by checking script files under the bin folder of BASALT environment, e.g.:
-   ```
-   <PATH_TO_CONDA>/envs/BASALT/bin/
-   ```
-   If no script file was found, please download BASALT script again and copy to the bin folder of BASALT environment, by using the following commands:
-   ```
-   unzip BASALT_script.zip
-   chmod -R 777 BASALT_script
-   mv BASALT_script/* <PATH_TO_CONDA>/envs/BASALT/bin/
-   ```
-   If BASALT scripts are found in the bin folder of BASALT environment, try to change permissions by using the following commands:
-   ```
-   chmod -R 777 <PATH_TO_CONDA>/envs/BASALT/bin/*
-   ```
-6.	Error encountered when running BASALT:
-   ```
-   Traceback (most recent call last):
-  File "/user/miniconda3/envs/BASALT/bin/BASALT", line 137, in <module>
-    BASALT_main_d(assembly_list, datasets, num_threads, lr_list, hifi_list, hic_list, eb_list, ram, continue_mode, functional_module, autobining_parameters, refinement_paramter, max_ctn, min_cpn, pwd, QC_software)
-  File "/user/miniconda3/envs/BASALT/bin/BASALT_main_d.py", line 494, in BASALT_main_d
-    Contig_recruiter_main(best_binset_from_multi_assemblies, outlier_remover_folder, num_threads, continue_mode, min_cpn, max_ctn, assembly_mo_list, connections_list, lr_connection_list, coverage_matrix_list, refinement_paramter, pwd)
-  File "/user/miniconda3/envs/BASALT/bin/S6_retrieve_contigs_from_PE_contigs_10302023.py", line 1819, in Contig_recruiter_main
-    parse_bin_in_bestbinset(assemblies_list, binset+'_filtrated', outlier_remover_folder, PE_connections_list, lr_connection_list, num_threads, last_step, coverage_matrix_list, refinement_mode)
-  File "/user/miniconda3/envs/BASALT/bin/S6_retrieve_contigs_from_PE_contigs_10302023.py", line 1695, in parse_bin_in_bestbinset
-    bin_comparison(str(binset), bins_checkm, str(binset)+'_retrieved', refinement_mode, num_threads)
-  File "/user/miniconda3/envs/BASALT/bin/S6_retrieve_contigs_from_PE_contigs_10302023.py", line 731, in bin_comparison
-    for line in open('quality_report.tsv','r'):
-FileNotFoundError: [Errno 2] No such file or directory: 'quality_report.tsv'
-   ```
-	
- This is possibly due to the insufficient number of bins generated due to the low coverage of datasets at the current step, which CheckM2 cannot generate quality file.
+```bash
+#!/bin/bash
+#SBATCH --job-name=basalt_sif
+#SBATCH --cpus-per-task=32
+#SBATCH --mem=128G
+
+singularity run -B $PWD basalt.sif BASALT \
+    -a as1.fa -s s1_R1.fq,s1_R2.fq \
+    -t 32 -m 128
+```
+
+---
+
+## Verifying Results
+
+After a successful run, check the quality of your MAGs:
+
+```bash
+# Check completeness and contamination
+head Final_binset_final_binset/quality_report.tsv
+
+# Count MAGs meeting quality thresholds
+awk -F'\t' 'NR>1 && $3>=50 && $4<10 {count++} END {print count " MAGs ≥50% complete, <10% contamination"}' \
+    Final_binset_final_binset/quality_report.tsv
+```
+
+---
+
+## Troubleshooting Common Issues
+
+### Run hangs or crashes
+
+1. Check `Basalt_log.txt` for the last completed step.
+2. Ensure sufficient RAM: BASALT is memory-intensive, especially during binning and reassembly.
+3. Resume with `BASALT --mode continue`.
+
+### Low MAG count
+
+1. Try `--sensitive more-sensitive` for more thorough binning.
+2. Lower `--min-cpn` threshold (e.g., `--min-cpn 20`).
+3. Ensure sufficient sequencing depth — low-coverage samples produce fewer recoverable MAGs.
+4. Consider using `--refinepara deep` for more aggressive contig retrieval.
+
+### Error: CheckM2 database not found
+
+```bash
+checkm2 database --download
+```
+
+Refer to the [FAQ](faq.md) for more troubleshooting guidance.

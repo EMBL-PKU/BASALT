@@ -1,483 +1,587 @@
-# BASALT: Binning Across a Series of Assemblies Toolkit
+# BASALT
 
-## 📣 News
+## Binning Across a Series of Assemblies Toolkit
 
-* **[2026/04/16]**:🤗 We release **BASALT-Air V1.0.0**(https://github.com/PKU-EMBL/BASALT-Air) under MIT LICENSE.
-* **[2025/12/16]**:🤗 We release **BASALT V1.2.0** under MIT LICENSE.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.12](https://img.shields.io/badge/Python-3.12-blue.svg)](https://www.python.org/downloads/)
+[![DOI](https://img.shields.io/badge/DOI-10.1038%2Fs41467--024--46539--7-green.svg)](https://doi.org/10.1038/s41467-024-46539-7)
+[![Bioconda](https://img.shields.io/badge/Bioconda-basalt-orange.svg)](https://anaconda.org/bioconda/basalt)
+[![Nature Communications](https://img.shields.io/badge/Nat.%20Commun.-2024-red.svg)](https://www.nature.com/articles/s41467-024-46539-7)
 
-> 1. Upgrade the python version from 3.8 to 3.12 with new friendly installation script
-> 2. Add LorBin [Nature Communications, 2025],  the current cutting-edged binning to BASALT Toolkit in Extra Binner
-> 3. Change the default QC evaluation software from CheckM to CheckM2 v1.1.0
-> 4. Support GPU acceleration for Semibin2 and Deep Learning Model in BASALT
-> 5. Weight for Deep Learning Model in BASALT can be set anywhere rather than in ~/.cahce by setting ~/.bashrc file
+**BASALT** is a versatile toolkit for binning and post-binning refinement of metagenomic assemblies. It produces high-quality metagenome-assembled genomes (MAGs) from short-read, long-read, and hybrid metagenomic datasets, integrating multiple binning algorithms with deep-learning-based contamination detection and removal.
 
-* **[2024/06/12]**:🤗 We release **BASALT V1.1.0** under MIT LICENSE.
+<p align="center">
+  <img src="fig/workflow.png" alt="BASALT Workflow" width="80%">
+</p>
 
-* **[2024/03/11]**:🤗 **BASALT refines binning from metagenomic data and increases resolution of genome-resolved metagenomic analysis** is publised on [Nature Communications](https://www.nature.com/articles/s41467-024-46539-7).
+---
 
-* **[2023/8/18]**:🤗 We release **BASALT V1.0.0** under MIT LICENSE.
+## Table of Contents
 
-## 🌉 Workflow of BASALT
+- [News](#news)
+- [Features](#features)
+- [System Requirements](#system-requirements)
+- [Installation](#installation)
+  - [Conda Installation (Recommended)](#conda-installation-recommended)
+  - [Singularity Installation](#singularity-installation)
+  - [Environment Variables](#environment-variables)
+- [Quick Start](#quick-start)
+- [Usage](#usage)
+  - [Required Arguments](#required-arguments)
+  - [Optional Arguments](#optional-arguments)
+  - [Sensitivity Presets](#sensitivity-presets)
+  - [Extra Binners](#extra-binners)
+  - [Usage Examples](#usage-examples)
+- [Pipeline Modules](#pipeline-modules)
+- [Output Description](#output-description)
+- [Data Feeding](#data-feeding)
+- [Troubleshooting](#troubleshooting)
+- [FAQ](#faq)
+- [Citing BASALT](#citing-basalt)
+- [References](#references)
+- [License](#license)
 
-<img src="fig/workflow.png" style="zoom: 75%;" />
+---
 
+## News
 
-## 📊 Type of input data for BASALT
-BASALT is a versatile tool with high efficiency for binning and post-binning refinement. BASALT can generate high quality metagenome-assembled genomes (MAGs) from various input data types including: 1) assembly from short-read sequences (SRS); 2) assembly from long-read sequences (LRS); [Note: only PacBio-HiFi data is supported in the current version for long-read only assemblies, other types of LRS data will be available in later versions.] 3) hybrid assembly from SRS + LRS. Specific features of BASALT are listed below:
+- **[2026/04/16]** [BASALT-Air v1.0.0](https://github.com/PKU-EMBL/BASALT-Air) released under MIT LICENSE.
+- **[2025/12/16]** BASALT v1.2.0 released with Python 3.12 support, LorBin integration, CheckM2 as default, and GPU acceleration.
+- **[2024/06/12]** BASALT v1.1.0 released.
+- **[2024/03/11]** BASALT paper published in [*Nature Communications*](https://www.nature.com/articles/s41467-024-46539-7).
+- **[2023/08/18]** Initial release v1.0.0.
 
-1.	Multiple assemblies as input with dereplication function
-BASALT developed a comprehensive method incorporating multiple assembly files, including single assemblies (SAs) and co-assemblies (CAs) in one run. Additionally, a dereplication step is applied after initial binning to efficiently remove redundant bins. Comparatively, prominent binning tools such as metaWRAP [1] and DASTool [2] only support single assembly file as input, where multiple binning processes are required if there are multiple assembly files in a dataset. Moreover, redundant bins generated under SA + CA mode need to be removed using dereplication tools such as dRep [3]. Although BASALT takes longer time than metaWRAP and DASTool in one single run, considerable amount of time will be saved when processing multiple assembly files, and a significantly more and better quality MAGs can be generated by BASALT than other tools, based on our assessment [4].
-2.	Standalone Refinement module
-BASALT can effectively identify and remove potential contamination sequences in Refinement module based on neural networks. Specifically, users can import their bins along with raw sequences to BASALT to run the Refinement module independently without initial binning using BASALT.
-3.	High read use efficiency of LRS
-BASALT maximized the utilization of LRS in the post-binning refinement steps. Firstly, LRS will be used at Sequence retrieval step by recruiting unused sequences to target bins via pair-end tracking. After processing the Sequence retrieval function, an extra polishing step will be performed in the existence of LRS. Polishing at this step will save ~90% of the computation time than conducting at assembly step with same iterations, as the data size is largely reduced. Furthermore, LRS will be exploited again at reassembly step using the SPAdes Hybrid function (default). [Note: reassembly function is not applicable on LRS-alone dataset in the current version of BASALT, but will be available in later version.] Although reassembly may take a considerable amount of time, large augmentation of genome quality can be observed after reassembly.
-For any issue compiling and running BASALT, as well as bug report, please do not hesitate to contact us (yuke.sz@pku.edu.cn). Thanks for using BASALT!
+---
 
+## Features
 
+**Multi-assembly binning with dereplication.** BASALT accepts multiple single assemblies (SAs) and co-assemblies (CAs) in a single run. A built-in dereplication step removes redundant bins automatically — something that requires separate tools like dRep when using metaWRAP or DASTool.
 
-## 💻 SYSTEM REQUIREMENTS
-1.	Required dependencies
+**Deep-learning contamination removal.** A neural network ensemble (5 MLP models) classifies each contig as *Real* or *Contaminated* using tetranucleotide frequency (TNF), coverage depth, and coverage change ratios. This is the core of the Refinement module.
 
-  	Linux x64 systems, 8+ cores, and 128GB+ RAM
+**High-efficiency long-read utilisation.** Long reads are used for paired-end tracking, contig retrieval, and polishing. Because these operations work on bin-level data rather than full assemblies, polishing is ~90% faster than assembly-level polishing.
 
-  	Python (>=3.0) modules: biopython, pandas, numpy, scikit-learn, copy, multiprocessing, collections，pytorch, tensorboardx
+**Standalone Refinement module.** Users can import externally generated bins (e.g. from VAMB, manual curation) and run only the Refinement and Reassembly steps via the Data Feeding workflow.
 
-  	Perl
+**Flexible sensitivity control.** Three presets (`quick`, `sensitive`, `more-sensitive`) trade off speed against MAG recovery.
 
-  	Java (>=1.7)
+**Checkpoint-based resumption.** BASALT records progress at each step, allowing interrupted runs to resume cleanly with `--mode continue`.
 
-  	Binning tools: MetaBAT2, Maxbin2, CONCOCT, Semibin2, LorBin
+**Supported input types:**
 
-  	Note: VAMB was used to be implemented in BASALT, but due to the conflict of environment and unsatisfactory performance on environmental datasets, we temporarily removed VAMB from BASALT environment. However, bins generated using VAMB can still be imported to BASALT directly for post-binning refinements.
+| Data Type | Short Reads | Long Reads (ONT/PacBio) | PacBio HiFi |
+|---|---|---|---|
+| Short-read only | ✓ | - | - |
+| Short + Long hybrid | ✓ | ✓ | - |
+| Short + HiFi hybrid | ✓ | - | ✓ |
+| HiFi only | - | - | ✓ |
 
-  	Sequences processing tools: Bowtie2, BWA, SAMtools, Prodigal, BLAST+, HMMER, Minimap2
+---
 
-  	Sequences assembly and polishing tools: SPAdes, IDBA-UD, Pilon, Racon, Unicycler
+## System Requirements
 
-  	Genome quality assessment tools: CheckM, CheckM2, pplacer
+| Resource | Minimum | Recommended |
+|---|---|---|
+| Operating System | Linux x64 | Linux x64 |
+| CPU Cores | 8 | 32+ |
+| RAM | 128 GB | 256 GB+ |
+| Python | 3.12 | 3.12 |
+| Storage | 100 GB free | 500 GB+ (dataset dependent) |
 
-  	Note: CheckM2 database is not compiled along with BASALT installation in v1.0.1. To setup CheckM2 database, please refer to CheckM2 user guide (https://github.com/chklovski/CheckM2).
+**Required software dependencies** (automatically installed via Conda):
 
+- **Binning tools:** MetaBAT2, Maxbin2, CONCOCT, Semibin2, LorBin
+- **Sequence processing:** Bowtie2, BWA, SAMtools, Minimap2, Prodigal, BLAST+, HMMER
+- **Assembly & polishing:** SPAdes, IDBA-UD, Pilon, Racon, Unicycler
+- **Quality assessment:** CheckM2 (default), CheckM
+- **Python packages:** PyTorch, scikit-learn, Biopython, pandas, numpy, LightGBM, TensorBoard
 
+> **Note:** VAMB was previously integrated but has been temporarily removed due to environment conflicts. VAMB-generated bins can still be imported via Data Feeding.
 
-## ⏬ BASALT v1.2.0 INSTALLATION
-1. BASALT 1.2.0 installation
+---
 
-   Please refer to the installation guide of BASALT v1.2.0:
-   ```
-   git clone https://github.com/EMBL-PKU/BASALT.git
+## Installation
 
-   cd BASALT
+### Conda Installation (Recommended)
 
-   conda create -n basalt_env -c conda-forge -c bioconda \     python=3.12 \     megahit metabat2 maxbin2 concoct prodigal semibin \     bedtools blast bowtie2 diamond checkm2 \     unicycler spades samtools racon pplacer pilon \     ncbi-vdb minimap2 miniasm idba hmmer entrez-direct \     biopython uv --yes
+**1. Clone the repository:**
 
-   conda activate basalt_env
+```bash
+git clone https://github.com/EMBL-PKU/BASALT.git
+cd BASALT
+```
 
-   uv pip install tensorflow torch torchvision tensorboard tensorboardx \     lightgbm scikit-learn numpy==1.26.4 python-igr
-   aph scipy pandas matplotlib \     cython biolib joblib tqdm requests checkm-genome
-   ```
+**2. Create and activate the Conda environment:**
 
-	Download BASALT Deep Learning Model Weights:
-   ```
-    # please chanage the download path according to your computer environment
-    
-	python BASALT_models_download.py --path "my_model_folder"
-   ```
-   
-   Download BASALT script files and change permission:
+```bash
+conda create -n basalt_env -c conda-forge -c bioconda \
+    python=3.12 \
+    megahit metabat2 maxbin2 concoct prodigal semibin \
+    bedtools blast bowtie2 diamond checkm2 \
+    unicycler spades samtools racon pplacer pilon \
+    ncbi-vdb minimap2 miniasm idba hmmer entrez-direct \
+    biopython uv --yes
 
-   ```
-   chmod +x install.sh
+conda activate basalt_env
+```
 
-   bash install.sh
+**3. Install Python packages with `uv`:**
 
-   chmod +x /path/to/basalt/bin/*
-   ```
+```bash
+uv pip install tensorflow torch torchvision tensorboard tensorboardx \
+    lightgbm scikit-learn numpy==1.26.4 python-igr \
+    scipy pandas matplotlib cython biolib joblib tqdm requests checkm-genome
+```
 
-   Set environment variables by adding the following lines to your ~/.bashrc file:
-   ```
-   nano ~/.bashrc
+**4. Download deep learning model weights:**
 
-   export CHECKM2DB=/path/to/checkm2db/CheckM2_database/uniref100.KO.1.dmnd
-   export CHECKM_DATA_PATH=/path/to/checkmdb
-   export BASALT_WEIGHT=/path/to/BASALT
-
-   source ~/.bashrc
-   ```
-   The below Google Drive link provide the essential files for checkm_db, checkm2_db and newest **singularity image**.
-   
-   ```
-   https://drive.google.com/drive/folders/1d0e_2FpYRBAZLwKXl8fA-yDK4b5PBA_E?usp=sharing
-   ```
-
-   ⚠️: **Another way** to install BASALT in China mainland 以singularity的方式加载BASALT的sif镜像
-      
-   将BASALT的singularity镜像（basalt.sif）放置在服务器的home目录下。以执行singularity的命令运行，如
-   ```
-   singularity run basalt.sif BASALT -a as1.fa -s S1_R1.fq,S1_R2.fq/S2_R1.fq,S2_R2.fq -t 32 -m 128
-   ```
-
-   如basalt.sif不在home目录下运行需要添加 -B挂载，如
-   ```
-   # please change /meida/emma according to your path
-   singularity run -B /media/emma basalt.sif BASALT -h
-   ```
-
-   需要后台挂载运行，nohup可能会出现意外，但是集群一般sbatch等提交命令的方式可以正常运行。实验室的服务器则考虑使用screen命令。
-请严格参考screen命令的执行方式（除非你很熟悉screen，切勿擅自修改命令执行方式）。如
-   ```
-    screen -dmS session_name bash -c 'bash basalt.sh >log_basalt'
-   ```
-   请注意session_name要起跟自己有辨识度唯一的名字，避免发生意外情况
-
-   basalt.sif含有checkm1 checkm2 semibin  bowtie2 bwa等很多软件，均可以通过以下方式调用：
-   ```
-   singularity run basalt.sif bowtie2 -h
-   ```
-
-## ⏬ BASALT v1.1.0 INSTALLATION
-
-1.	Quick installation 
-   
-  	Download BASALT_setup.py and run:
-   ```
-   python BASALT_setup.py
-   ```
-   Please remain patient, as the installation process may take an extended period.
-
-2. Quick installation from China mainland 从中国内地快速安装BASALT
-   
-   For users in China mainland who may experience a network issue, please download the alternative script ‘BASALT_setup_China_mainland.py’ and run:
-
-   中国内地且无法翻墙的用户推荐使用‘BASALT_setup_China_mainland.py’安装
-   ```
-   python BASALT_setup_China_mainland.py
-   ```
-   Then, download the trained models for neural networks BASALT.zip from Tencent iCloud (https://share.weiyun.com/r33c2gqa) and run:
-   ```
-   mv BASALT.zip ~/.cache
-   cd ~/.cache
-   unzip BASALT.zip
-   ```
-
-3. Manual installation (recommended)
-   
-   Install Miniconda (https://docs.anaconda.com/free/miniconda/miniconda-install/) or Anaconda (https://docs.anaconda.com/free/anaconda/install/index.html)
-
-   Add mirrors to increase download speed of BASALT dependent software (optional):
-   ```
-   site=https://mirrors.tuna.tsinghua.edu.cn/anaconda
-   conda config --add channels ${site}/pkgs/free/
-   conda config --add channels ${site}/pkgs/main/
-   conda config --add channels ${site}/cloud/conda-forge/
-   conda config --add channels ${site}/cloud/bioconda/
-   ```
-
-   Download the BASALT installation file and create a conda environment:
-   ```
-   git clone https://github.com/EMBL-PKU/BASALT.git
-   cd BASALT
-   conda env create -n BASALT --file basalt_env.yml
-   ```
-
-   Please remain patient, as the installation process may take an extended period.
-
-   If you have encountered an error, please download 'basalt_env.yml' from Tencent iCloud (https://share.weiyun.com/xXdRiDkl) and create a conda environment:
-   ```
-   conda env create -n BASALT --file basalt_env.yml
-   ```
-
-   After successfully creating the conda environment, change file permissions for BASALT script files:
-   ```  
-   chmod -R 777 <PATH_TO_CONDA>/envs/BASALT/bin/*
-   ```
-   Example: To easily find your path to conda environments, simply use:
-   ```
-   conda info --envs
-   ```
-   and you can find your path to BASALT environment, such as:
-   ```
-   # conda environments:
-   #
-   base     /home/emma/miniconda3
-   BASALT   /home/emma/miniconda3/envs/BASALT
-   ```
-   Then, change permission to BASALT script folders:
-   ```
-   chmod -R 777 /home/emma/miniconda/envs/BASALT/bin/*
-   ```
-
-   Download the trained models for neural networks 'BASALT.zip' from FigShare:
-
-   > You can also find the BASALT v1.1.0 version BASALT.zip file the previous released version and download it
-   
-   ```
-   wget https://figshare.com/ndownloader/files/41093033
-   mv 41093033 BASALT.zip
-   mv BASALT.zip ~/.cache
-   cd ~/.cache
-   unzip BASALT.zip
-   ```
-   For users from China mainland, please download the models BASALT.zip from Tencent iCloud (https://share.weiyun.com/r33c2gqa) and run:
-   ```
-   mv BASALT.zip ~/.cache
-   cd ~/.cache
-   unzip BASALT.zip
-   ```
-
-5. Another way to install BASALT in China mainland 以singularity的方式加载BASALT的sif镜像
-
-   使用BASALT,可通过微云的以下网址获得BASALT.sif镜像文件
-   ```
-   https://share.weiyun.com/xKmoBmrF
-   ```
-      
-   将BASALT的singularity镜像（BASALT.sif）放置在服务器的home目录下。以执行singularity的命令运行，如
-   ```
-   singularity run BASALT.sif BASALT -a as1.fa -s S1_R1.fq,S1_R2.fq/S2_R1.fq,S2_R2.fq -t 32 -m 128
-   ```
-
-   如BASALT.sif不在home目录下运行需要添加 -B挂载，如
-   ```
-   singularity run -B /media/emma BASALT.sif BASALT -h
-   ```
-
-   需要后台挂载运行，nohup可能会出现意外，但是集群一般sbatch等提交命令的方式可以正常运行。实验室的服务器则考虑使用screen命令。
-请严格参考screen命令的执行方式（除非你很熟悉screen，切勿擅自修改命令执行方式）。如
-   ```
-    screen -dmS session_name bash -c 'bash basalt.sh >log_basalt'
-   ```
-   请注意session_name要起跟自己有辨识度唯一的名字，避免发生意外情况
-
-   BASALT.sif含有checkm1 checkm2 semibin  bowtie2 bwa等很多软件，均可以通过以下方式调用：
-   ```
-   singularity run BASALT.sif bowtie2 -h
-   ```
-   
-6. Test files
-   Sample demo files (see BASALT demo files) are prepared for testing whether the BASALT script can be successfully performed, and the bins can be generated. The demo files contain Data.tar.gz, Final_bestbinset.tar.gz and basalt.sh.
-   ```
-   Data.tar.gz -> short read and long read raw sequence files and an OPERA-MS assembled contig file.
-   Final_bestbinset.tar.gz -> expected output of final bins.
-   basalt.sh -> script running this demo
-   ```
-   A workstation with a configuration of Intel(R) Xeon(R) Gold 5218 CPU @ 2.30GHz with 32 cores is expected to complete processing of this demo dataset within 6 hours.
-
-
-
-## 🧪 USAGE
-1.	General usage
-
-  	To run BASALT, use BASALT under conda environment, or use BASALT.py for standalone users:
-   ```
-   BASALT [-h] [-a ASSEMBLIES] [-s SR_DATASETS] [-l LONG_DATASETS] [-hf HIFI_DATASET] [-c HI_C_DATASET] [-t THREADS] [-m RAM] [-e EXTRA_BINNER] [-qc QC_SOFTWARE] [--min-cpn MIN_COMPLETENESS] [--max-ctn MAX_CONTAMINATION] [--mode RUNNING_MODE] [--module FUNCTIONAL_MODULE] [--autopara AUTOBINING_PARAMETERS] [--refinepara REFINEMENT_PARAMTER]![image](https://github.com/EMBL-PKU/BASALT/assets/62051720/61fb5b05-2844-4867-9598-f91e0709fa9a)
-   ```
-   Required arguments
-   
-   ```
-   -a	list of assemblies, e.g., -a assembly1.fa,assembly2.fa
-   Files ending with .fa, .fna, and .fasta are all supported. Additionally, compressed files ending with .gz, .tar.gz, and .zip are also supported.
-   
-   -s	short-read datasets, e.g., -s d1_r1.fq,d1_r2.fq/d2_r1.fq,d2_r2.fq
-   Please note, read files within each pair are separated with ‘,’, and read pairs are separated with ‘/’. Reads files ending with .gz, .tar.gz, and .zip are also supported.
-   
-   -l		long-read datasets, e.g., -l lr1.fq,lr2.fq
-   
-   -hf	PacBio-HiFi datasets, e.g., -hf hifi1.fq,hifi2.fq
-   
-   -c	Hi-C datasets, e.g., -c hc1.fq,hc2.fq
-   Read files within each pair are separated with ‘,’. Reads files ending with .gz, .tar.gz, and .zip are also supported.
-   
-   -t	number of threads, e.g., -t 32
-   
-   -m	RAM, e.g., -m 128
-   Suggested minimum RAM is 32G.
-   ```
-   Optional arguments
-   ```
-   --min-cpn		Minimum completeness cutoff, e.g., --min-cpn 30 (default: 35)
-   
-   --max-ctn		Maximum contamination cutoff, e.g., --max-ctn 25 (default: 20)
-   
-   --mode		Running mode. Start a new project from the beginning –-mode new or continue the previous run –-mode continue. (default: continue)
-   
-   --module		Running mode. Run only Autobinning + Bin Selection modules –-module autobinning, Refinement module –-module refinement, Gap filling module –-module reassembly, or running all modules –-module all. (default: all)
-   
-   --autopara		Autobinning parameters. 
-   –-autopara more-sensitive Choose recommended binners with full parameters: Maxbin2 [0.3, 0.5, 0.7, 0.9], MetaBAT2 [200, 300, 400, 500], CONCOCT [2-3 flexible parameters based on result of MetaBAT2], and Semibin2 [100]
-   –-autopara sensitive Partial binners with partial parameters: MetaBAT2 [200, 300, 400, 500], CONCOCT [1-2 flexible parameters based on result of MetaBAT2], and Semibin2 [100]
-   –-autopara quick Limited binners: MetaBAT2 [200, 300, 400, 500] and Semibin2 [100]
-(default: more-sensitive)
-
-   --refinepara	Refinement parameters. 
-   --refinepara deep will enable deep refinement at sequence retrieval step. Disable this function by setting the parameter with 
-   –-refinepara quick. (default: deep)
-   
-   --hybrid_reassembly	Setting hybrid reassembly parameters. In reassembly function, BASALT uses SPAdes Hybrid function as default parameter
-   –-hybrid_assembly n to process hybrid reassembly in the existence of SRS and LRS. Use –-hybrid_assembly y to use Unicycler for hybrid reassembly. Please note that it will take a considerable amount of time when using Unicycler for hybrid reassembly.
-
-   -q			Selection of quality check software. Default: checkm. If you want to use CheckM2, by setting with –q checkm2.
-   
-   -e			Enable extra binners. We temporarily disabled VAMB in BASALT v1.0.1. To enable Metabinner, use –e m in addition to other binners
-   
-   -h 			Help documents.
-   ```
-
-2.	Example
-   Run BASALT based on SRS datasets:
-   ```
-   BASALT\
-   -a as1.fa,as2.fa,as3.fa\
-   -s srs1_r1.fq,srs1_r2.fq/srs2_r1.fq,srs2_r2.fq\
-   -t 60 -m 250
-   ```
-
-   Run BASALT based on SRS + LRS datasets:
-   ```
-   BASALT\
-   -a as1.fa,as2.fa,as3.fa\
-   -s srs1_r1.fq,srs1_r2.fq/srs2_r1.fq,srs2_r2.fq\
-   -l lrs1.fq,lrs2.fq -t 60 -m 250
-   ```
-
-   Run BASALT based on customized parameters:
-   ```
-   BASALT\
-   -a as1.fa,as2.fa,as3.fa\
-   -s srs1_r1.fq,srs1_r2.fq/srs2_r1.fq,srs2_r2.fq\
-   -l lr1.fq,lr2.fq -hf hifi1.fq\
-   -t 60 -m 250\
-   --autopara sensitive --refinepara quick --min-cpn 40 --max-ctn 15 -qc checkm2
-   ```
-
-
-
-## 🙋 Troubleshooting
-1.	Error from SAMtools when installing BASALT:
-   ```
-   samtools: error while loading shared libraries: libcrypto.so1.0.0: cannot open shared object file: No such file or directory
-   ```
-   Troubleshooting: Check the file libcrypto.so1.0.0:
-   ```
-   ls <PATH_TO_CONDA>/envs/BASALT/lib/libcry*
-   ```
-   If libcrypto.so.1.1 was found instead of libcrypto.so.1.0.0, create a soft link of libcrypto.so.1.1 to libcrypto.so.1.0.0:
-   ```
-   cd <PATH_TO_CONDA>/envs/BASALT/lib
-   ln -s libcrypto.so.1.1 libcrypto.so.1.0.0
-   ```
-   Then check if SAMtools is available:
-   ```
-   samtools -help
-   ```
-2.	Error encountered when running BASALT:
-   ```
-   Traceback (most recent call last):
-   File "/users/.conda/envs/BASALT/bin/BASALT", line 57, in
-   datasets[str(n)].append(pr[1].strip())
-   IndexError: list index out of range
-   ```
-   This is because BASALT does not support reading files with absolute path. To address this issue, simply move/copy corresponding files to the working directory or establish soft links under the working directory.
-   
-3.	Error encountered when running BASALT:
-   ```
-   Traceback (most recent call last):
-   File "/users/.conda/envs/BASALT/bin/BASALT", line 53, in 
-   datasets_list=sr_datasets.split('/')
-   ```
-   This is because BASALT does not support LRS only mode except PacBio-HiFi reads in v1.0.1. Please use SRS + LRS instead of LRS only. LRS only mode for Nanopore/PacBio long reads will be available in v1.0.2.
-
-4.	Error encountered when running BASALT:
-   ```
-   INFO: Running CheckM2 version 1.0.1
-   [03/13/2024 12:56:34 PM] INFO: Running quality prediction workflow with 30 threads.
-   [03/13/2024 12:56:34 PM] ERROR: DIAMOND database not found. Please download database using <checkm2 database --download>
-   ```
-   This is because CheckM2 database is not installed. Users can simply download CheckM2 database from their official website (https://github.com/chklovski/CheckM2) to address this issue.
-
-5.	Error encountered when running BASALT:
-   ```
-   BASALT: command not found!
-   ```
-   This issue occurred because BASALT scripts cannot be found or administrated. Please firstly check if BASALT has been successfully installed, by checking script files under the bin folder of BASALT environment, e.g.:
-   ```
-   <PATH_TO_CONDA>/envs/BASALT/bin/
-   ```
-   If no script file was found, please download BASALT script again and copy to the bin folder of BASALT environment, by using the following commands:
-   ```
-   unzip BASALT_script.zip
-   chmod -R 777 BASALT_script
-   mv BASALT_script/* <PATH_TO_CONDA>/envs/BASALT/bin/
-   ```
-   If BASALT scripts are found in the bin folder of BASALT environment, try to change permissions by using the following commands:
-   ```
-   chmod -R 777 <PATH_TO_CONDA>/envs/BASALT/bin/*
-   ```
-6.	Error encountered when running BASALT:
-   ```
-   Traceback (most recent call last):
-  File "/user/miniconda3/envs/BASALT/bin/BASALT", line 137, in <module>
-    BASALT_main_d(assembly_list, datasets, num_threads, lr_list, hifi_list, hic_list, eb_list, ram, continue_mode, functional_module, autobining_parameters, refinement_paramter, max_ctn, min_cpn, pwd, QC_software)
-  File "/user/miniconda3/envs/BASALT/bin/BASALT_main_d.py", line 494, in BASALT_main_d
-    Contig_recruiter_main(best_binset_from_multi_assemblies, outlier_remover_folder, num_threads, continue_mode, min_cpn, max_ctn, assembly_mo_list, connections_list, lr_connection_list, coverage_matrix_list, refinement_paramter, pwd)
-  File "/user/miniconda3/envs/BASALT/bin/S6_retrieve_contigs_from_PE_contigs_10302023.py", line 1819, in Contig_recruiter_main
-    parse_bin_in_bestbinset(assemblies_list, binset+'_filtrated', outlier_remover_folder, PE_connections_list, lr_connection_list, num_threads, last_step, coverage_matrix_list, refinement_mode)
-  File "/user/miniconda3/envs/BASALT/bin/S6_retrieve_contigs_from_PE_contigs_10302023.py", line 1695, in parse_bin_in_bestbinset
-    bin_comparison(str(binset), bins_checkm, str(binset)+'_retrieved', refinement_mode, num_threads)
-  File "/user/miniconda3/envs/BASALT/bin/S6_retrieve_contigs_from_PE_contigs_10302023.py", line 731, in bin_comparison
-    for line in open('quality_report.tsv','r'):
-FileNotFoundError: [Errno 2] No such file or directory: 'quality_report.tsv'
-   ```
-	
- This is possibly due to the insufficient number of bins generated due to the low coverage of datasets at the current step, which CheckM2 cannot generate quality file.
-
-
-   
-## 🤝 Community contributors —— FAQ
-1.	Q: Same contigs may be used multiple times in the single assembly + co-assembly mode. Does this strategy affect the final output?
-   A: Redundant bins can be generated under single assembly + co-assembly mode when raw reads are used multiple times in the assembly step. For example, bin1 is clustered from single assembly A1, bin2 is clustered from co-assembly A1+A2+A3, where bin1 and bin2 are the same genome clustered with same contigs. This redundancy can be identified in the bin selection module, and redundant bins will be removed at this step. The final best binset is a non-redundant binset.
-
-2.	Q: BASALT takes longer time to finish compared to metaWRAP. Is there a way to reduce the computation time?
-
-  	A: Indeed, BASALT will take approximately doubled amount of time compared with metaWRAP, which computation time may even prolong with the increase of sample complexity. However, BASALT can obtain more MAGs with better quality than metaWRAP at similar computation time (i.e., running BASALT without gap filling module). Moreover, BASALT may save computation time on multiple assemblies because it only takes a single run to finish. If users wish to accelerate the entire procedure, we suggest using quick mode (--autopara quick) and skip deep refinement (--refinepara quick). This will significantly reduce the computation time.
-
-4.	Q: How do I process refinement with existing bins?
-
-  	A: To use refinement module only, users can feed their bin sequences with raw reads into BASALT using the script data_feeding.py.
-Note: A new version of BASALT (v1.0.2) will be released around late May 2024. We will aim to optimize the above functions to make it more user-friendly.
-
-6.	Q: Is there an output parameter?
-
-  	A: No. BASALT will process and generate results under current working directory. We suggest users prepare a copy or generate soft links of raw reads and assembly files under the working directory to avoid error occurring.
-
-## 🔒 License
-* See [LICENSE](LICENSE) for details.
-
-
-## ✏️ Citation
-
-If you use this software in your research, please cite our paper:
-
-Z Qiu, L Yuan, C Lian, B Lin, J Chen, R Mu, X Qiao, L Zhang, Z Xu, L Fan, Y Zhang, S Wang, J Li, H Cao, B Li, B Chen, C Song, Y Liu, L Shi, Y Tian, J Ni, T Zhang, J Zhou, W Zhuang, K Yu. BASALT refines binning from metagenomic data and increases resolution of genome-resolved metagenomic analysis. Nat. Commun. 2024, 15, 2179. https://doi.org/10.1038/s41467-024-46539-7
+```bash
+python BASALT_models_download.py --path "/path/to/model/folder"
+```
+
+**5. Install BASALT scripts:**
+
+```bash
+chmod +x install.sh
+bash install.sh
+chmod +x /path/to/basalt/bin/*
+```
+
+> For users in China mainland, see the [Singularity Installation](#singularity-installation) section below for a simpler setup.
+
+### Singularity Installation
+
+A prebuilt Singularity image (`basalt.sif`) is available via [Google Drive](https://drive.google.com/drive/folders/1d0e_2FpYRBAZLwKXl8fA-yDK4b5PBA_E?usp=sharing). This image bundles all dependencies including CheckM, CheckM2, Semibin2, Bowtie2, and BWA.
+
+**Usage:**
+
+```bash
+# Run BASALT directly (when basalt.sif is in your home directory)
+singularity run basalt.sif BASALT -a as1.fa -s S1_R1.fq,S1_R2.fq/S2_R1.fq,S2_R2.fq -t 32 -m 128
+
+# Bind mount with custom path
+singularity run -B /media/emma basalt.sif BASALT -h
+
+# Run in background with screen
+screen -dmS basalt_job bash -c 'singularity run basalt.sif BASALT -a as1.fa -s S1_R1.fq,S1_R2.fq -t 32 -m 128 > log_basalt'
+```
+
+> **Tip:** You can also invoke individual tools inside the image:
+> ```bash
+> singularity run basalt.sif bowtie2 -h
+> ```
+
+### Environment Variables
+
+Add the following to your `~/.bashrc`:
+
+```bash
+export CHECKM2DB=/path/to/checkm2db/CheckM2_database/uniref100.KO.1.dmnd
+export CHECKM_DATA_PATH=/path/to/checkmdb
+export BASALT_WEIGHT=/path/to/BASALT
+```
+
+Then reload:
+
+```bash
+source ~/.bashrc
+```
+
+> The CheckM and CheckM2 databases are available from the [Google Drive folder](https://drive.google.com/drive/folders/1d0e_2FpYRBAZLwKXl8fA-yDK4b5PBA_E?usp=sharing).
+
+---
+
+## Quick Start
+
+**Minimal command (short-read only, single assembly):**
+
+```bash
+BASALT -a assembly.fasta -s sample_R1.fq,sample_R2.fq -t 32 -m 128
+```
+
+**Multi-assembly with short and long reads:**
+
+```bash
+BASALT -a as1.fa,as2.fa,as3.fa \
+    -s s1_R1.fq,s1_R2.fq/s2_R1.fq,s2_R2.fq \
+    -l long.fastq \
+    -t 60 -m 250
+```
+
+**Fast mode (reduced sensitivity, quicker runtime):**
+
+```bash
+BASALT -a assembly.fasta -s sample_R1.fq,sample_R2.fq \
+    -t 32 -m 128 --sensitive quick --refinepara quick
+```
+
+**Resume a previous run:**
+
+```bash
+BASALT --mode continue
+```
+
+---
+
+## Usage
+
+```
+BASALT -a <assemblies> -s <short_reads> [-l <long_reads>] [-hf <hifi_reads>]
+       -t <threads> -m <RAM_GB> [options]
+```
+
+### Required Arguments
+
+| Argument | Description | Example |
+|---|---|---|
+| `-a`, `--assemblies` | Comma-separated list of assembly FASTA files | `-a as1.fa,as2.fa` |
+| `-s`, `--shortreads` | Paired-end short reads: pairs separated by `,`, datasets by `/` | `-s s1_r1.fq,s1_r2.fq/s2_r1.fq,s2_r2.fq` |
+| `-t`, `--threads` | Number of CPU threads | `-t 64` |
+| `-m`, `--ram` | Maximum RAM in GB | `-m 250` |
+
+Supported file formats: `.fa`, `.fna`, `.fasta`, `.fq`, `.fastq`; compressed: `.gz`, `.tar.gz`, `.zip`.
+
+### Optional Arguments
+
+| Argument | Default | Description |
+|---|---|---|
+| `-l`, `--longreads` | *none* | Comma-separated list of long-read files (ONT/PacBio, excluding HiFi) |
+| `-hf`, `--hifi` | *none* | Comma-separated list of PacBio HiFi read files |
+| `-e`, `--extra_binner` | *none* | Extra binner: `m` (MetaBinner), `v` (VAMB), `l` (LorBin). Combine as `-e m,v` |
+| `-o`, `--out` | `Final_binset` | Output folder name prefix |
+| `-q`, `--quality-check` | `checkm2` | Quality assessment tool: `checkm` or `checkm2` |
+| `--min-cpn` | `35` | Minimum completeness threshold for refinement |
+| `--max-ctn` | `20` | Maximum contamination threshold for refinement |
+| `--mode` | `continue` | `new` (fresh start) or `continue` (resume) |
+| `--module` | `all` | Pipeline module: `autobinning`, `refinement`, `reassembly`, or `all` |
+| `--sensitive` | `sensitive` | Binning sensitivity preset (see below) |
+| `--refinepara` | `quick` | Refinement depth: `deep` or `quick` |
+| `-r`, `--refinement-binset` | *none* | Binset folder name for standalone refinement |
+| `-c`, `--coverage-list` | *none* | Coverage files for standalone refinement |
+| `-b`, `--binsets-list` | *none* | Comma-separated binset folders for dereplication |
+| `-d`, `--data-feeding-folder` | *none* | External binset folders for Data Feeding |
+| `--binset-index` | `500` | Start index for extra binsets in Data Feeding |
+
+### Sensitivity Presets
+
+| Preset | Binners Used | Parameters | Speed |
+|---|---|---|---|
+| `quick` | MetaBAT2 + Semibin2 | MetaBAT2: 200/300/400/500; Semibin2: 100 | Fastest |
+| `sensitive` *(default)* | MetaBAT2 + CONCOCT + Semibin2 | As above + CONCOCT with 1-2 settings | Balanced |
+| `more-sensitive` | Maxbin2 + MetaBAT2 + CONCOCT + Semibin2 | Maxbin2: 0.3/0.5/0.7/0.9 + full parameters for all | Most thorough |
+
+### Extra Binners
+
+Use `-e` to activate additional binners beyond the defaults:
+
+| Flag | Binner | Description | Reference |
+|---|---|---|---|
+| `m` | MetaBinner | k-mer + coverage based | *BMC Bioinformatics* (2021) |
+| `v` | VAMB | Variational autoencoder based | *Nature Biotechnology* (2021) |
+| `l` | LorBin | Long-read adaptive clustering | *Nature Communications* (2025) |
+
+Example: `-e m,l` enables both MetaBinner and LorBin alongside the default binners.
+
+### Usage Examples
+
+**Short-read only with conservative quality filtering:**
+
+```bash
+BASALT -a as1.fa \
+    -s sample_R1.fq,sample_R2.fq \
+    -t 60 -m 250 \
+    --min-cpn 50 --max-ctn 10
+```
+
+**Short + long reads, sensitive mode, CheckM2:**
+
+```bash
+BASALT -a as1.fa,as2.fa \
+    -s s1_R1.fq,s1_R2.fq/s2_R1.fq,s2_R2.fq \
+    -l lr1.fastq,lr2.fastq \
+    -t 64 -m 256 \
+    --sensitive more-sensitive --refinepara deep \
+    -q checkm2
+```
+
+**Short + HiFi reads, quick refinement:**
+
+```bash
+BASALT -a as1.fa \
+    -s sample_R1.fq,sample_R2.fq \
+    -hf hifi_reads.fastq \
+    -t 32 -m 128 \
+    --refinepara quick
+```
+
+**Autobinning only (skip refinement and reassembly):**
+
+```bash
+BASALT -a as1.fa,as2.fa \
+    -s s1_R1.fq,s1_R2.fq/s2_R1.fq,s2_R2.fq \
+    -t 60 -m 250 \
+    --module autobinning
+```
+
+**Refinement only (on existing bins):**
+
+```bash
+BASALT -a as1.fa \
+    -s sample_R1.fq,sample_R2.fq \
+    -r My_MAGs_Folder \
+    -c Coverage_matrix.txt \
+    -t 32 -m 128
+```
+
+**Import external bins via Data Feeding:**
+
+```bash
+BASALT -s sample_R1.fq,sample_R2.fq \
+    -d my_vamb_bins,my_metabat_bins \
+    --binset-index 1 \
+    -t 32 -m 128
+```
+
+---
+
+## Pipeline Modules
+
+BASALT consists of three main modules, each with checkpoint support:
+
+### 1. Autobinning + Bin Selection
+Runs multiple binning algorithms in parallel across all assemblies, evaluates bin quality with CheckM2, and selects the optimal non-redundant binset through within-assembly and cross-assembly dereplication.
+
+**Steps:**
+- S1: Multiple binners produce initial binsets
+- S2: Abundance and PE-connection profiling
+- S3: Within-assembly bin comparison and selection
+- S4: Cross-assembly dereplication
+
+### 2. Refinement
+Identifies and removes contamination from individual bins using a deep-learning ensemble, then retrieves missed contigs using paired-end and long-read connectivity.
+
+**Steps:**
+- S5: DL-based outlier (contamination) detection and removal
+- S6: Contig retrieval via paired-end tracking
+- S7: Contig retrieval via long-read tracking + polishing
+- S8: Overlap-Layout-Consensus (OLC) refinement
+
+### 3. Reassembly
+Reassembles refined bins using short reads (SPAdes) or hybrid reads (SPAdes hybrid / Unicycler) to further improve genome contiguity and quality.
+
+**Steps:**
+- S9: Short-read reassembly (SPAdes)
+- S9p: Hybrid reassembly (Unicycler, when long reads available)
+- S10: Final OLC refinement
+
+---
+
+## Output Description
+
+All outputs are generated under the current working directory. The final output folder is named `<output_prefix>_final_binset` (default: `Final_binset_final_binset`).
+
+**Key output files and directories:**
+
+| Path | Description |
+|---|---|
+| `Final_binset_final_binset/` | Final curated MAGs in FASTA format |
+| `Basalt_checkpoint.txt` | Checkpoint file for resumption |
+| `Basalt_log.txt` | Detailed runtime log |
+| `BestBinsSet/` | Bins selected after autobinning and dereplication |
+| `BestBinsSet_outlier_refined/` | Bins after DL-based contamination removal |
+| `BestBinsSet_outlier_refined_filtrated_retrieved/` | Bins after contig retrieval |
+| `BestBinsSet_*_reassembly_OLC/` | Final bins after reassembly and OLC |
+| `*_checkm/` or `*_checkm2/` | Quality assessment output for each stage |
+
+---
+
+## Data Feeding
+
+The Data Feeding workflow allows you to import externally generated bins (e.g. from VAMB, manual binning) into BASALT for refinement and reassembly.
+
+**Basic usage:**
+
+```bash
+BASALT -s sample_R1.fq,sample_R2.fq \
+    -d external_binset1,external_binset2 \
+    --binset-index 1 \
+    -t 32 -m 128
+```
+
+Each external binset should be a directory containing one FASTA file per bin. BASALT will reindex the bins, recompute coverage matrices, and run CheckM2 quality assessment before proceeding to refinement.
+
+> **Note:** Each binset folder must be located in the current working directory (or a soft link must be created). Absolute paths are not supported.
+
+---
+
+## Troubleshooting
+
+<details>
+<summary><b>1. SAMtools: libcrypto.so.1.0.0 not found</b></summary>
+
+```bash
+ls <CONDA_ENV>/lib/libcry*
+# If libcrypto.so.1.1 exists, create a symlink:
+cd <CONDA_ENV>/lib
+ln -s libcrypto.so.1.1 libcrypto.so.1.0.0
+samtools --help  # verify
+```
+</details>
+
+<details>
+<summary><b>2. IndexError: list index out of range</b></summary>
+
+BASALT does not support file paths in the `-a`, `-s`, `-l`, or `-hf` arguments. Move or symlink all input files to the current working directory, or use relative paths only.
+</details>
+
+<details>
+<summary><b>3. CheckM2: DIAMOND database not found</b></summary>
+
+Install the CheckM2 database manually:
+```bash
+checkm2 database --download
+```
+Refer to the [CheckM2 documentation](https://github.com/chklovski/CheckM2) for details.
+</details>
+
+<details>
+<summary><b>4. BASALT: command not found</b></summary>
+
+Check that BASALT scripts are properly installed and have correct permissions:
+```bash
+ls <CONDA_ENV>/bin/BASALT*
+chmod -R 755 <CONDA_ENV>/bin/*
+```
+If scripts are missing, re-download and copy them:
+```bash
+unzip BASALT_script.zip
+chmod -R 755 BASALT_script
+mv BASALT_script/* <CONDA_ENV>/bin/
+```
+</details>
+
+<details>
+<summary><b>5. FileNotFoundError: quality_report.tsv</b></summary>
+
+This occurs when too few bins pass quality thresholds, causing CheckM2 to produce no output. This is typically due to low sequencing coverage. Try lowering the `--min-cpn` threshold or using a more sensitive binning preset.
+</details>
+
+<details>
+<summary><b>6. Run takes too long</b></summary>
+
+To accelerate BASALT:
+- Use `--sensitive quick --refinepara quick` for the fastest runtime
+- Use `--module autobinning` to skip refinement and reassembly
+- Increase thread count with `-t`
+- Ensure sufficient RAM (in-memory operations bottleneck with low RAM)
+</details>
+
+---
+
+## FAQ
+
+<details>
+<summary><b>Q: Can the same contig appear in multiple bins under SA + CA mode?</b></summary>
+
+Redundant bins can be generated when the same reads are used in both single assembly and co-assembly. BASALT's Bin Selection module (S3-S4) identifies and removes these redundancies. The final best binset is non-redundant.
+</details>
+
+<details>
+<summary><b>Q: How does BASALT compare to metaWRAP in runtime?</b></summary>
+
+BASALT takes approximately twice as long as metaWRAP for a single assembly. However, for multiple assemblies BASALT requires only one run, whereas metaWRAP needs one run per assembly. On multi-assembly datasets, BASALT is time-competitive while producing more and higher-quality MAGs.
+</details>
+
+<details>
+<summary><b>Q: Can I run only the Refinement module on my own bins?</b></summary>
+
+Yes. Use the `-r` flag with standalone refinement:
+```bash
+BASALT -a as1.fa -s reads_R1.fq,reads_R2.fq \
+    -r My_Bins_Folder \
+    -c Coverage_matrix.txt \
+    -t 32 -m 128
+```
+Or use the Data Feeding workflow (`-d`) if you have multiple external binsets.
+</details>
+
+<details>
+<summary><b>Q: Does BASALT support long-read-only datasets?</b></summary>
+
+Currently, BASALT supports PacBio HiFi-only datasets. ONT-only or PacBio CLR-only modes are not yet available (planned for a future release). If you have ONT/CLR data, you must pair it with short reads using SRS + LRS mode.
+</details>
+
+<details>
+<summary><b>Q: Is there an output directory parameter?</b></summary>
+
+BASALT generates all output in the current working directory. We recommend creating a dedicated working directory, copying or symlinking your input files there, and running BASALT from that directory.
+</details>
+
+<details>
+<summary><b>Q: Can I use GPU acceleration?</b></summary>
+
+Yes. BASALT v1.2.0 supports GPU acceleration for Semibin2 and the deep learning model inference. Ensure CUDA-compatible PyTorch is installed in your environment.
+</details>
+
+<details>
+<summary><b>Q: How do I specify a custom model weights location?</b></summary>
+
+Set the `BASALT_WEIGHT` environment variable before running:
+```bash
+export BASALT_WEIGHT=/path/to/your/model/weights
+```
+Then run BASALT as usual.
+</details>
+
+---
+
+## Citing BASALT
+
+If you use BASALT in your research, please cite:
+
+> Qiu, Z., Yuan, L., Lian, CA. et al. BASALT refines binning from metagenomic data and increases resolution of genome-resolved metagenomic analysis. *Nat. Commun.* **15**, 2179 (2024). https://doi.org/10.1038/s41467-024-46539-7
 
 ```bibtex
 @article{qiu2024basalt,
-  title={BASALT refines binning from metagenomic data and increases resolution of genome-resolved metagenomic analysis},
-  author={Qiu, Zhiguang and Yuan, Li and Lian, Chun-Ang and Lin, Bin and Chen, Jie and Mu, Rong and Qiao, Xuejiao and Zhang, Liyu and Xu, Zheng and Fan, Lu and others},
-  journal={Nature communications},
-  volume={15},
-  number={1},
-  pages={2179},
-  year={2024},
-  publisher={Nature Publishing Group UK London}
+  title   = {BASALT refines binning from metagenomic data and increases
+             resolution of genome-resolved metagenomic analysis},
+  author  = {Qiu, Zhiguang and Yuan, Li and Lian, Chun-Ang and Lin, Bin
+             and Chen, Jie and Mu, Rong and Qiao, Xuejiao and Zhang, Liyu
+             and Xu, Zheng and Fan, Lu and others},
+  journal = {Nature Communications},
+  volume  = {15},
+  number  = {1},
+  pages   = {2179},
+  year    = {2024},
+  doi     = {10.1038/s41467-024-46539-7}
 }
 ```
 
-## 📖 References
+If you use the LorBin extra binner, please also cite:
 
-> 1. Qiu, Z. et al. BASALT refines binning from metagenomic data and increases resolution of genome-resolved metagenomic analysis. Nature Communications 15, 2179 (2024).
-> 2. Sieber, C.M. et al. Recovery of genomes from metagenomes via a dereplication, aggregation and scoring strategy. Nature microbiology 3, 836-843 (2018).
-> 3. Uritskiy, G.V., DiRuggiero, J. & Taylor, J. MetaWRAP—a flexible pipeline for genome-resolved metagenomic data analysis. Microbiome 6, 1-13 (2018).
-> 4. Olm, M.R., Brown, C.T., Brooks, B. & Banfield, J.F. dRep: a tool for fast and accurate genomic comparisons that enables improved genome recovery from metagenomes through de-replication. The ISME journal 11, 2864-2868 (2017).
-> 5. Xue, W., Liu, Z., Zhang, Y. et al. LorBin: efficient binning of long-read metagenomes by multiscale adaptive clustering and evaluation. Nat Commun 16, 9353 (2025). 
+> Xue, W., Liu, Z., Zhang, Y. et al. LorBin: efficient binning of long-read metagenomes by multiscale adaptive clustering and evaluation. *Nat. Commun.* **16**, 9353 (2025).
 
+---
+
+## References
+
+1. Qiu, Z. et al. BASALT refines binning from metagenomic data... *Nat. Commun.* **15**, 2179 (2024).
+2. Uritskiy, G.V. et al. MetaWRAP—a flexible pipeline... *Microbiome* **6**, 1-13 (2018).
+3. Sieber, C.M. et al. Recovery of genomes from metagenomes via a dereplication, aggregation and scoring strategy. *Nat. Microbiol.* **3**, 836-843 (2018).
+4. Olm, M.R. et al. dRep: a tool for fast and accurate genomic comparisons... *ISME J.* **11**, 2864-2868 (2017).
+5. Xue, W. et al. LorBin: efficient binning of long-read metagenomes... *Nat. Commun.* **16**, 9353 (2025).
+
+---
+
+## License
+
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
+
+---
+
+## Contact
+
+- **Ke Yu** — [yuke.sz@pku.edu.cn](mailto:yuke.sz@pku.edu.cn)
+- **Zhaorui (Elijah) Jiang** — [zrjiang25@stu.pku.edu.cn](mailto:zrjiang25@stu.pku.edu.cn)
+
+For bug reports and feature requests, please [open an issue](https://github.com/EMBL-PKU/BASALT/issues) on GitHub.

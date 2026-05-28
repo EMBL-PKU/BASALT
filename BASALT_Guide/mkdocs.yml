@@ -4,26 +4,29 @@ site_author: "Zhaorui Jiang"
 copyright: "Copyright &copy; PKU EMBL Lab 2025"
 
 nav:
-  - Index: index.md
-  - Prerequisites: Prerequisites_guild.md
+  - Home: index.md
+  - Quick Start: quickstart.md
+  - Installation: installation.md
+  - Usage: usage.md
   - Tutorial: tutorial.md
-  - Release notes: Release_notes.md
-  # - Developer guild: Developer_guild.md
+  - Pipeline: pipeline.md
+  - Output Files: output.md
+  - FAQ: faq.md
+  - Release Notes: Release_notes.md
+  - API Reference: api/index.md
 
 plugins:
   - mkdocs-jupyter
   - glightbox
-  # - gen-files:
-  #     scripts:
-  #       - docs/gen_ref_pages.py
   - mkdocstrings:
       enabled: !ENV [ENABLE_MKDOCSTRINGS, true]
-      # custom_templates: templates
       default_handler: python
       handlers:
         python:
           options:
             show_source: false
+  - search:
+      lang: en
 
 theme:
   name: material
@@ -47,16 +50,23 @@ theme:
     - navigation.instant
     - navigation.tracking
     - navigation.indexes
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.tabs.link
 
 markdown_extensions:
   - admonition
   - pymdownx.details
-  #- mkautodoc
+  - pymdownx.tabbed:
+      alternate_style: true
   - attr_list
   - md_in_html
   - toc:
       permalink: true
-
   - pymdownx.arithmatex:
       generic: true
   - pymdownx.highlight:
@@ -68,6 +78,9 @@ markdown_extensions:
           class: mermaid
           format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.inlinehilite
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
 
 extra_javascript:
   - javascripts/config.js
