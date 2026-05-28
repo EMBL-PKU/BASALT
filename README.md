@@ -1,6 +1,4 @@
-# BASALT
-
-## Binning Across a Series of Assemblies Toolkit
+# BASALT: Binning Across a Series of Assemblies Toolkit
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.12](https://img.shields.io/badge/Python-3.12-blue.svg)](https://www.python.org/downloads/)
@@ -276,7 +274,7 @@ Use `-e` to activate additional binners beyond the defaults:
 
 | Flag | Binner | Description | Reference |
 |---|---|---|---|
-| `m` | MetaBinner | k-mer + coverage based | *BMC Bioinformatics* (2021) |
+| `m` | MetaBinner | k-mer + coverage based | *Genome Biology* (2023) |
 | `v` | VAMB | Variational autoencoder based | *Nature Biotechnology* (2021) |
 | `l` | LorBin | Long-read adaptive clustering | *Nature Communications* (2025) |
 
