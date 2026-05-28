@@ -1,6 +1,85 @@
 # Installation
 
-## Conda Installation (Recommended)
+BASALT is available in two editions:
+
+- **BASALT-Air** (v1.0.0) — New lightweight version using Pixi, supports absolute paths and `--workdir/--outdir`.
+- **BASALT** (v1.2.0) — Mature Conda-based version, well-tested and widely used.
+
+> **For new users, BASALT-Air is recommended.** It offers a simpler setup and more flexible file handling.
+
+---
+
+## BASALT-Air Installation (Recommended for New Users)
+
+BASALT-Air requires Python 3.12 and uses [Pixi](https://pixi.sh) for dependency management.
+
+### 1. Install Pixi
+
+```bash
+curl -fsSL https://pixi.sh/install.sh | sh
+```
+
+### 2. Clone and Configure
+
+```bash
+git clone https://github.com/PKU-EMBL/BASALT-Air.git
+cd BASALT-Air
+```
+
+Edit `pixi.toml` (lines 85-87) to set your local paths:
+
+```toml
+[activation.env]
+BASALT_WEIGHT = "/your/path/to/basalt_weights"
+CHECKM2DB     = "/your/path/to/checkm2db/CheckM2_database/uniref100.KO.1.dmnd"
+```
+
+Optionally adjust the CUDA version (line 13):
+
+```toml
+[system-requirements]
+cuda = "12"  # Change to "11" or "13" as needed
+```
+
+### 3. Install Dependencies
+
+```bash
+pixi install
+```
+
+### 4. Download Databases
+
+**BASALT model weights** are available from:
+
+- [Hugging Face](https://huggingface.co/PKU-EMBL/BASALT_WEIGHT)
+- [Google Drive](https://drive.google.com/drive/folders/1d0e_2FpYRBAZLwKXl8fA-yDK4b5PBA_E)
+- [Baidu Netdisk](https://pan.baidu.com/s/1ouKqabxHYr1GmvpquQCzqw?pwd=embl) (提取码: `embl`)
+
+**Quick download with Hugging Face CLI:**
+
+```bash
+pip install huggingface_hub
+huggingface-cli download PKU-EMBL/BASALT_WEIGHT --local-dir /your/path/to/basalt_weights
+```
+
+Or use pixi tasks:
+
+```bash
+pixi run download-weights  # BASALT DL models (~100 MB)
+pixi run checkm2-db        # CheckM2 database (~3 GB)
+```
+
+### 5. Verify
+
+```bash
+pixi shell
+BASALT --version
+BASALT --check-deps
+```
+
+---
+
+## BASALT (Conda) Installation
 
 ### 1. Clone the Repository
 

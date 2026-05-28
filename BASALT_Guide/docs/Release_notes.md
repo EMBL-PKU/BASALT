@@ -1,5 +1,36 @@
 # Release Notes
 
+## BASALT-Air v1.0.0 (2026-04-16)
+
+BASALT-Air is a lightweight, modular reimplementation of BASALT using [Pixi](https://pixi.sh) for dependency management.
+
+### Key Improvements
+
+- **Absolute path support**: No need to `cd` into data directories. Run BASALT from anywhere.
+- **Separated work/output directories**: `--workdir` for intermediate files, `--outdir` for final results.
+- **Pixi-based installation**: Faster, more reproducible than Conda. No environment activation headaches.
+- **Hugging Face model hosting**: Download weights via `huggingface-cli` or `pixi run download-weights`.
+- **Built-in dependency check**: `BASALT --check-deps` and `BASALT --version`.
+- **Configurable CUDA version**: Set in `pixi.toml` instead of manual CUDA toolkit management.
+- **Semicolon separator**: Multiple datasets separated by `;` instead of `/` for cleaner CLI.
+
+### Breaking Changes from BASALT (Conda)
+
+| | BASALT (Conda) | BASALT-Air |
+|---|---|---|
+| Package manager | Conda | Pixi |
+| Activation | `conda activate basalt_env` | `pixi shell` |
+| Dataset separator | `/` (slash) | `;` (semicolon) |
+
+> BASALT-Air shares the same core pipeline and produces identical output. The change is in packaging and CLI ergonomics only.
+
+### Links
+
+- GitHub: [https://github.com/PKU-EMBL/BASALT-Air](https://github.com/PKU-EMBL/BASALT-Air)
+- Hugging Face: [https://huggingface.co/PKU-EMBL/BASALT_WEIGHT](https://huggingface.co/PKU-EMBL/BASALT_WEIGHT)
+
+---
+
 ## v1.2.0 (2025-12-16)
 
 ### Major Changes

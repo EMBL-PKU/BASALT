@@ -136,9 +136,13 @@ This occurs when too few bins pass quality thresholds, so CheckM2 produces no ou
 
 ## Installation
 
+### What's the difference between BASALT and BASALT-Air?
+
+BASALT-Air (v1.0.0, 2026) is a new lightweight edition that replaces Conda with Pixi for dependency management. Key improvements include absolute path support, `--workdir`/`--outdir` separation, and built-in dependency checks. The core pipeline is identical — both versions produce the same results. See the [home page](index.md) for a comparison table.
+
 ### Can I install BASALT without Conda?
 
-It is strongly recommended to use Conda. BASALT depends on many bioinformatics tools that are easier to manage through Bioconda. Alternatively, use the Singularity image.
+Yes. BASALT-Air uses Pixi instead of Conda. Or use the Singularity image for either version.
 
 ### How do I install on macOS?
 

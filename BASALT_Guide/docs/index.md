@@ -51,6 +51,24 @@ The pipeline integrates multiple binning algorithms, a deep-learning-based conta
 
 ---
 
+## BASALT vs BASALT-Air
+
+BASALT comes in two editions:
+
+| | **BASALT** | **BASALT-Air** |
+|---|---|---|
+| **Package manager** | Conda / Singularity | Pixi |
+| **Path support** | Working directory only | Absolute paths anywhere |
+| **Dataset separator** | `/` (slash) | `;` (semicolon) |
+| **Output control** | Writes to CWD | `--workdir` + `--outdir` |
+| **CUDA config** | Manual | Built-in via `pixi.toml` |
+| **Model download** | `BASALT_models_download.py` | Hugging Face / pixi tasks |
+| **Status** | Mature (v1.2.0) | New (v1.0.0) |
+
+> **Recommendation:** New users should start with **BASALT-Air** for easier installation and flexible path handling. Existing BASALT users can continue using the Conda edition — both versions share the same core pipeline.
+
+---
+
 ## Key Features
 
 | Feature | Description |

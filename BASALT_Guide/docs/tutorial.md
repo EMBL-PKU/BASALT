@@ -6,8 +6,23 @@ A step-by-step guide for running BASALT with demo data.
 
 ## Prerequisites
 
-- BASALT installed and environment activated (see [Installation](installation.md))
-- Demo data downloaded from the repository
+=== "BASALT-Air"
+
+    ```bash
+    git clone https://github.com/PKU-EMBL/BASALT-Air.git
+    cd BASALT-Air
+    # Edit pixi.toml to set BASALT_WEIGHT and CHECKM2DB paths
+    pixi install
+    pixi shell
+    ```
+
+=== "BASALT (Conda)"
+
+    ```bash
+    conda activate basalt_env
+    ```
+
+- Demo data downloaded from the [Google Drive](https://drive.google.com/drive/folders/1d0e_2FpYRBAZLwKXl8fA-yDK4b5PBA_E)
 - At least 32 cores and 128 GB RAM recommended
 
 ---

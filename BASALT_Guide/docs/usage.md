@@ -1,10 +1,37 @@
 # Usage
 
+## BASALT vs BASALT-Air: Key CLI Differences
+
+BASALT-Air introduces several quality-of-life improvements over the original BASALT CLI:
+
+| Feature | BASALT (Conda) | BASALT-Air (Pixi) |
+|---|---|---|
+| **Path support** | Working directory only | Absolute paths supported |
+| **Dataset separator** | `/` (slash) | `;` (semicolon) |
+| **Intermediate dir** | CWD (fixed) | `--workdir` |
+| **Output dir** | CWD (fixed) | `--outdir` |
+| **Activation** | `conda activate basalt_env` | `pixi shell` |
+| **Version check** | — | `BASALT --version` |
+| **Dependency check** | — | `BASALT --check-deps` |
+
+> **Tip:** In BASALT-Air, you can use `;` as a separator for multiple datasets in `-s`, and run BASALT from any directory without copying or symlinking files.
+
+---
+
 ## Command-Line Interface
 
-```
-BASALT -a <assemblies> -s <short_reads> -t <threads> -m <RAM_GB> [options]
-```
+=== "BASALT (Conda)"
+
+    ```
+    BASALT -a <assemblies> -s <short_reads> -t <threads> -m <RAM_GB> [options]
+    ```
+
+=== "BASALT-Air"
+
+    ```
+    BASALT -a <assemblies> -s <short_reads> -t <threads> -m <RAM_GB>
+           [--workdir <dir>] [--outdir <dir>] [options]
+    ```
 
 ---
 
@@ -45,6 +72,10 @@ BASALT -a <assemblies> -s <short_reads> -t <threads> -m <RAM_GB> [options]
 | `-b`, `--binsets-list` | `str` | *none* | — | Binset folders for dereplication |
 | `-d`, `--data-feeding-folder` | `str` | *none* | — | External binset folders for Data Feeding |
 | `--binset-index` | `int` | `500` | — | Start index for extra binsets in Data Feeding |
+| `--workdir` :material-airballoon: | `str` | CWD | — | Directory for intermediate files (BASALT-Air only) |
+| `--outdir` :material-airballoon: | `str` | Same as workdir | — | Directory for final output (BASALT-Air only) |
+
+:material-airballoon: = BASALT-Air only
 
 ---
 
@@ -167,4 +198,26 @@ BASALT -a as1.fa \
     -t 32 -m 128 \
     -e m,l \
     --sensitive more-sensitive
+```
+
+### BASALT-Air: Absolute Paths with Work/Output Directories
+
+```bash
+BASALT \
+    -a /path/to/data/assembly.fa \
+    -s /path/to/data/sample1.R1.fq,/path/to/data/sample1.R2.fq \
+    -l /path/to/data/sample1.nanopore.fq \
+    -t 64 -m 128 \
+    -o my_project \
+    --workdir /scratch/work \
+    --outdir /results/output
+```
+
+### BASALT-Air: Multiple Datasets (Semicolon Separator)
+
+```bash
+BASALT \
+    -a /data/as1.fa,/data/as2.fa \
+    -s /data/s1_R1.fq,/data/s1_R2.fq;/data/s2_R1.fq,/data/s2_R2.fq \
+    -t 64 -m 128
 ```
