@@ -72,7 +72,6 @@
 | Short-read only | ✓ | - | - |
 | Short + Long hybrid | ✓ | ✓ | - |
 | Short + HiFi hybrid | ✓ | - | ✓ |
-| HiFi only | - | - | ✓ |
 
 ---
 
