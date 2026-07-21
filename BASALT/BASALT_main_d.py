@@ -57,7 +57,6 @@ def BASALT_main_d(assembly_list, datasets, num_threads, lr_list, hifi_list,
         x=0
     else:
         print('BASALT models lacking. Start download the model')
-        # os.system('python BASALT_models_download.py')
         os.system('BASALT_models_download.py')
 
     #### Program start

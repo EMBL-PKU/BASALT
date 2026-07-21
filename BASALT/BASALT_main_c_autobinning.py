@@ -82,7 +82,6 @@ def BASALT_main_c_autobinning(assembly_list, datasets, num_threads, lr_list, hif
         x=0
     else:
         print('BASALT models lacking. Start download the model')
-        # os.system('python BASALT_models_download.py')
         os.system('BASALT_models_download.py')
 
     #### Program start

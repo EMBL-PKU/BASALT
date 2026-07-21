@@ -46,7 +46,7 @@ find "$BASALT_WEIGHT" -maxdepth 1 -name '*_ensemble.csv' | wc -l
 If the count is not `5`, rerun the model downloader and inspect extraction errors:
 
 ```bash
-python /path/to/BASALT/BASALT_models_download.py --path "$BASALT_WEIGHT"
+BASALT_models_download.py --path "$BASALT_WEIGHT"
 ```
 
 ### `CheckM2 database not found`
@@ -140,12 +140,23 @@ For the default CheckM2 route, they are in the directory named by `-o`. Without 
 Possible causes include:
 
 - CheckM2 database or executable failure;
-- no bins reaching a stage;
+- no bins reaching a stage, including after low-coverage candidate generation;
 - an external stage failing before quality assessment;
 - output being written under a stage-specific directory;
 - cleanup or manual movement.
 
 Search logs before lowering scientific quality thresholds. Lowering `--min-cpn` changes which bins enter refinement and is not a general fix for a missing database or failed program.
+
+Start by distinguishing a missing report from a low-coverage result:
+
+```bash
+find . -type f -name 'quality_report.tsv' -print
+find . -maxdepth 2 -type f \( -name '*.fa' -o -name '*.fasta' \) -size +0c | wc -l
+grep -Ei 'coverage|no bins|quality_report|diamond|error|failed' \
+  Basalt_log.txt basalt.stderr.log 2>/dev/null
+```
+
+If the mapping and binning stages produced few or no candidates, inspect mapped-read fraction, depth distribution, assembly fragmentation, and read-to-assembly provenance. Additional sequencing or a biologically justified co-assembly may improve coverage; lowering a quality threshold cannot create missing read support. If candidates exist but the report does not, test CheckM2 independently on one non-empty bin and verify its database before rerunning BASALT.
 
 ### Does a folder named `refined` or `MAGs` guarantee acceptable genomes?
 

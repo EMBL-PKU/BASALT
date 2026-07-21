@@ -1,4 +1,4 @@
-# Inputs and study design
+# Input formats and paths
 
 BASALT can combine evidence across assemblies and read datasets, but it cannot repair a mismatched study design. Confirm sample identity, read provenance, assembly provenance, and intended coverage relationships before launching the workflow.
 
@@ -23,6 +23,8 @@ Accepted filename suffixes are `.fa`, `.fna`, and `.fasta`. BASALT filters assem
 
 Assemblies may represent single-sample assemblies, co-assemblies, or a combination of both. Each assembly should be derived from reads that are represented in the supplied coverage data. Adding an unrelated assembly can create uninformative mappings and invalid comparisons.
 
+For concrete individual-plus-pooled and longitudinal layouts, see [Study design patterns](study-design.md).
+
 ## Paired-end short reads
 
 Within each sample, separate R1 and R2 with a comma. Separate samples with `/`:
@@ -33,8 +35,9 @@ Within each sample, separate R1 and R2 with a comma. Separate samples with `/`:
 
 The order of samples is retained internally. Use unambiguous filenames and verify that every pair has consistent read identifiers and orientation.
 
-!!! warning "Shell interpretation"
-    Quote the complete `-s` value if a wrapper, scheduler, or shell treats `/` or other characters specially. BASALT itself uses `/` as the sample delimiter for this Conda edition.
+:::{warning}
+Quote the complete `-s` value if a wrapper, scheduler, or shell treats `/` or other characters specially. BASALT itself uses `/` as the sample delimiter for this Conda edition.
+:::
 
 ## ONT and PacBio CLR reads
 

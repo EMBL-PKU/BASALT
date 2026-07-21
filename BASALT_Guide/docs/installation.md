@@ -51,7 +51,7 @@ uv pip install \
   numpy==1.26.4 scipy pandas matplotlib tqdm requests
 ```
 
-`basalt_new_environment.yml` is provided as an alternative environment definition. It currently uses Tsinghua mirror channels. Review and replace the channel URLs if those mirrors are unsuitable for your site.
+`basalt_environment.yml` is the sole repository environment definition and is provided as an alternative to the explicit command above. It currently uses Tsinghua mirror channels. Review and replace the channel URLs if those mirrors are unsuitable for your site.
 
 ### 3. Install the BASALT command
 
@@ -68,7 +68,7 @@ The script copies the BASALT programs into `$CONDA_PREFIX/bin` and creates the `
 Choose a persistent model directory and keep the path free of shell metacharacters:
 
 ```bash
-python BASALT_models_download.py --path "$PWD/BASALT_WEIGHT"
+BASALT_models_download.py --path "$PWD/BASALT_WEIGHT"
 export BASALT_WEIGHT="$PWD/BASALT_WEIGHT"
 ```
 
@@ -112,12 +112,15 @@ Then record the environment for provenance:
 conda env export --no-builds > basalt-environment.yml
 ```
 
-!!! warning "No built-in dependency audit"
-    The Conda edition documented here does not implement `BASALT --version` or `BASALT --check-deps`. Those options belong to BASALT-Air. Use `BASALT --help`, `command -v`, explicit tool version commands, and the tutorial smoke test.
+:::{warning}
+The Conda edition documented here does not implement `BASALT --version` or `BASALT --check-deps`. Those options belong to BASALT-Air. Use `BASALT --help`, `command -v`, explicit tool version commands, and the tutorial smoke test.
+:::
 
-## Singularity installation
+## Singularity execution
 
-A prebuilt `basalt.sif` image and associated database resources are distributed through the project [Google Drive folder](https://drive.google.com/drive/folders/1d0e_2FpYRBAZLwKXl8fA-yDK4b5PBA_E?usp=sharing).
+The upstream repository has historically described a prebuilt `basalt.sif` image, but its former Google Drive endpoint returned HTTP 404 during this documentation update. Use the Conda installation above unless you already possess a trusted image or the maintainers publish a new verified artifact. Follow the [upstream repository](https://github.com/PKU-EMBL/BASALT) for distribution updates.
+
+If you already have an image, record where it came from and verify its checksum before production use.
 
 Verify the image before production use:
 
@@ -141,15 +144,17 @@ singularity run \
   -t 32 -m 128 --mode new -o study_basalt
 ```
 
-The image contents can change when a new file is uploaded under the same human-readable name. Preserve an image checksum with each analysis:
+Preserve an image checksum with each analysis:
 
 ```bash
 sha256sum basalt.sif > basalt.sif.sha256
 ```
 
+On a cluster, make the bind explicit even if the runtime normally auto-binds the current directory. Confirm that inputs, the working directory, databases, and `BASALT_WEIGHT` are visible inside the container before starting a long job. Run under the site scheduler or a persistent session, capture stdout and stderr, and do not rely on terminal persistence as a substitute for checkpoint and output auditing.
+
 ## China mainland
 
-The repository includes `basalt_new_environment.yml` with Tsinghua mirror channels. Model files are also mirrored on [Baidu Netdisk](https://pan.baidu.com/s/1ouKqabxHYr1GmvpquQCzqw?pwd=embl) with extraction code `embl`.
+The repository includes `basalt_environment.yml` with Tsinghua mirror channels. Model files are also mirrored on [Baidu Netdisk](https://pan.baidu.com/s/1ouKqabxHYr1GmvpquQCzqw?pwd=embl) with extraction code `embl`.
 
 Do not mix packages from several mirror and upstream channel stacks within the same solved environment unless necessary. Export the final environment and verify each external executable after installation.
 

@@ -1,0 +1,56 @@
+name: basalt
+
+# Canonical channel names keep this file portable. The China-mainland installer
+# renders temporary mirror URLs and never modifies the user's global .condarc.
+channels:
+  - conda-forge
+  - bioconda
+  - nodefaults
+
+dependencies:
+  - python=3.12
+
+  # Core bioinformatics command-line tools
+  - megahit
+  - metabat2
+  - maxbin2
+  - concoct
+  - prodigal
+  - semibin
+  - bedtools
+  - blast
+  - bowtie2
+  - bwa
+  - diamond
+  - checkm2
+  - unicycler
+  - spades
+  - samtools
+  - racon
+  - pplacer
+  - pilon
+  - ncbi-vdb
+  - minimap2
+  - miniasm
+  - idba
+  - hmmer
+  - entrez-direct
+
+  # Python runtime and installer
+  - biopython
+  - pip
+  - uv
+  - pip:
+      - vamb>=5.0.0,<6
+      - torch
+      - tensorboardx
+      - scikit-learn
+      - numpy==1.26.4
+      - scipy
+      - pandas
+      - matplotlib
+      - pillow
+      - joblib
+      - tqdm
+      - requests
+      - huggingface_hub

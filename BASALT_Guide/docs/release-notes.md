@@ -58,7 +58,7 @@ Released 18 August 2023.
 
 ## Related project: BASALT-Air 1.0.0
 
-BASALT-Air is maintained in the separate [BASALT-Air repository](https://github.com/PKU-EMBL/BASALT-Air).
+BASALT-Air v1.0.0 is now available from the separate [BASALT-Air repository](https://github.com/PKU-EMBL/BASALT-Air). See [BASALT-Air: the new implementation](basalt-air.md) for the implementation comparison and migration boundary.
 
 BASALT-Air uses Pixi and adds first-class absolute paths, separate work and output directories, and implementation-specific dependency checks. Its CLI and dependency model differ from the Conda-based BASALT documented on this site.
 

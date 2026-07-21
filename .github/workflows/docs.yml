@@ -20,7 +20,7 @@ permissions:
   contents: read
 
 jobs:
-  strict-mkdocs-build:
+  strict-sphinx-build:
     runs-on: ubuntu-24.04
     steps:
       - name: Check out repository
@@ -37,4 +37,6 @@ jobs:
         run: python -m pip install -r BASALT_Guide/requirements.txt
 
       - name: Build documentation with warnings as errors
-        run: mkdocs build --strict --config-file BASALT_Guide/mkdocs.yml
+        run: >-
+          sphinx-build -W --keep-going -b html
+          BASALT_Guide/docs .build/basalt-guide

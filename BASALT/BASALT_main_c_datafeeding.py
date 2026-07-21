@@ -60,7 +60,6 @@ def data_feeding_main(assembly_list, datasets, num_threads, data_feeding_folder,
         x=0
     else:
         print('BASALT models lacking. Start download the model')
-        # os.system('python BASALT_models_download.py')
         os.system('BASALT_models_download.py')
 
     #### Program start

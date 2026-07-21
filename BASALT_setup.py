@@ -64,7 +64,7 @@ if __name__ =='__main__':
         os.chdir('BASALT')
         print('Creating BASALT environment')
         print('This will take a while...')
-        os.system('conda env create -n BASALT --file basalt_env.yml')
+        os.system('conda env create -n BASALT --file basalt_environment.yml')
 
         # os.system('unzip BASALT_script.zip')
         # os.system('chmod -R 777 BASALT_script')

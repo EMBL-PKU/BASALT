@@ -18,8 +18,9 @@ Final_binset/
 
 The directory contains final bin FASTA files, generally with a `.fa` suffix, and a final quality report when CheckM2 completes successfully.
 
-!!! warning "Historical names"
-    Earlier documentation referred to `Final_binset_final_binset/` or `Final_bestbinset/`. Those names do not describe the current `-o` behaviour in the default CheckM2 orchestration.
+:::{warning}
+Earlier documentation referred to `Final_binset_final_binset/` or `Final_bestbinset/`. Those names do not describe the current `-o` behaviour in the default CheckM2 orchestration.
+:::
 
 ## Run-level provenance
 

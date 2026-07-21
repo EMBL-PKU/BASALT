@@ -2,15 +2,19 @@
 
 BASALT is organized as a sequence of candidate generation, selection, refinement, and reassembly stages. The description below distinguishes executable operations from biological interpretation.
 
-```mermaid
-flowchart LR
-    A["Assemblies and reads"] --> B["Autobinning"]
-    B --> C["Within-assembly selection"]
-    C --> D["Cross-assembly dereplication"]
-    D --> E["Contig-level refinement"]
-    E --> F["Read-supported retrieval"]
-    F --> G["Reassembly and OLC"]
-    G --> H["Final MAG set and quality report"]
+```{image} img/workflow.png
+:alt: BASALT pipeline from input assemblies and reads to a final MAG set
+:class: basalt-workflow
+```
+
+```text
+assemblies + reads
+  → candidate generation
+  → within-assembly selection
+  → cross-assembly dereplication
+  → contig screening and retrieval
+  → reassembly and OLC
+  → final MAG set + quality report
 ```
 
 ## Stage 0: preprocessing and coverage

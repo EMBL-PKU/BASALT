@@ -3,9 +3,13 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-2f855a.svg)](LICENSE)
 [![Python 3.12](https://img.shields.io/badge/Python-3.12-3776ab.svg)](https://www.python.org/)
 [![Nature Communications](https://img.shields.io/badge/Nature%20Communications-2024-b31b1b.svg)](https://doi.org/10.1038/s41467-024-46539-7)
-[![Documentation](https://img.shields.io/badge/docs-MkDocs-526cfe.svg)](BASALT_Guide/docs/index.md)
+[![Documentation](https://readthedocs.org/projects/basalt-guide/badge/?version=latest)](https://basalt-guide.readthedocs.io/en/latest/)
+[![BASALT-Air](https://img.shields.io/badge/BASALT--Air-v1.0.0-55ad62.svg)](https://github.com/PKU-EMBL/BASALT-Air)
 
 BASALT is a metagenomic workflow for recovering and refining metagenome-assembled genomes (MAGs) across one or more assemblies. It combines multi-binner candidate generation, within- and between-assembly bin selection, contig-level contamination screening, contig retrieval, and reassembly in one checkpointed pipeline.
+
+> [!IMPORTANT]
+> **New: [BASALT-Air v1.0.0](https://github.com/PKU-EMBL/BASALT-Air) is now available.** BASALT-Air is the newer Pixi-based implementation for users who need absolute input paths, separate working and output directories, reproducible run manifests, and built-in dependency checks. Its executable is lowercase `basalt`, and its CLI and checkpoints are not interchangeable with the Conda-based BASALT documented in this repository.
 
 The published evaluation reports improved MAG recovery and downstream genome-resolved analyses relative to the tested workflows and datasets. These results define the evidence boundary: performance depends on community complexity, sequencing depth, assembly quality, read type, and the selected parameters. See the [Nature Communications article](https://doi.org/10.1038/s41467-024-46539-7) for the complete experimental design.
 
@@ -15,14 +19,42 @@ The published evaluation reports improved MAG recovery and downstream genome-res
 
 ## Documentation
 
-The [BASALT guide](BASALT_Guide/docs/index.md) is the source of truth for installation, inputs, commands, outputs, troubleshooting, and reproducible reporting.
+The [BASALT guide](https://basalt-guide.readthedocs.io/en/latest/) is the source of truth for installation, inputs, commands, outputs, troubleshooting, and reproducible reporting. Its editable sources are under [`BASALT_Guide/docs/`](BASALT_Guide/docs/index.md).
 
 - [Installation](BASALT_Guide/docs/installation.md)
+- [BASALT-Air: the new implementation](BASALT_Guide/docs/basalt-air.md)
 - [Quick start](BASALT_Guide/docs/quickstart.md)
-- [Inputs and study design](BASALT_Guide/docs/inputs.md)
+- [Input formats](BASALT_Guide/docs/inputs.md)
+- [Study design patterns](BASALT_Guide/docs/study-design.md)
 - [Command-line reference](BASALT_Guide/docs/usage.md)
 - [Tutorial](BASALT_Guide/docs/tutorial.md)
 - [Reproducibility and reporting](BASALT_Guide/docs/reproducibility.md)
+
+## Choose a route
+
+| Goal | Recommended route | Read first |
+|---|---|---|
+| Start a new deployment with modern path and environment handling | BASALT-Air v1.0.0 | [BASALT-Air overview](BASALT_Guide/docs/basalt-air.md) |
+| Reproduce or resume an existing Conda BASALT analysis | This BASALT repository | [Installation](BASALT_Guide/docs/installation.md) |
+| First successful run | One assembly and one matched paired-end sample | [Quick start](BASALT_Guide/docs/quickstart.md) |
+| Compare individual and pooled assemblies | Run a biologically coherent multi-assembly pilot | [Study design patterns](BASALT_Guide/docs/study-design.md) |
+| Recover candidates with lower compute demand | `--sensitive quick --refinepara quick` | [Command-line reference](BASALT_Guide/docs/usage.md) |
+| Expand the candidate pool | `--sensitive sensitive` or `more-sensitive`; optionally add a validated binner | [Extra binners](BASALT_Guide/docs/extra-binners.md) |
+| Import bins from another workflow | Data feeding, then optional dereplication and refinement | [External-binset workflow](BASALT_Guide/docs/usage.md#external-binsets-staged-workflow) |
+| Resume an interrupted run | `BASALT --mode continue` in the unchanged run directory | [Resume semantics](BASALT_Guide/docs/usage.md#resume-semantics) |
+
+### BASALT or BASALT-Air?
+
+| Capability | BASALT in this repository | BASALT-Air v1.0.0 |
+|---|---|---|
+| Environment | Conda plus external installation steps | Pixi environment and lock file |
+| Command | `BASALT` | `basalt` |
+| Input paths | Dedicated run directory and local names recommended | First-class absolute paths |
+| Work and output locations | Intermediates in the current directory | Separate `--workdir` and `--outdir` |
+| Run provenance | Command, logs, and checkpoint files | Adds a structured run manifest and timestamped logs |
+| Best suited to | Existing BASALT analyses and checkpoint reproduction | New deployments needing clearer path and environment isolation |
+
+See the [BASALT-Air repository](https://github.com/PKU-EMBL/BASALT-Air) for its authoritative installation and command reference.
 
 ## What BASALT does
 
@@ -32,6 +64,14 @@ The [BASALT guide](BASALT_Guide/docs/index.md) is the source of truth for instal
 4. **Reassembly.** BASALT can reassemble and polish selected bins when the required read types are available.
 
 Optional adapters support MetaBinner (`-e m`), VAMB (`-e v`), and LorBin (`-e l`). Their installation and input requirements are documented separately in the [extra-binner guide](BASALT_Guide/docs/extra-binners.md).
+
+### Candidate-generation presets
+
+| Preset | Candidate generators | Practical trade-off |
+|---|---|---|
+| `quick` | MetaBAT 2 and SemiBin 2 | Lower compute demand and fewer candidate sets |
+| `sensitive` | MetaBAT 2, CONCOCT, and SemiBin 2 | Default balance of candidate diversity and runtime |
+| `more-sensitive` | MaxBin 2.0, MetaBAT 2, CONCOCT, and SemiBin 2 | Higher compute and storage demand; not guaranteed to recover more acceptable MAGs |
 
 ## Supported input designs
 
@@ -47,6 +87,8 @@ Every run requires at least one assembly and at least one source of read coverag
 
 Input paths are resolved from the working directory. Use filenames or relative paths without shell metacharacters; for the most reliable execution, place or symlink inputs into a dedicated run directory. Paired-end files within a sample are separated by a comma, and multiple short-read samples are separated by `/`.
 
+For replicate or longitudinal studies, decide the biological strata before assembling or pooling. BASALT can compare sample-specific and matched pooled assemblies, but it cannot infer whether a pool erased a time, treatment, host, or habitat contrast. The [study-design guide](BASALT_Guide/docs/study-design.md) provides concrete layouts and a minimum design manifest.
+
 ## Requirements
 
 - Linux x86-64
@@ -59,31 +101,37 @@ Resource use is dataset-dependent. Run a pilot or request more memory for large 
 
 ## Installation
 
-The Conda installation below is the maintained route for this repository. A prebuilt Singularity image is also available; see the [installation guide](BASALT_Guide/docs/installation.md) for databases, model weights, container use, and verification.
+The Conda-compatible installation below is the maintained route for this repository. [Micromamba](https://mamba.readthedocs.io/en/stable/installation/micromamba-installation.html) is recommended for faster dependency solving and parallel package downloads; current Conda with the libmamba solver is also supported. See the [installation guide](BASALT_Guide/docs/installation.md) for databases, model weights, mainland-China mirrors, verification, and container execution notes.
 
 ```bash
 git clone https://github.com/PKU-EMBL/BASALT.git
 cd BASALT
 
-conda create -n basalt_env -c conda-forge -c bioconda \
-  python=3.12 megahit metabat2 maxbin2 concoct prodigal semibin \
-  bedtools blast bowtie2 bwa diamond checkm2 \
-  unicycler spades samtools racon pilon ncbi-vdb \
-  minimap2 miniasm idba hmmer entrez-direct biopython uv --yes
-
-conda activate basalt_env
-uv pip install torch tensorboardx pillow scikit-learn \
-  numpy==1.26.4 scipy pandas matplotlib tqdm requests
-
-bash install.sh
+micromamba create -n basalt -f basalt_environment.yml --yes
+micromamba run -n basalt bash install.sh
 ```
+
+Conda users can replace `micromamba create` with `conda env create` and `micromamba run` with `conda run`. [`basalt_environment.yml`](basalt_environment.yml) is the sole environment definition. It uses the portable `conda-forge` and `bioconda` channel names with strict dependency scope; it does not hard-code a site mirror.
+
+For mainland China, the network-aware installer probes TUNA, BFSU, USTC, and upstream endpoints, prefers `micromamba`, applies matching Conda and PyPI mirrors only to the installation subprocess, and leaves `~/.condarc` and pip configuration unchanged:
+
+```bash
+python3 BASALT_setup_China_mainland.py \
+  --manager micromamba \
+  --bootstrap-micromamba \
+  --mirror auto
+```
+
+Use `--dry-run` to inspect all commands first, `--mirror tuna|bfsu|ustc|upstream` to pin a route, or `--update` to synchronize an existing environment.
 
 Download the trained BASALT models and expose their directory:
 
 ```bash
-python BASALT_models_download.py --path "$PWD/BASALT_WEIGHT"
+BASALT_models_download.py --source auto --path "$PWD/BASALT_WEIGHT"
 export BASALT_WEIGHT="$PWD/BASALT_WEIGHT"
 ```
+
+Automatic mode downloads concurrently from the official [PKU-EMBL/BASALT_WEIGHT](https://huggingface.co/PKU-EMBL/BASALT_WEIGHT) repository first and falls back to the legacy Figshare archive. A local ZIP, a custom URL, and the documented Baidu Netdisk route are available when either service is unsuitable.
 
 Set the CheckM2 database path if it is not already configured by your environment:
 
@@ -174,6 +222,12 @@ BASALT \
 ```
 
 See the [command-line reference](BASALT_Guide/docs/usage.md) before using standalone refinement, data feeding, dereplication, or module-specific execution. These routes require intermediate files from a compatible BASALT run.
+
+## Output contract
+
+For the default CheckM2 route, `-o NAME` produces the final directory `NAME/`; without `-o`, the default is `Final_binset/`. A scientifically complete result should contain non-empty bin FASTA files and a matching quality report, while the working directory should retain `BASALT_command.txt`, `Basalt_log.txt`, and `Basalt_checkpoint.txt`.
+
+Directory names such as `BestBinset`, `refined`, or `MAGs` describe workflow state, not publication-ready quality. Apply explicit completeness, contamination, taxonomy, contiguity, read-support, and dereplication criteria. See [Outputs and quality control](BASALT_Guide/docs/output.md).
 
 ## Reproducible use
 

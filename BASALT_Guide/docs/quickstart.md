@@ -115,35 +115,37 @@ The current CLI defaults omitted arguments to empty values and relies on checkpo
 
 ## Common input variants
 
-=== "Short reads and long reads"
+::::{tab-set}
+:::{tab-item} Short and long reads
+```bash
+BASALT \
+  -a assembly.fasta \
+  -s sample_R1.fastq,sample_R2.fastq \
+  -l nanopore.fastq \
+  -t 64 -m 256 --mode new -o study_01_basalt
+```
+:::
 
-    ```bash
-    BASALT \
-      -a assembly.fasta \
-      -s sample_R1.fastq,sample_R2.fastq \
-      -l nanopore.fastq \
-      -t 64 -m 256 --mode new -o study_01_basalt
-    ```
+:::{tab-item} PacBio HiFi
+```bash
+BASALT \
+  -a assembly.fasta \
+  -hf hifi.fastq \
+  -t 32 -m 128 --mode new -o study_01_basalt
+```
+:::
 
-=== "PacBio HiFi"
+:::{tab-item} Two short-read samples
+```bash
+BASALT \
+  -a assembly.fasta \
+  -s sample_1_R1.fastq,sample_1_R2.fastq/sample_2_R1.fastq,sample_2_R2.fastq \
+  -t 64 -m 256 --mode new -o study_01_basalt
+```
+:::
+::::
 
-    ```bash
-    BASALT \
-      -a assembly.fasta \
-      -hf hifi.fastq \
-      -t 32 -m 128 --mode new -o study_01_basalt
-    ```
-
-=== "Two short-read samples"
-
-    ```bash
-    BASALT \
-      -a assembly.fasta \
-      -s sample_1_R1.fastq,sample_1_R2.fastq/sample_2_R1.fastq,sample_2_R2.fastq \
-      -t 64 -m 256 --mode new -o study_01_basalt
-    ```
-
-Read [Inputs and study design](inputs.md) before using several samples or assemblies. The delimiter describes file grouping; it does not encode biological pairing between assemblies and samples.
+Read [Input formats and paths](inputs.md) before using several samples or assemblies. The delimiter describes file grouping; it does not encode biological pairing between assemblies and samples.
 
 ## Next steps
 

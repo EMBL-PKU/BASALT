@@ -7,8 +7,8 @@ build:
   tools:
     python: "3.12"
 
-mkdocs:
-  configuration: BASALT_Guide/mkdocs.yml
+sphinx:
+  configuration: BASALT_Guide/docs/conf.py
   fail_on_warning: true
 
 python:

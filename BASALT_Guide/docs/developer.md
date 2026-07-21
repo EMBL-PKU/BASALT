@@ -1,6 +1,6 @@
-# Developer reference
+# Developer guide
 
-BASALT is a command-line workflow rather than a stable importable Python API. Internal functions, filenames, argument lists, and intermediate formats may change without deprecation. External software should invoke a pinned `BASALT` command and treat the documented files as workflow outputs.
+BASALT is a command-line workflow rather than a stable importable Python API. Internal functions, filenames, argument lists, and intermediate formats may change without deprecation. External software should invoke a pinned `BASALT` command and treat documented files as workflow outputs.
 
 ## Entry points
 
@@ -36,7 +36,7 @@ BASALT is a command-line workflow rather than a stable importable Python API. In
 | `ensemble.py` | Load model descriptors and combine predictions |
 | `my_dataset.py` | PyTorch dataset wrappers for contig features |
 | `utils.py` | Training and evaluation utilities |
-| `BASALT_models_download.py` | Download model descriptors and checkpoints |
+| `BASALT/BASALT_models_download.py` | Canonical downloader installed as `BASALT_models_download.py` |
 
 The trained model files are external assets. Code version alone is insufficient to reproduce model-based refinement.
 
@@ -52,16 +52,27 @@ Changes to intermediate naming, checkpoint text, or contig identifiers can break
 
 ## Documentation build
 
-Documentation sources are under `BASALT_Guide/docs/` and use MkDocs Material.
+Documentation sources are under `BASALT_Guide/docs/` and use Sphinx with the Sphinx Book Theme and MyST Markdown.
 
 ```bash
 python -m venv .venv-docs
 . .venv-docs/bin/activate
 python -m pip install -r BASALT_Guide/requirements.txt
-mkdocs build --strict --config-file BASALT_Guide/mkdocs.yml
+sphinx-build -W --keep-going -b html \
+  BASALT_Guide/docs .build/basalt-guide
 ```
 
-Read the Docs uses the repository-root `.readthedocs.yaml`. A local strict build should pass before documentation changes are merged.
+Preview the completed build locally:
+
+```bash
+python -m http.server 8000 \
+  --bind 127.0.0.1 \
+  --directory .build/basalt-guide
+```
+
+Then open `http://127.0.0.1:8000/`. Rebuild and reload the page after editing a source file.
+
+Read the Docs uses the repository-root `.readthedocs.yaml`. A local warnings-as-errors build should pass before documentation changes are merged.
 
 ## Contribution checklist
 

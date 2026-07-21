@@ -28,7 +28,7 @@ A normal new run requires one or more assemblies and at least one read source, a
 
 `-m` is not a hard memory cap. The operating system or scheduler must enforce a limit if one is required.
 
-Read [Inputs and study design](inputs.md) for filename, compression, and sample-matching constraints.
+Read [Input formats and paths](inputs.md) for filename, compression, and sample-matching constraints.
 
 ## Workflow options
 
@@ -44,8 +44,9 @@ Read [Inputs and study design](inputs.md) for filename, compression, and sample-
 | `--refinepara` | `quick` | `quick`, `deep` | Contig-retrieval depth |
 | `-e`, `--extra_binner` | none | `m`, `v`, `l` | Optional MetaBinner, VAMB, or LorBin adapter; combine with commas |
 
-!!! note "Output naming"
-    In the current CheckM2 workflow, the final directory is the value supplied to `-o`. For example, `-o study_01_basalt` produces `study_01_basalt/`. The option is a name, not a portable absolute output path.
+:::{note}
+In the current CheckM2 workflow, the final directory is the value supplied to `-o`. For example, `-o study_01_basalt` produces `study_01_basalt/`. The option is a name, not a portable absolute output path.
+:::
 
 ## Advanced input routes
 
@@ -169,6 +170,57 @@ BASALT \
 ```
 
 The supplied assembly, reads, bin contig identifiers, and coverage matrix must be mutually compatible.
+
+## External binsets: staged workflow
+
+The former Chinese guide described a useful three-stage route for bringing bins from another workflow into BASALT. The current implementation still dispatches these stages through `-d`, `-b`, and `-r`, but it does not validate all cross-file relationships. Run each command from the data-feeding output directory or link the generated files into a new isolated directory.
+
+### 1. Feed external bins
+
+```bash
+BASALT \
+  -s sample_1_R1.fastq,sample_1_R2.fastq/sample_2_R1.fastq,sample_2_R2.fastq \
+  -d binner_A_bins,binner_B_bins \
+  --binset-index 500 \
+  -t 32 -m 128 \
+  -q checkm2 \
+  -o imported
+```
+
+This example writes `imported_data_feeded/`. For each imported directory, BASALT renames contig identifiers, creates an assembly FASTA, a `*_BestBinsSet` directory, coverage and paired-end connection files, and quality-control output.
+
+### 2. Dereplicate compatible binsets
+
+After inspecting the generated filenames, supply corresponding lists in the same order:
+
+```bash
+BASALT \
+  -b 500_binner_A_bins.fa_BestBinsSet,501_binner_B_bins.fa_BestBinsSet \
+  -c Coverage_matrix_for_binning_500_binner_A_bins.fa.txt,Coverage_matrix_for_binning_501_binner_B_bins.fa.txt \
+  -a 500_binner_A_bins.fa,501_binner_B_bins.fa \
+  -s PE_r1_sample_1_R1.fastq,PE_r2_sample_1_R2.fastq/PE_r1_sample_2_R1.fastq,PE_r2_sample_2_R2.fastq \
+  -t 32
+```
+
+The dereplication route writes `BestBinset/`. Confirm the exact data-feeding basenames instead of copying this example literally; imported directory names determine part of the filename.
+
+### 3. Refine the selected binset
+
+```bash
+BASALT \
+  -r BestBinset \
+  -c Coverage_matrix_for_binning_500_binner_A_bins.fa.txt,Coverage_matrix_for_binning_501_binner_B_bins.fa.txt \
+  -a 500_binner_A_bins.fa,501_binner_B_bins.fa \
+  -s PE_r1_sample_1_R1.fastq,PE_r2_sample_1_R2.fastq/PE_r1_sample_2_R1.fastq,PE_r2_sample_2_R2.fastq \
+  -t 32 \
+  -q checkm2
+```
+
+The standalone outlier-screening route writes `<input-binset>_outlier_refined/`, here `BestBinset_outlier_refined/`.
+
+:::{warning}
+This is an expert route, not a substitute for a normal full run. Assembly FASTA files, renamed contig identifiers, binsets, coverage matrices, and paired-end files must remain mutually compatible and in matching list order. Pilot the complete sequence and inspect logs and outputs before applying it at scale.
+:::
 
 ## Resume semantics
 
