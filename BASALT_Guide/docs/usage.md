@@ -44,6 +44,8 @@ Read [Input formats and paths](inputs.md) for filename, compression, and sample-
 | `--refinepara` | `quick` | `quick`, `deep` | Contig-retrieval depth |
 | `-e`, `--extra_binner` | none | `m`, `v`, `l` | Optional MetaBinner, VAMB, or LorBin adapter; combine with commas |
 
+`-e l` targets the BASALT-compatible [PKU-EMBL/LorBin-BASALT-Extrabinner](https://github.com/PKU-EMBL/LorBin-BASALT-Extrabinner) in-house fork, not an automatically installed upstream LorBin environment. Install and validate the fork separately, and record its Git commit as described in [Extra binners](extra-binners.md#lorbin).
+
 :::{note}
 In the current CheckM2 workflow, the final directory is the value supplied to `-o`. For example, `-o study_01_basalt` produces `study_01_basalt/`. The option is a name, not a portable absolute output path.
 :::

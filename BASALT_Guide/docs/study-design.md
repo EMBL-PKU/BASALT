@@ -8,6 +8,24 @@ BASALT can compare candidate bins recovered from several assemblies. This makes 
 Combine assemblies only when their read coverage is biologically interpretable together. More assemblies can expose complementary genome fragments, but unrelated samples can also create misleading mappings and comparisons. Test a representative pilot before scaling the design.
 :::
 
+## Why related multi-assembly designs are informative
+
+BASALT accepts several assemblies in one run, including sample-specific assemblies together with a co-assembly generated from the same coherent sample group. These assembly strategies expose complementary evidence. A sample-specific assembly can preserve population structure restricted to one sample or time point and can avoid some of the complexity introduced by pooling. A matched co-assembly can increase effective sequencing depth for genomes shared across samples, potentially improving the continuity of low-abundance genome reconstruction.
+
+Related samples can also provide discriminating coverage variation. Contigs from the same population genome often change in coverage concordantly across samples and therefore form a cross-sample abundance fingerprint. Contigs from another population or from contamination may show discordant profiles. BASALT combines coverage-derived evidence with tetranucleotide composition, read connectivity, and complementary candidates recovered from different assemblies during within- and cross-assembly selection, contig screening, retrieval, and reassembly. These signals support candidate decisions; they do not establish genome membership independently of downstream validation.
+
+Particularly informative designs can include:
+
+- repeated sampling from the same reactor or experimental system;
+- longitudinal samples from the same host;
+- samples from nearby locations within one connected environment;
+- matched aliquots processed with different DNA-extraction protocols;
+- samples collected before and after an intervention;
+- related growth or cultivation stages; and
+- environmental gradients with substantial community continuity.
+
+The useful regime lies between two extremes: samples should share enough genomes for complementary observation, while abundance changes should provide enough contrast to distinguish contig profiles. Nearly identical samples may add little differential signal; biologically distant samples may share too little genomic content and can introduce ambiguous mappings or invalid comparisons. Any gain in completeness, contamination, or contiguity must therefore be demonstrated under prespecified criteria rather than assumed from the design.
+
 ## Decide what belongs in one run
 
 Use one BASALT run when all of the following are true:
@@ -52,7 +70,7 @@ Omit `-l` when long reads are not available. The pooled assembly must be produce
 
 ### Why test both assembly strategies?
 
-Sample-specific assemblies preserve individual provenance and can retain sample-restricted populations. A pooled assembly can gain coverage for genomes shared across replicates, but it can also merge closely related populations or increase assembly complexity. BASALT provides a framework for comparing the resulting candidates; it does not prove that pooling improved the assembly.
+Sample-specific assemblies preserve individual provenance and can retain sample-restricted populations. A pooled assembly can gain coverage for genomes shared across replicates, but it can also merge closely related populations or increase assembly complexity. Supplying both allows BASALT to compare redundant and complementary candidates across assembly strategies. It does not prove that pooling, or the combined design, improved recovery.
 
 Report the assembler, version, parameters, and exact reads used for every individual and pooled assembly. Compare the pilot using prespecified MAG, redundancy, taxonomy, and read-support criteria.
 

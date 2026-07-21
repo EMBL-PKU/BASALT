@@ -46,7 +46,7 @@ sha256sum \
 ## 3. Run BASALT
 
 ```bash
-conda activate basalt_env
+conda activate basalt
 
 BASALT \
   -a assembly.fasta \

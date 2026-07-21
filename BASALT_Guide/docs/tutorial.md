@@ -23,7 +23,7 @@ The complete download is approximately 967 MB. Preserve the Figshare version and
 Follow [Installation](installation.md), then verify:
 
 ```bash
-conda activate basalt_env
+conda activate basalt
 BASALT --help
 test -n "$BASALT_WEIGHT"
 test -d "$BASALT_WEIGHT"
@@ -164,7 +164,7 @@ A checksum mismatch does not by itself establish a regression. FASTA ordering, i
 set -u
 
 source /path/to/conda.sh
-conda activate basalt_env
+conda activate basalt
 cd /project/basalt_demo/run
 
 BASALT \

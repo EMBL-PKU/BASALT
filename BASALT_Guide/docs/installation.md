@@ -1,6 +1,6 @@
 # Installation
 
-This page installs the Conda-based BASALT repository. BASALT depends on several compiled bioinformatics programs, two quality-control databases, and trained model files. A successful Python import alone is therefore not a complete installation test.
+This page installs the Conda-compatible BASALT repository. BASALT depends on several compiled bioinformatics programs, quality-control databases, and trained model files. A successful Python import alone is therefore not a complete installation test.
 
 ## Platform and resources
 
@@ -14,7 +14,7 @@ This page installs the Conda-based BASALT repository. BASALT depends on several 
 
 macOS and Windows are not supported as native execution platforms. Use a Linux host, cluster, virtual machine, or compatible container runtime.
 
-## Conda installation
+## Conda-compatible installation
 
 ### 1. Clone the repository
 
@@ -31,48 +31,69 @@ git rev-parse HEAD
 
 ### 2. Create the environment
 
-```bash
-conda create -n basalt_env -c conda-forge -c bioconda \
-  python=3.12 \
-  megahit metabat2 maxbin2 concoct prodigal semibin \
-  bedtools blast bowtie2 bwa diamond checkm2 \
-  unicycler spades samtools racon pilon ncbi-vdb \
-  minimap2 miniasm idba hmmer entrez-direct biopython uv \
-  --yes
-
-conda activate basalt_env
-```
-
-Install the Python dependencies into the active environment:
+Micromamba is the recommended package manager because it uses the libmamba solver, downloads packages in parallel, and does not require a Python-equipped base environment:
 
 ```bash
-uv pip install \
-  torch tensorboardx pillow scikit-learn \
-  numpy==1.26.4 scipy pandas matplotlib tqdm requests
+micromamba create -n basalt -f basalt_environment.yml \
+  --strict-channel-priority --yes
 ```
 
-`basalt_environment.yml` is the sole repository environment definition and is provided as an alternative to the explicit command above. It currently uses Tsinghua mirror channels. Review and replace the channel URLs if those mirrors are unsuitable for your site.
+Current Conda is an equivalent fallback:
+
+```bash
+CONDA_CHANNEL_PRIORITY=strict \
+  conda env create -n basalt -f basalt_environment.yml \
+  --solver libmamba --yes
+```
+
+`basalt_environment.yml` is the sole repository environment definition. It uses only `conda-forge` and `bioconda`; the commands above enforce strict channel priority without editing global configuration. The file pins NumPy for the trained-model stack and omits redundant direct dependencies. The legacy CheckM package is intentionally excluded because its dependency stack conflicts with the maintained Python 3.12/CheckM2 route; install it in a separate compatible environment only when `-q checkm` is required.
+
+If package access is slow or unreliable in mainland China, use the [network-aware installer](#china-mainland) rather than changing this portable YAML or the global Conda configuration.
 
 ### 3. Install the BASALT command
 
-Run the installer while `basalt_env` is active:
+Install directly through the selected manager without depending on shell activation:
 
 ```bash
-bash install.sh
+micromamba run -n basalt bash install.sh
+# or: conda run -n basalt bash install.sh
 ```
 
 The script copies the BASALT programs into `$CONDA_PREFIX/bin` and creates the `BASALT` launcher. Re-run the installer after updating the repository because this is a copied installation, not an editable package.
 
+Optional extra binners are not part of the base installation. In particular, `-e l` uses the [PKU-EMBL/LorBin-BASALT-Extrabinner](https://github.com/PKU-EMBL/LorBin-BASALT-Extrabinner) in-house fork, which must be installed and validated separately. Do not add it to the portable BASALT environment YAML without re-solving and testing the complete stack; follow the pinned-source procedure in [Extra binners](extra-binners.md#lorbin).
+
 ### 4. Download the trained models
 
-Choose a persistent model directory and keep the path free of shell metacharacters:
+Choose a persistent model directory and keep the path free of shell metacharacters. Automatic mode first uses the official [PKU-EMBL/BASALT_WEIGHT repository](https://huggingface.co/PKU-EMBL/BASALT_WEIGHT), whose client supports concurrent and resumable downloads, and then falls back to the legacy Figshare ZIP:
 
 ```bash
-BASALT_models_download.py --path "$PWD/BASALT_WEIGHT"
+micromamba run -n basalt \
+  BASALT_models_download.py \
+  --source auto \
+  --path "$PWD/BASALT_WEIGHT"
+
 export BASALT_WEIGHT="$PWD/BASALT_WEIGHT"
 ```
 
-Add the export to your shell initialization file only after verifying the path. The extracted directory should contain five `*_ensemble.csv` files and their associated model checkpoints.
+Conda users can replace `micromamba run` with `conda run`. A public Hugging Face repository does not require login. To force one source or use a file obtained through another route:
+
+```bash
+# Official Hugging Face only
+BASALT_models_download.py --source huggingface --path "$BASALT_WEIGHT"
+
+# Existing ZIP, including a manually downloaded Baidu Netdisk copy
+BASALT_models_download.py --source archive \
+  --archive /path/to/BASALT.zip \
+  --path "$BASALT_WEIGHT"
+
+# Site-operated object storage or another trusted URL
+BASALT_models_download.py --source url \
+  --url https://example.org/BASALT.zip \
+  --path "$BASALT_WEIGHT"
+```
+
+Add the export to your shell initialization file only after verifying the path. The downloader checks both the five top-level `*_ensemble.csv` descriptors and their corresponding checkpoint directories.
 
 ```bash
 find "$BASALT_WEIGHT" -maxdepth 1 -name '*_ensemble.csv' | wc -l
@@ -109,7 +130,8 @@ command -v \
 Then record the environment for provenance:
 
 ```bash
-conda env export --no-builds > basalt-environment.yml
+micromamba env export -n basalt > basalt-environment.yml
+# or: conda env export -n basalt --no-builds > basalt-environment.yml
 ```
 
 :::{warning}
@@ -154,9 +176,75 @@ On a cluster, make the bind explicit even if the runtime normally auto-binds the
 
 ## China mainland
 
-The repository includes `basalt_environment.yml` with Tsinghua mirror channels. Model files are also mirrored on [Baidu Netdisk](https://pan.baidu.com/s/1ouKqabxHYr1GmvpquQCzqw?pwd=embl) with extraction code `embl`.
+`BASALT_setup_China_mainland.py` handles the environment, script installation, and model weights as one recoverable workflow. It prefers an installed `micromamba`, then `mamba`, then Conda. The following command downloads the official standalone micromamba only when micromamba is unavailable, stores its shared package cache under `~/micromamba`, probes several mirror endpoints, and downloads weights from Hugging Face first:
 
-Do not mix packages from several mirror and upstream channel stacks within the same solved environment unless necessary. Export the final environment and verify each external executable after installation.
+```bash
+python3 BASALT_setup_China_mainland.py \
+  --manager micromamba \
+  --bootstrap-micromamba \
+  --mirror auto \
+  --env-name basalt
+```
+
+The bootstrapped binary is placed at `~/.local/bin/micromamba`; the installer does not initialize or edit the shell. It also does not run `conda config`, edit `~/.condarc`, edit pip configuration, or change environment files to mode `777`. Activate later with the path printed at completion, or continue using `micromamba run -n basalt COMMAND`.
+
+Inspect the exact commands without changing the system:
+
+```bash
+python3 BASALT_setup_China_mainland.py \
+  --manager micromamba \
+  --bootstrap-micromamba \
+  --mirror tuna \
+  --model-source none \
+  --dry-run
+```
+
+### Mirror selection
+
+| Option | Conda channels | Matching temporary PyPI index | Intended use |
+|---|---|---|---|
+| `--mirror auto` | probes TUNA, BFSU, USTC, then upstream | follows the selected preset | default for variable networks |
+| `--mirror tuna` | TUNA `conda-forge` and `bioconda` | TUNA PyPI | stable manual selection |
+| `--mirror bfsu` | BFSU `conda-forge` and `bioconda` | BFSU PyPI | alternative education-network route |
+| `--mirror ustc` | USTC dynamic caches for `conda-forge` and `bioconda` | USTC PyPI | community-channel-only environment |
+| `--mirror upstream` | official `conda.anaconda.org` | inherited/default PyPI | VPN, proxy, or international route |
+
+The presets follow the current [TUNA](https://mirrors.tuna.tsinghua.edu.cn/help/anaconda/), [BFSU](https://mirrors.bfsu.edu.cn/help/anaconda/), and [USTC](https://mirrors.ustc.edu.cn/help/anaconda.html) Anaconda mirror guidance. USTC currently documents dynamic caches for `conda-forge` and `bioconda`, which is sufficient because the maintained BASALT environment no longer depends on `defaults` or the historical `esteinig` channel.
+
+For an institutional mirror, repeat `--channel` in decreasing-priority order and optionally set the PyPI endpoint:
+
+```bash
+python3 BASALT_setup_China_mainland.py \
+  --channel https://mirror.example.edu/anaconda/cloud/conda-forge \
+  --channel https://mirror.example.edu/anaconda/cloud/bioconda \
+  --pip-index-url https://mirror.example.edu/pypi/simple
+```
+
+Do not combine packages from different channel stacks in one solved environment. If a mirror is reachable but lacks a required artifact, rerun with `--update --mirror OTHER` after confirming the selected route, or create a new environment under a different name. Existing package caches can be used with `--offline`.
+
+### Weight fallbacks
+
+Automatic mode uses [Hugging Face](https://huggingface.co/PKU-EMBL/BASALT_WEIGHT) first and Figshare second. To create only the software environment, pass `--model-source none`. Model files are additionally available from [Baidu Netdisk](https://pan.baidu.com/s/1ouKqabxHYr1GmvpquQCzqw?pwd=embl) with extraction code `embl`; after manual download, keep the original ZIP and run:
+
+```bash
+python3 BASALT_setup_China_mainland.py \
+  --model-source archive \
+  --model-archive /absolute/path/BASALT.zip \
+  --model-dir /persistent/path/BASALT_WEIGHT
+```
+
+The same local archive works independently of the installer:
+
+```bash
+BASALT_models_download.py \
+  --source archive \
+  --archive /absolute/path/BASALT.zip \
+  --path /persistent/path/BASALT_WEIGHT
+```
+
+Use `--hf-endpoint` only for a trusted Hugging Face-compatible service operated or approved by your institution. Proxy variables such as `HTTPS_PROXY` are inherited automatically.
+
+After installation, export the final environment, record the selected mirror, and verify every external executable. Database downloads are separate from package and model installation; run `checkm2 database --download` through the network route approved for the compute site.
 
 ## Updating BASALT
 
@@ -166,8 +254,11 @@ The installer copies scripts into the environment. Update and reinstall them exp
 cd /path/to/BASALT
 git pull --ff-only
 git rev-parse HEAD
-conda activate basalt_env
-bash install.sh
+python3 BASALT_setup_China_mainland.py \
+  --source-dir . \
+  --env-name basalt \
+  --update \
+  --model-source none
 ```
 
 Start new analyses in a new working directory after an update. Resuming a checkpoint with different code, model weights, databases, or external-tool versions weakens reproducibility and may produce incompatible intermediates.

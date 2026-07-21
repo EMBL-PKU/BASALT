@@ -41,6 +41,8 @@ MetaBAT 2 is run across four internal threshold settings. CONCOCT cluster counts
 
 BASALT computes abundance and paired-end connectivity summaries, compares candidates within an assembly, and then compares selected bins across assemblies. The selection logic uses combinations of contig overlap, coverage, sequence composition, and CheckM or CheckM2 quality estimates.
 
+For biologically related samples, contigs from the same population genome can exhibit concordant coverage changes across samples, whereas foreign or mismatched contigs may show discordant profiles. This differential signal is most informative when the sample group retains substantial community continuity while population abundances vary. It is complementary evidence, not an independent proof of contig origin; see [Study design patterns](study-design.md#why-related-multi-assembly-designs-are-informative).
+
 These stages reduce redundant candidates and retain representatives for downstream refinement.
 
 **Interpretive boundary.** Computational dereplication is not a taxonomic or strain-definition procedure. Use an explicit downstream species or strain criterion if the scientific question requires one.

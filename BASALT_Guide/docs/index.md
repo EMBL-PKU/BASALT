@@ -24,6 +24,12 @@
 The published study reports improved MAG recovery and downstream genome-resolved analyses relative to the workflows and datasets tested. This is not a guarantee for every community or sequencing design. Dataset complexity, sequencing depth, assembly quality, read type, database choice, and parameter settings can change the outcome.
 :::
 
+## Core advantage: coherent multi-assembly refinement
+
+BASALT can jointly evaluate sample-specific assemblies and a biologically matched co-assembly. The former can preserve sample-restricted populations while avoiding some pooling complexity; the latter can increase effective depth for genomes shared across samples. In related longitudinal, spatial, technical, intervention, stage, or environmental-gradient designs, concordant cross-sample coverage changes provide an abundance fingerprint that complements tetranucleotide composition and sequence overlap during candidate selection, dereplication, contig screening, retrieval, and reassembly.
+
+This strategy is most informative when samples share substantial genomic content while retaining biologically meaningful abundance variation. It does not justify pooling unrelated samples or guarantee better MAGs. Use a prespecified pilot to compare individual-only, pooled-only, and combined designs under identical quality criteria. See [Study design patterns](study-design.md) for supported layouts and decision boundaries.
+
 ## Start here
 
 Choose the route that matches the decision you need to make. Commands and defaults on this site are checked against the current repository.

@@ -16,12 +16,27 @@ grep -Ei 'error|failed|warning|traceback' *.log 2>/dev/null || true
 
 ## Installation and environment
 
+### Environment solving or package downloads are slow
+
+Use the China-mainland installer in dry-run mode to inspect the manager, channels, PyPI index, and model source before retrying:
+
+```bash
+python3 BASALT_setup_China_mainland.py \
+  --manager micromamba \
+  --bootstrap-micromamba \
+  --mirror auto \
+  --model-source none \
+  --dry-run
+```
+
+Remove `--dry-run` when the selected route is correct. The installer prefers micromamba and keeps mirror settings local to its subprocesses. If one route is connected but incomplete, choose `--mirror tuna`, `bfsu`, `ustc`, or `upstream` explicitly and pass `--update` for an existing environment. Do not repeatedly append channels to the global `.condarc`; mixed channel priority is a common cause of slow or inconsistent solves.
+
 ### `BASALT: command not found`
 
 Activate the environment used during installation and inspect the launcher:
 
 ```bash
-conda activate basalt_env
+conda activate basalt
 command -v BASALT
 ls -l "$CONDA_PREFIX/bin/BASALT" "$CONDA_PREFIX/bin/BASALT.py"
 ```
@@ -29,10 +44,23 @@ ls -l "$CONDA_PREFIX/bin/BASALT" "$CONDA_PREFIX/bin/BASALT.py"
 If the launcher is absent, return to the cloned repository and reinstall:
 
 ```bash
-conda activate basalt_env
+conda activate basalt
 cd /path/to/BASALT
 bash install.sh
 ```
+
+### `LorBin: command not found`
+
+The `-e l` adapter does not install LorBin automatically. It targets the BASALT-compatible [LorBin–BASALT Extra-binner fork](https://github.com/PKU-EMBL/LorBin-BASALT-Extrabinner), not an arbitrary upstream installation. From the cloned fork, install it into the same environment that launches BASALT and retain its source commit:
+
+```bash
+git -C /path/to/LorBin-BASALT-Extrabinner rev-parse HEAD
+micromamba run -n basalt python -m pip install --no-deps \
+  /path/to/LorBin-BASALT-Extrabinner
+micromamba run -n basalt LorBin --help
+```
+
+Conda users can replace `micromamba run` with `conda run`. If the command exists only in a separate environment, BASALT will not discover it automatically. See [Extra binners](extra-binners.md#lorbin) for dependency checks, the standalone-environment fallback, and output validation.
 
 ### BASALT models are missing
 
@@ -46,7 +74,16 @@ find "$BASALT_WEIGHT" -maxdepth 1 -name '*_ensemble.csv' | wc -l
 If the count is not `5`, rerun the model downloader and inspect extraction errors:
 
 ```bash
-BASALT_models_download.py --path "$BASALT_WEIGHT"
+BASALT_models_download.py --source auto --path "$BASALT_WEIGHT"
+```
+
+Automatic mode tries the official Hugging Face repository before Figshare. For a manually obtained Baidu Netdisk ZIP or another trusted local copy:
+
+```bash
+BASALT_models_download.py \
+  --source archive \
+  --archive /absolute/path/BASALT.zip \
+  --path "$BASALT_WEIGHT"
 ```
 
 ### `CheckM2 database not found`

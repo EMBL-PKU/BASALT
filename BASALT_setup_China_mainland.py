@@ -27,7 +27,6 @@ from urllib.request import Request, urlopen
 
 REPOSITORY_URL = "https://github.com/PKU-EMBL/BASALT.git"
 MICROMAMBA_URL = "https://micro.mamba.pm/api/micromamba/{platform}/latest"
-BAIDU_MODELS_URL = "https://pan.baidu.com/s/1ouKqabxHYr1GmvpquQCzqw?pwd=embl"
 
 MIRRORS = {
     "tuna": {
@@ -191,21 +190,21 @@ def bootstrap_micromamba(destination: Path, url_template: str) -> Path:
                 "Could not download micromamba from {}: {}".format(url, exc)
             ) from exc
 
-        with tarfile.open(str(archive), "r:bz2") as bundle:
-            try:
+        try:
+            with tarfile.open(str(archive), "r:bz2") as bundle:
                 member = bundle.getmember("bin/micromamba")
                 source = bundle.extractfile(member)
-            except (KeyError, tarfile.TarError) as exc:
-                raise InstallationError(
-                    "The micromamba archive does not contain bin/micromamba."
-                ) from exc
-            if source is None or not member.isfile():
-                raise InstallationError("Invalid micromamba binary in archive.")
-            temporary_binary = destination.with_suffix(".part")
-            with source, temporary_binary.open("wb") as output:
-                shutil.copyfileobj(source, output)
-            temporary_binary.chmod(0o755)
-            temporary_binary.replace(destination)
+                if source is None or not member.isfile():
+                    raise InstallationError("Invalid micromamba binary in archive.")
+                temporary_binary = destination.with_suffix(".part")
+                with source, temporary_binary.open("wb") as output:
+                    shutil.copyfileobj(source, output)
+                temporary_binary.chmod(0o755)
+                temporary_binary.replace(destination)
+        except (KeyError, tarfile.TarError, OSError) as exc:
+            raise InstallationError(
+                "The downloaded archive does not contain a valid bin/micromamba."
+            ) from exc
 
     print("Installed micromamba: {}".format(destination))
     return destination
@@ -613,6 +612,10 @@ def validate_arguments(args: argparse.Namespace) -> None:
         raise InstallationError(
             "--model-url is only compatible with --model-source url/auto."
         )
+    if args.model_archive and args.model_url:
+        raise InstallationError(
+            "--model-archive and --model-url are mutually exclusive."
+        )
 
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
@@ -698,7 +701,30 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         model_dir = Path(args.model_dir).expanduser().resolve()
         print("\nBASALT installation completed.")
         if manager == "micromamba":
-            print("Activate: micromamba activate {}".format(args.env_name))
+            root_prefix = Path(args.mamba_root_prefix).expanduser().resolve()
+            print(
+                "Run without activation: MAMBA_ROOT_PREFIX={} {}".format(
+                    shlex.quote(str(root_prefix)),
+                    quote_command(
+                        [
+                            executable,
+                            "run",
+                            "--name",
+                            args.env_name,
+                            "BASALT",
+                            "--help",
+                        ]
+                    ),
+                )
+            )
+            print("For bash activation:")
+            print('  export MAMBA_ROOT_PREFIX="{}"'.format(root_prefix))
+            print(
+                '  eval "$({})"'.format(
+                    quote_command([executable, "shell", "hook", "--shell", "bash"])
+                )
+            )
+            print("  micromamba activate {}".format(args.env_name))
         else:
             print("Activate: conda activate {}".format(args.env_name))
         if args.model_source != "none":
@@ -708,7 +734,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     except InstallationError as exc:
         print("\nERROR: {}".format(exc), file=sys.stderr)
         print(
-            "Model fallback: {} (code: embl)".format(BAIDU_MODELS_URL),
+            "Inspect the selected route with --dry-run, or retry with an explicit "
+            "--mirror/--channel after checking the error above.",
             file=sys.stderr,
         )
         return 2

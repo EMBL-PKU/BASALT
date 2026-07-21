@@ -13,6 +13,10 @@ BASALT is a metagenomic workflow for recovering and refining metagenome-assemble
 
 The published evaluation reports improved MAG recovery and downstream genome-resolved analyses relative to the tested workflows and datasets. These results define the evidence boundary: performance depends on community complexity, sequencing depth, assembly quality, read type, and the selected parameters. See the [Nature Communications article](https://doi.org/10.1038/s41467-024-46539-7) for the complete experimental design.
 
+## Core advantage: coherent multi-assembly refinement
+
+BASALT can jointly evaluate sample-specific assemblies and a biologically matched co-assembly. Individual assemblies preserve sample-restricted populations while avoiding some pooling complexity; co-assembly can increase effective depth for shared, low-abundance genomes. Across related samples, concordant coverage changes provide an abundance fingerprint that complements tetranucleotide composition and sequence overlap during bin selection, dereplication, contig screening, retrieval, and reassembly. This design is especially useful for longitudinal, reactor time-series, nearby-site, extraction-method, intervention, growth-stage, and environmental-gradient studies. Validate it in a pilot; it is not a reason to combine unrelated samples. See [Study design patterns](BASALT_Guide/docs/study-design.md).
+
 <p align="center">
   <img src="fig/workflow.png" alt="BASALT workflow from assemblies and reads to refined MAGs" width="86%">
 </p>
@@ -65,6 +69,8 @@ See the [BASALT-Air repository](https://github.com/PKU-EMBL/BASALT-Air) for its 
 
 Optional adapters support MetaBinner (`-e m`), VAMB (`-e v`), and LorBin (`-e l`). Their installation and input requirements are documented separately in the [extra-binner guide](BASALT_Guide/docs/extra-binners.md).
 
+The LorBin adapter is maintained against [PKU-EMBL/LorBin-BASALT-Extrabinner](https://github.com/PKU-EMBL/LorBin-BASALT-Extrabinner), an in-house fork that adapts LorBin to the BASALT Python 3.12 environment and carries BASALT-specific runtime fixes. Record the fork's Git commit for every analysis that uses `-e l`; the package version alone does not uniquely identify these changes.
+
 ### Candidate-generation presets
 
 | Preset | Candidate generators | Practical trade-off |
@@ -107,11 +113,12 @@ The Conda-compatible installation below is the maintained route for this reposit
 git clone https://github.com/PKU-EMBL/BASALT.git
 cd BASALT
 
-micromamba create -n basalt -f basalt_environment.yml --yes
+micromamba create -n basalt -f basalt_environment.yml \
+  --strict-channel-priority --yes
 micromamba run -n basalt bash install.sh
 ```
 
-Conda users can replace `micromamba create` with `conda env create` and `micromamba run` with `conda run`. [`basalt_environment.yml`](basalt_environment.yml) is the sole environment definition. It uses the portable `conda-forge` and `bioconda` channel names with strict dependency scope; it does not hard-code a site mirror.
+Conda users can run `CONDA_CHANNEL_PRIORITY=strict conda env create -n basalt -f basalt_environment.yml --solver libmamba --yes` and replace `micromamba run` with `conda run`. [`basalt_environment.yml`](basalt_environment.yml) is the sole environment definition. It uses the portable `conda-forge` and `bioconda` channel names with a narrow dependency scope; it does not hard-code a site mirror.
 
 For mainland China, the network-aware installer probes TUNA, BFSU, USTC, and upstream endpoints, prefers `micromamba`, applies matching Conda and PyPI mirrors only to the installation subprocess, and leaves `~/.condarc` and pip configuration unchanged:
 

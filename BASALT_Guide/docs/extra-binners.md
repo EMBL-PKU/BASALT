@@ -6,7 +6,7 @@ BASALT can add candidate bins from MetaBinner, VAMB, or LorBin to the default ca
 |---|---|---|
 | `-e m` | MetaBinner | Sequence composition and abundance profiles |
 | `-e v` | VAMB | Variational autoencoder representation and abundance |
-| `-e l` | LorBin | Long-read-oriented binning |
+| `-e l` | [LorBin–BASALT Extra-binner](https://github.com/PKU-EMBL/LorBin-BASALT-Extrabinner) | Long-read-oriented binning through the BASALT-compatible in-house fork |
 
 Combine flags with commas, for example `-e m,v`. An adapter runs in addition to the binners selected by `--sensitive`.
 
@@ -76,7 +76,48 @@ VAMB GPU behaviour depends on its PyTorch installation and local accelerator sta
 
 ## LorBin
 
-LorBin is intended for long-read metagenomic binning. The adapter depends on a separately installed `LorBin` executable and compatible BAM files.
+LorBin is intended for long-read metagenomic binning. For `-e l`, the maintained integration target is [PKU-EMBL/LorBin-BASALT-Extrabinner](https://github.com/PKU-EMBL/LorBin-BASALT-Extrabinner), an in-house fork of the upstream `LorMeBioAI/LorBin` repository. It retains the `LorBin` executable and algorithmic workflow while adapting the package to the BASALT Python 3.12 environment and carrying BASALT-oriented fixes for argument parsing, marker evaluation, runtime name errors, and related integration defects.
+
+:::{important}
+Do not report this route only as “LorBin.” Record that the BASALT-compatible in-house fork was used, together with its Git commit. The LorBin paper describes the method; the fork repository and commit identify the implementation that actually produced the candidate bins.
+:::
+
+### Install into the BASALT environment
+
+The fork declares Python 3.12 and exposes `LorBin=lorbin.lorbin:main`. Its repository documents installation on top of the BASALT environment. Clone and pin the source before installing it:
+
+```bash
+git clone https://github.com/PKU-EMBL/LorBin-BASALT-Extrabinner.git
+cd LorBin-BASALT-Extrabinner
+git rev-parse HEAD | tee lorbin-basalt-commit.txt
+
+micromamba run -n basalt \
+  python -m pip install --no-deps .
+
+micromamba run -n basalt LorBin --help
+```
+
+Conda users can replace `micromamba run` with `conda run`. `--no-deps` prevents pip from silently replacing the solved BASALT packages; the repository's `setup.py` does not currently declare Python-package dependencies. The BASALT environment already supplies the required sequence-processing tools, but its transitive PyTorch and scientific-Python versions can differ from the fork's standalone reference environment. Verify the exact resolved stack rather than assuming compatibility:
+
+```bash
+micromamba run -n basalt python -c \
+  'import Bio, joblib, numpy, pandas, scipy, sklearn, torch; \
+print("Biopython", Bio.__version__); print("NumPy", numpy.__version__); \
+print("pandas", pandas.__version__); print("SciPy", scipy.__version__); \
+print("scikit-learn", sklearn.__version__); print("joblib", joblib.__version__); \
+print("PyTorch", torch.__version__)'
+
+micromamba run -n basalt \
+  sh -c 'command -v LorBin minimap2 samtools hmmsearch prodigal bedtools'
+```
+
+Run the fork's public test dataset before a production analysis. The repository links the test data from [Zenodo record 13883404](https://zenodo.org/records/13883404).
+
+If the fork cannot coexist with the validated BASALT environment, use its standalone `lorbin_env.yaml`, run LorBin independently, and import the resulting FASTA bins through [data feeding](#manual-recovery-through-data-feeding). A separately activated LorBin environment is not automatically visible to a BASALT process running in another environment.
+
+### Run through BASALT
+
+The adapter depends on the installed `LorBin` executable and compatible BAM files generated during BASALT preprocessing.
 
 ```bash
 BASALT \
@@ -87,7 +128,15 @@ BASALT \
   -t 32 -m 128 --mode new -o study_lorbin
 ```
 
-Treat the current LorBin integration as an optional adapter that requires local validation. Run LorBin on a small test, inspect its command in stderr or logs, and verify the returned FASTA set before production use.
+The adapter invokes the fork's `LorBin bin` command, then normalizes returned FASTA files into the BASALT candidate-bin naming scheme. Confirm that `Basalt_log.txt` records successful completion and that the corresponding `*_LorBin_genomes/` directory contains non-empty FASTA files. A final BASALT result is not evidence that LorBin succeeded because optional-binner failures are warning-only.
+
+### Report the implementation
+
+A minimal Methods statement is:
+
+> Long-read-oriented candidate bins were generated with the PKU-EMBL LorBin–BASALT Extra-binner in-house fork (package version 0.1.0; Git commit [SHA]) through the BASALT `-e l` adapter. Candidate FASTA files were subsequently evaluated within the BASALT selection and refinement workflow.
+
+Replace the version and commit with the installed values. Do not imply that all fork-generated candidates were retained in the final bin set.
 
 ## Manual recovery through data feeding
 
@@ -105,8 +154,10 @@ The CheckM2 data-feeding route writes `imported_data_feeded/` for this example.
 
 ## Citation
 
-Cite the exact optional binner used. For LorBin, see:
+Cite the exact optional binner used. For the LorBin adapter, cite the algorithm paper and identify the forked code version:
 
 > Xue, W. *et al.* LorBin: efficient binning of long-read metagenomes by multiscale adaptive clustering and evaluation. *Nature Communications* **16**, 9353 (2025).
+
+> LorBin source-code archive. [https://doi.org/10.5281/zenodo.13864645](https://doi.org/10.5281/zenodo.13864645). Record the corresponding [LorBin–BASALT Extra-binner](https://github.com/PKU-EMBL/LorBin-BASALT-Extrabinner) Git commit used for the BASALT run.
 
 Use each software project's recommended citation and version-specific documentation for MetaBinner and VAMB.

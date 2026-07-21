@@ -18,6 +18,7 @@ A reproducible BASALT analysis requires more than the final FASTA files. The res
 - installation route, operating system, and hardware allocation;
 - Conda environment export;
 - versions of binners, mappers, assemblers, polishers, and quality-control tools;
+- source repository and Git commit for every forked optional binner, including the LorBin–BASALT Extra-binner used by `-e l`;
 - checksums of the BASALT ensemble descriptors and checkpoints;
 - accelerator, driver, CUDA, and PyTorch versions when a GPU is used.
 
@@ -51,6 +52,9 @@ Run these from the analysis directory and adapt tool names to the installed envi
 
 ```bash
 git -C /path/to/BASALT rev-parse HEAD > basalt-git-commit.txt
+# Required when the LorBin adapter (`-e l`) contributed candidates:
+git -C /path/to/LorBin-BASALT-Extrabinner rev-parse HEAD \
+  > lorbin-basalt-git-commit.txt
 conda env export --no-builds > basalt-environment.yml
 
 {
@@ -88,7 +92,7 @@ Avoid phrases such as “high quality,” “improved,” “faster,” or “no
 
 Adapt the bracketed fields without adding unsupported claims:
 
-> Metagenomic assemblies were processed with BASALT [release; Git commit] on [operating system and hardware]. Assemblies were generated with [assembler, version, parameters] from [samples and read types]. BASALT received [number] assemblies, [number] paired-end datasets, [number] ONT or CLR datasets, and [number] HiFi datasets. Candidate generation used the `[quick|sensitive|more-sensitive]` preset with [optional binners, versions, parameters]. Contig refinement used the `[quick|deep]` setting and retained bins entering refinement at a minimum estimated completeness of [value]% and maximum estimated contamination of [value]%. Genome quality was estimated with [CheckM or CheckM2, version, database identifier]. The run used [threads] threads and [RAM] GB and was [started new|resumed from stated checkpoint]. Final bins were filtered using [complete criteria] and dereplicated with [software, version, threshold]. Commands, environment files, logs, database identifiers, model checksums, and output checksums are available at [repository or archive].
+> Metagenomic assemblies were processed with BASALT [release; Git commit] on [operating system and hardware]. Assemblies were generated with [assembler, version, parameters] from [samples and read types]. BASALT received [number] assemblies, [number] paired-end datasets, [number] ONT or CLR datasets, and [number] HiFi datasets. Candidate generation used the `[quick|sensitive|more-sensitive]` preset with [optional binners, versions, source repository or fork commit, and parameters]. Contig refinement used the `[quick|deep]` setting and retained bins entering refinement at a minimum estimated completeness of [value]% and maximum estimated contamination of [value]%. Genome quality was estimated with [CheckM or CheckM2, version, database identifier]. The run used [threads] threads and [RAM] GB and was [started new|resumed from stated checkpoint]. Final bins were filtered using [complete criteria] and dereplicated with [software, version, threshold]. Commands, environment files, logs, database identifiers, model checksums, and output checksums are available at [repository or archive].
 
 ## Results reporting template
 

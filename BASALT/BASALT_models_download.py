@@ -5,7 +5,9 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import os
+import sys
 from pathlib import Path
 from typing import Optional
 from zipfile import BadZipFile, ZipFile
@@ -59,6 +61,7 @@ def download_huggingface(
     target_dir: Path,
     endpoint: Optional[str] = None,
     revision: str = "main",
+    force: bool = False,
 ) -> None:
     """Download the model repository concurrently with resumable HF metadata."""
     try:
@@ -75,13 +78,14 @@ def download_huggingface(
         repo_id=HUGGING_FACE_REPO,
         revision=revision,
         local_dir=str(target_dir),
-        allow_patterns=["*_ensemble.csv", "*_ensemble/**"],
+        allow_patterns=["*_ensemble.csv", "*_ensemble/*", "*_ensemble/**"],
         endpoint=endpoint,
         max_workers=8,
+        force_download=force,
     )
 
 
-def download_archive(url: str, target_dir: Path) -> Path:
+def download_archive(url: str, target_dir: Path, force: bool = False) -> Path:
     """Download a ZIP archive atomically and return its local path."""
     try:
         import requests
@@ -92,9 +96,15 @@ def download_archive(url: str, target_dir: Path) -> Path:
             "`python -m pip install requests tqdm`."
         ) from exc
 
-    target_dir.mkdir(parents=True, exist_ok=True)
-    archive = target_dir / "BASALT.zip"
-    if archive.is_file() and archive.stat().st_size > 0:
+    download_dir = target_dir / ".downloads"
+    download_dir.mkdir(parents=True, exist_ok=True)
+    if url == FIGSHARE_URL:
+        archive_name = "BASALT-figshare-41093033.zip"
+    else:
+        digest = hashlib.sha256(url.encode("utf-8")).hexdigest()[:12]
+        archive_name = "BASALT-custom-{}.zip".format(digest)
+    archive = download_dir / archive_name
+    if archive.is_file() and archive.stat().st_size > 0 and not force:
         print("Using existing archive: {}".format(archive))
         return archive
 
@@ -157,7 +167,7 @@ def obtain_models(args: argparse.Namespace, target_dir: Path) -> str:
         use_local_archive(Path(args.archive), target_dir)
         return "local archive"
     if args.url:
-        archive = download_archive(args.url, target_dir)
+        archive = download_archive(args.url, target_dir, args.force)
         unpack_model(archive, target_dir)
         return "custom URL"
 
@@ -166,23 +176,23 @@ def obtain_models(args: argparse.Namespace, target_dir: Path) -> str:
     if args.source == "url":
         raise RuntimeError("--source url requires --url.")
     if args.source == "huggingface":
-        download_huggingface(target_dir, args.hf_endpoint, args.revision)
+        download_huggingface(target_dir, args.hf_endpoint, args.revision, args.force)
         return "Hugging Face"
     if args.source == "figshare":
-        archive = download_archive(FIGSHARE_URL, target_dir)
+        archive = download_archive(FIGSHARE_URL, target_dir, args.force)
         unpack_model(archive, target_dir)
         return "Figshare"
 
     # Automatic policy: the official Hugging Face repository is concurrent and
     # resumable, while the legacy Figshare ZIP remains a compatibility fallback.
     try:
-        download_huggingface(target_dir, args.hf_endpoint, args.revision)
+        download_huggingface(target_dir, args.hf_endpoint, args.revision, args.force)
         validate_models(target_dir)
         return "Hugging Face"
     except Exception as exc:
         print("Hugging Face download failed: {}".format(exc))
         print("Falling back to the Figshare archive ...")
-        archive = download_archive(FIGSHARE_URL, target_dir)
+        archive = download_archive(FIGSHARE_URL, target_dir, args.force)
         unpack_model(archive, target_dir)
         return "Figshare fallback"
 
@@ -238,12 +248,14 @@ def main() -> None:
         source = obtain_models(args, target_dir)
         descriptors = validate_models(target_dir)
     except Exception as exc:
-        raise RuntimeError(
-            "Model installation failed: {}\n"
+        print("Model installation failed: {}".format(exc), file=sys.stderr)
+        print(
             "Manual China-mainland fallback: {} (extraction code: embl). "
             "After downloading the ZIP, rerun with --source archive --archive FILE."
-            .format(exc, BAIDU_URL)
-        ) from exc
+            .format(BAIDU_URL),
+            file=sys.stderr,
+        )
+        raise SystemExit(2)
 
     print("Models ready in: {}".format(target_dir))
     print("Source: {}".format(source))

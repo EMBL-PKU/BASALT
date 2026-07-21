@@ -2,6 +2,16 @@
 
 Release notes summarize intended changes. For reproducible analysis, also record the exact Git commit, model files, quality-control database, and dependency environment.
 
+## Unreleased
+
+### Installation changes
+
+- Reworked the mainland-China installer to prefer micromamba, support TUNA, BFSU, USTC, upstream, and institutional channels, and keep mirror settings out of global user configuration.
+- Added dry-run, cached/offline, update, local model archive, custom model URL, and explicit manager/path options.
+- Made the official `PKU-EMBL/BASALT_WEIGHT` Hugging Face repository the first automatic model source, with Figshare and Baidu Netdisk fallbacks.
+- Removed the obsolete `esteinig` and `defaults` channel requirements, separated legacy CheckM from the maintained Python 3.12 environment, and removed redundant direct declarations of large Python dependencies already managed transitively by CheckM2.
+- Documented `PKU-EMBL/LorBin-BASALT-Extrabinner` as the maintained `-e l` integration target, including pinned-source installation, dependency validation, warning-only failure semantics, and fork-commit reporting.
+
 ## BASALT 1.2.1
 
 Tagged 15 May 2026.
