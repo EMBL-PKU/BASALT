@@ -1,0 +1,3 @@
+# Documentation-only dependencies, pinned for reproducible Read the Docs builds.
+mkdocs==1.6.1
+mkdocs-material==9.7.7

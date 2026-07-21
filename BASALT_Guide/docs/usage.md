@@ -1,223 +1,197 @@
-# Usage
+# Command-line reference
 
-## BASALT vs BASALT-Air: Key CLI Differences
+This page documents the Conda-based BASALT CLI in this repository. BASALT-Air has a different path model and sample delimiter.
 
-BASALT-Air introduces several quality-of-life improvements over the original BASALT CLI:
+## Command structure
 
-| Feature | BASALT (Conda) | BASALT-Air (Pixi) |
+```text
+BASALT \
+  -a <assembly[,assembly...]> \
+  [-s <R1,R2[/R1,R2...]>] \
+  [-l <long_read[,long_read...]>] \
+  [-hf <hifi_read[,hifi_read...]>] \
+  [options]
+```
+
+A normal new run requires one or more assemblies and at least one read source, although the argument parser does not enforce every valid combination.
+
+## Input and resource options
+
+| Option | Parsed default | Meaning |
+|---|---:|---|
+| `-a`, `--assemblies` | none | Comma-separated assembly FASTA files |
+| `-s`, `--shortreads` | none | Paired-end files separated by `,`; samples separated by `/` |
+| `-l`, `--longreads` | none | Comma-separated ONT or PacBio CLR read files |
+| `-hf`, `--hifi` | none | Comma-separated PacBio HiFi read files |
+| `-t`, `--threads` | `4` | Requested CPU threads |
+| `-m`, `--ram` | `32` | Available RAM in GB used by internal scheduling decisions |
+
+`-m` is not a hard memory cap. The operating system or scheduler must enforce a limit if one is required.
+
+Read [Inputs and study design](inputs.md) for filename, compression, and sample-matching constraints.
+
+## Workflow options
+
+| Option | Default | Accepted values | Meaning |
+|---|---:|---|---|
+| `-o`, `--out` | `Final_binset` | directory name | Name of the final output directory |
+| `-q`, `--quality-check` | `checkm2` | `checkm2`, `checkm` | Quality-control backend |
+| `--min-cpn` | `35` | integer percentage | Minimum estimated completeness for bins entering refinement |
+| `--max-ctn` | `20` | integer percentage | Maximum estimated contamination for bins entering refinement |
+| `--mode` | `continue` | `new`, `continue` | Initialize or resume checkpoint state |
+| `--module` | `all` | `autobinning`, `refinement`, `reassembly`, `all` | Requested pipeline section |
+| `--sensitive` | `sensitive` | `quick`, `sensitive`, `more-sensitive` | Candidate-generation preset |
+| `--refinepara` | `quick` | `quick`, `deep` | Contig-retrieval depth |
+| `-e`, `--extra_binner` | none | `m`, `v`, `l` | Optional MetaBinner, VAMB, or LorBin adapter; combine with commas |
+
+!!! note "Output naming"
+    In the current CheckM2 workflow, the final directory is the value supplied to `-o`. For example, `-o study_01_basalt` produces `study_01_basalt/`. The option is a name, not a portable absolute output path.
+
+## Advanced input routes
+
+| Option | Default | Meaning |
+|---|---:|---|
+| `-d`, `--data-feeding-folder` | none | Comma-separated external binset directories for data feeding |
+| `--binset-index` | `500` | Starting index assigned to imported binsets |
+| `-r`, `--refinement-binset` | empty | Existing binset for standalone outlier screening |
+| `-c`, `--coverage-list` | none | Comma-separated compatible coverage matrices |
+| `-b`, `--binsets-list` | none | Comma-separated existing binsets for dereplication |
+
+These routes require BASALT-compatible identifiers and intermediate files. They are not interchangeable shortcuts for a normal new run. Preserve the source assembly, reads, coverage-generation method, and original binning provenance.
+
+## Sensitivity presets
+
+| Preset | Candidate generators | Consequence |
 |---|---|---|
-| **Path support** | Working directory only | Absolute paths supported |
-| **Dataset separator** | `/` (slash) | `;` (semicolon) |
-| **Intermediate dir** | CWD (fixed) | `--workdir` |
-| **Output dir** | CWD (fixed) | `--outdir` |
-| **Activation** | `conda activate basalt_env` | `pixi shell` |
-| **Version check** | — | `BASALT --version` |
-| **Dependency check** | — | `BASALT --check-deps` |
+| `quick` | MetaBAT 2 and SemiBin 2 | Fewer candidate sets and lower runtime |
+| `sensitive` | MetaBAT 2, dynamically parameterized CONCOCT, and SemiBin 2 | Default balance of candidate diversity and runtime |
+| `more-sensitive` | MaxBin 2.0, MetaBAT 2, dynamically parameterized CONCOCT, and SemiBin 2 | More candidate sets and higher compute and storage demand |
 
-> **Tip:** In BASALT-Air, you can use `;` as a separator for multiple datasets in `-s`, and run BASALT from any directory without copying or symlinking files.
+The presets change candidate generation, not a universal accuracy threshold. `more-sensitive` can increase opportunities for recovery but does not guarantee more acceptable MAGs.
 
----
+## Refinement depth
 
-## Command-Line Interface
-
-=== "BASALT (Conda)"
-
-    ```
-    BASALT -a <assemblies> -s <short_reads> -t <threads> -m <RAM_GB> [options]
-    ```
-
-=== "BASALT-Air"
-
-    ```
-    BASALT -a <assemblies> -s <short_reads> -t <threads> -m <RAM_GB>
-           [--workdir <dir>] [--outdir <dir>] [options]
-    ```
-
----
-
-## Required Arguments
-
-| Argument | Type | Description | Example |
-|---|---|---|---|
-| `-a`, `--assemblies` | `str` | Comma-separated assembly FASTA files | `-a as1.fa,as2.fa,as3.fa` |
-| `-s`, `--shortreads` | `str` | Paired-end reads. Read pairs separated by `,`; datasets by `/` | `-s s1_r1.fq,s1_r2.fq/s2_r1.fq,s2_r2.fq` |
-| `-t`, `--threads` | `int` | Number of CPU threads | `-t 64` |
-| `-m`, `--ram` | `int` | Maximum RAM in GB (minimum: 32) | `-m 250` |
-
-**Supported file formats:**
-
-- Assemblies: `.fa`, `.fna`, `.fasta`
-- Reads: `.fq`, `.fastq`
-- Compression: `.gz`, `.tar.gz`, `.zip`
-
----
-
-## Optional Arguments
-
-| Argument | Type | Default | Choices | Description |
-|---|---|---|---|---|
-| `-l`, `--longreads` | `str` | *none* | — | Comma-separated long-read files (ONT/PacBio, excludes HiFi) |
-| `-hf`, `--hifi` | `str` | *none* | — | Comma-separated PacBio HiFi read files |
-| `-e`, `--extra_binner` | `str` | *none* | `m`, `v`, `l` | Additional binners: `m`=MetaBinner, `v`=VAMB, `l`=LorBin |
-| `-o`, `--out` | `str` | `Final_binset` | — | Output folder name prefix |
-| `-q`, `--quality-check` | `str` | `checkm2` | `checkm`, `checkm2` | Quality assessment software |
-| `--min-cpn` | `int` | `35` | — | Minimum completeness (%) for refinement |
-| `--max-ctn` | `int` | `20` | — | Maximum contamination (%) for refinement |
-| `--mode` | `str` | `continue` | `new`, `continue` | Start fresh or resume from checkpoint |
-| `--module` | `str` | `all` | `autobinning`, `refinement`, `reassembly`, `all` | Pipeline stage to run |
-| `--sensitive` | `str` | `sensitive` | `quick`, `sensitive`, `more-sensitive` | Binning sensitivity preset |
-| `--refinepara` | `str` | `quick` | `quick`, `deep` | Refinement depth |
-| `-r`, `--refinement-binset` | `str` | *none* | — | Binset folder for standalone refinement |
-| `-c`, `--coverage-list` | `str` | *none* | — | Coverage files for standalone refinement |
-| `-b`, `--binsets-list` | `str` | *none* | — | Binset folders for dereplication |
-| `-d`, `--data-feeding-folder` | `str` | *none* | — | External binset folders for Data Feeding |
-| `--binset-index` | `int` | `500` | — | Start index for extra binsets in Data Feeding |
-| `--workdir` :material-airballoon: | `str` | CWD | — | Directory for intermediate files (BASALT-Air only) |
-| `--outdir` :material-airballoon: | `str` | Same as workdir | — | Directory for final output (BASALT-Air only) |
-
-:material-airballoon: = BASALT-Air only
-
----
-
-## Sensitivity Presets
-
-The `--sensitive` flag controls which binners are used and their parameter ranges:
-
-| Preset | Binners | Parameters | Runtime |
-|---|---|---|---|
-| `quick` | MetaBAT2, Semibin2 | MetaBAT2: 200/300/400/500; Semibin2: 100 | :material-rabbit: Fastest |
-| `sensitive` | MetaBAT2, CONCOCT, Semibin2 | As above + CONCOCT (1–2 settings) | :material-tortoise: Balanced |
-| `more-sensitive` | Maxbin2, MetaBAT2, CONCOCT, Semibin2 | Maxbin2: 0.3/0.5/0.7/0.9 + full settings | :material-snail: Most thorough |
-
----
-
-## Refinement Depth
-
-| Option | Description |
+| Value | Behaviour |
 |---|---|
-| `quick` | Standard contig retrieval. Faster, suitable for most datasets. |
-| `deep` | Extended contig retrieval at the sequence retrieval step. Recovers more contigs but takes longer. |
+| `quick` | Standard retrieval path |
+| `deep` | Extends retrieval in compatible code paths and generally requires more time |
 
----
+Report this option together with completeness and contamination thresholds. A deeper search changes the candidate space and should not be treated as a purely computational setting.
 
-## Extra Binners
+## Recommended invocation pattern
 
-Binners enabled via `-e` run **in addition to** the default set (MetaBAT2, Maxbin2, CONCOCT, Semibin2):
+Specify scientific and computational defaults explicitly so the run remains interpretable if software defaults change:
 
-| Flag | Tool | Method | Reference |
-|---|---|---|---|
-| `m` | MetaBinner | k-mer composition + coverage clustering | — |
-| `v` | VAMB | Variational autoencoder | *Nat. Biotechnol.* (2021) |
-| `l` | LorBin | Long-read multi-scale adaptive clustering | *Nat. Commun.* (2025) |
-
-Combine multiple extra binners: `-e m,l` or `-e m,v,l`.
-
----
+```bash
+BASALT \
+  -a assembly.fasta \
+  -s sample_R1.fastq,sample_R2.fastq \
+  -t 32 -m 128 \
+  --sensitive sensitive \
+  --refinepara quick \
+  --min-cpn 35 \
+  --max-ctn 20 \
+  -q checkm2 \
+  --mode new \
+  -o study_01_basalt
+```
 
 ## Examples
 
-### Basic Short-Read Run
-
-```bash
-BASALT -a assembly.fasta \
-    -s sample_R1.fq,sample_R2.fq \
-    -t 32 -m 128
-```
-
-### Multi-Assembly with Long Reads
-
-```bash
-BASALT -a as1.fa,as2.fa,as3.fa \
-    -s s1_R1.fq,s1_R2.fq/s2_R1.fq,s2_R2.fq \
-    -l long.fastq \
-    -t 60 -m 250
-```
-
-### Fast Mode
-
-```bash
-BASALT -a assembly.fasta \
-    -s sample_R1.fq,sample_R2.fq \
-    -t 32 -m 128 \
-    --sensitive quick --refinepara quick
-```
-
-### High-Quality Filtering with Custom Thresholds
-
-```bash
-BASALT -a as1.fa \
-    -s sample_R1.fq,sample_R2.fq \
-    -t 60 -m 250 \
-    --min-cpn 50 --max-ctn 10
-```
-
-### Short + Long Reads, Sensitive Mode, CheckM2
-
-```bash
-BASALT -a as1.fa,as2.fa \
-    -s s1_R1.fq,s1_R2.fq/s2_R1.fq,s2_R2.fq \
-    -l lr1.fastq,lr2.fastq \
-    -t 64 -m 256 \
-    --sensitive more-sensitive --refinepara deep \
-    -q checkm2
-```
-
-### Autobinning Only (Skip Refinement + Reassembly)
-
-```bash
-BASALT -a as1.fa,as2.fa \
-    -s s1_R1.fq,s1_R2.fq/s2_R1.fq,s2_R2.fq \
-    -t 60 -m 250 \
-    --module autobinning
-```
-
-### Refinement Only on Existing Bins
-
-```bash
-BASALT -a assembly.fa \
-    -s sample_R1.fq,sample_R2.fq \
-    -r My_MAGs_Folder \
-    -c Coverage_matrix.txt \
-    -t 32 -m 128
-```
-
-### Data Feeding: Import External Bins
-
-```bash
-BASALT -s sample_R1.fq,sample_R2.fq \
-    -d vamb_bins,metabat_bins \
-    --binset-index 1 \
-    -t 32 -m 128
-```
-
-### With Extra Binners
-
-```bash
-BASALT -a as1.fa \
-    -s sample_R1.fq,sample_R2.fq \
-    -t 32 -m 128 \
-    -e m,l \
-    --sensitive more-sensitive
-```
-
-### BASALT-Air: Absolute Paths with Work/Output Directories
+### Several assemblies and short-read samples
 
 ```bash
 BASALT \
-    -a /path/to/data/assembly.fa \
-    -s /path/to/data/sample1.R1.fq,/path/to/data/sample1.R2.fq \
-    -l /path/to/data/sample1.nanopore.fq \
-    -t 64 -m 128 \
-    -o my_project \
-    --workdir /scratch/work \
-    --outdir /results/output
+  -a assembly_1.fasta,assembly_2.fasta \
+  -s sample_1_R1.fastq,sample_1_R2.fastq/sample_2_R1.fastq,sample_2_R2.fastq \
+  -t 64 -m 256 \
+  --mode new -o study_multi_assembly
 ```
 
-### BASALT-Air: Multiple Datasets (Semicolon Separator)
+### Short reads plus ONT or PacBio CLR reads
 
 ```bash
 BASALT \
-    -a /data/as1.fa,/data/as2.fa \
-    -s /data/s1_R1.fq,/data/s1_R2.fq;/data/s2_R1.fq,/data/s2_R2.fq \
-    -t 64 -m 128
+  -a assembly.fasta \
+  -s sample_R1.fastq,sample_R2.fastq \
+  -l nanopore.fastq \
+  -t 64 -m 256 \
+  --mode new -o study_hybrid
 ```
+
+### PacBio HiFi
+
+```bash
+BASALT \
+  -a assembly.fasta \
+  -hf hifi.fastq \
+  -t 32 -m 128 \
+  --mode new -o study_hifi
+```
+
+### Autobinning only
+
+```bash
+BASALT \
+  -a assembly.fasta \
+  -s sample_R1.fastq,sample_R2.fastq \
+  --module autobinning \
+  -t 32 -m 128 --mode new
+```
+
+Module-specific execution relies on checkpoint and intermediate state. Start with a full run unless you understand the stage dependencies described on the [pipeline page](pipeline.md).
+
+### Data feeding
+
+```bash
+BASALT \
+  -s sample_R1.fastq,sample_R2.fastq \
+  -d external_bins_1,external_bins_2 \
+  --binset-index 1 \
+  -t 32 -m 128 \
+  -q checkm2 \
+  -o study_external
+```
+
+With CheckM2, a non-default `-o study_external` is transformed to `study_external_data_feeded/` for this data-feeding route.
+
+### Standalone outlier screening
+
+```bash
+BASALT \
+  -s sample_R1.fastq,sample_R2.fastq \
+  -l nanopore.fastq \
+  -a source_assembly.fasta \
+  -r existing_bins \
+  -c Coverage_matrix_for_binning_source_assembly.fasta.txt \
+  -t 32 -m 128 \
+  -q checkm2
+```
+
+The supplied assembly, reads, bin contig identifiers, and coverage matrix must be mutually compatible.
+
+## Resume semantics
+
+`--mode continue` reads `Basalt_checkpoint.txt` and reuses intermediates in the current directory. It does not prove that those files were generated by the same software version or command.
+
+Before resuming, confirm:
+
+- the same working directory and inputs;
+- the same BASALT commit or release;
+- the same model files and database;
+- compatible external-tool versions;
+- no manual renaming or partial cleanup of intermediates.
+
+If any condition changed, begin a new run in a new directory.
+
+## Exit status and logs
+
+Some external programs are invoked through shell commands, and not every failure is propagated as a non-zero BASALT exit status. A scheduler state of `COMPLETED` is therefore insufficient evidence of a successful scientific result.
+
+Check all of the following:
+
+1. the last entries in `Basalt_log.txt` and `Basalt_checkpoint.txt`;
+2. the presence and size of final FASTA files;
+3. the final quality report;
+4. stderr for failed external commands;
+5. warnings about optional binners or skipped stages.

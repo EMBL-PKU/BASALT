@@ -1,225 +1,172 @@
 # Installation
 
-BASALT is available in two editions:
+This page installs the Conda-based BASALT repository. BASALT depends on several compiled bioinformatics programs, two quality-control databases, and trained model files. A successful Python import alone is therefore not a complete installation test.
 
-- **BASALT-Air** (v1.0.0) — New lightweight version using Pixi, supports absolute paths and `--workdir/--outdir`.
-- **BASALT** (v1.2.0) — Mature Conda-based version, well-tested and widely used.
+## Platform and resources
 
-> **For new users, BASALT-Air is recommended.** It offers a simpler setup and more flexible file handling.
+| Requirement | Supported or practical value |
+|---|---|
+| Operating system | Linux x86-64 |
+| Python | 3.12 |
+| CPU | 8 threads minimum; 32 or more recommended for routine datasets |
+| Memory | 128 GB practical starting point; 256 GB or more for large or complex runs |
+| Storage | Dataset-dependent; allow space for mappings, candidate bins, reassemblies, and archives |
 
----
+macOS and Windows are not supported as native execution platforms. Use a Linux host, cluster, virtual machine, or compatible container runtime.
 
-## BASALT-Air Installation (Recommended for New Users)
+## Conda installation
 
-BASALT-Air requires Python 3.12 and uses [Pixi](https://pixi.sh) for dependency management.
-
-### 1. Install Pixi
-
-```bash
-curl -fsSL https://pixi.sh/install.sh | sh
-```
-
-### 2. Clone and Configure
+### 1. Clone the repository
 
 ```bash
-git clone https://github.com/PKU-EMBL/BASALT-Air.git
-cd BASALT-Air
-```
-
-Edit `pixi.toml` (lines 85-87) to set your local paths:
-
-```toml
-[activation.env]
-BASALT_WEIGHT = "/your/path/to/basalt_weights"
-CHECKM2DB     = "/your/path/to/checkm2db/CheckM2_database/uniref100.KO.1.dmnd"
-```
-
-Optionally adjust the CUDA version (line 13):
-
-```toml
-[system-requirements]
-cuda = "12"  # Change to "11" or "13" as needed
-```
-
-### 3. Install Dependencies
-
-```bash
-pixi install
-```
-
-### 4. Download Databases
-
-**BASALT model weights** are available from:
-
-- [Hugging Face](https://huggingface.co/PKU-EMBL/BASALT_WEIGHT)
-- [Google Drive](https://drive.google.com/drive/folders/1d0e_2FpYRBAZLwKXl8fA-yDK4b5PBA_E)
-- [Baidu Netdisk](https://pan.baidu.com/s/1ouKqabxHYr1GmvpquQCzqw?pwd=embl) (提取码: `embl`)
-
-**Quick download with Hugging Face CLI:**
-
-```bash
-pip install huggingface_hub
-huggingface-cli download PKU-EMBL/BASALT_WEIGHT --local-dir /your/path/to/basalt_weights
-```
-
-Or use pixi tasks:
-
-```bash
-pixi run download-weights  # BASALT DL models (~100 MB)
-pixi run checkm2-db        # CheckM2 database (~3 GB)
-```
-
-### 5. Verify
-
-```bash
-pixi shell
-BASALT --version
-BASALT --check-deps
-```
-
----
-
-## BASALT (Conda) Installation
-
-### 1. Clone the Repository
-
-```bash
-git clone https://github.com/EMBL-PKU/BASALT.git
+git clone https://github.com/PKU-EMBL/BASALT.git
 cd BASALT
 ```
 
-### 2. Create the Conda Environment
+Record the version you installed:
+
+```bash
+git rev-parse HEAD
+```
+
+### 2. Create the environment
 
 ```bash
 conda create -n basalt_env -c conda-forge -c bioconda \
-    python=3.12 \
-    megahit metabat2 maxbin2 concoct prodigal semibin \
-    bedtools blast bowtie2 diamond checkm2 \
-    unicycler spades samtools racon pplacer pilon \
-    ncbi-vdb minimap2 miniasm idba hmmer entrez-direct \
-    biopython uv --yes
+  python=3.12 \
+  megahit metabat2 maxbin2 concoct prodigal semibin \
+  bedtools blast bowtie2 bwa diamond checkm2 \
+  unicycler spades samtools racon pilon ncbi-vdb \
+  minimap2 miniasm idba hmmer entrez-direct biopython uv \
+  --yes
 
 conda activate basalt_env
 ```
 
-### 3. Install Python Packages
+Install the Python dependencies into the active environment:
 
 ```bash
-uv pip install tensorflow torch torchvision tensorboard tensorboardx \
-    lightgbm scikit-learn numpy==1.26.4 python-igr \
-    scipy pandas matplotlib cython biolib joblib tqdm requests checkm-genome
+uv pip install \
+  torch tensorboardx pillow scikit-learn \
+  numpy==1.26.4 scipy pandas matplotlib tqdm requests
 ```
 
-### 4. Download Model Weights
+`basalt_new_environment.yml` is provided as an alternative environment definition. It currently uses Tsinghua mirror channels. Review and replace the channel URLs if those mirrors are unsuitable for your site.
+
+### 3. Install the BASALT command
+
+Run the installer while `basalt_env` is active:
 
 ```bash
-python BASALT_models_download.py --path "/path/to/model/folder"
-```
-
-### 5. Install BASALT Scripts
-
-```bash
-chmod +x install.sh
 bash install.sh
-chmod +x /path/to/basalt/bin/*
 ```
 
-### 6. Set Up Environment Variables
+The script copies the BASALT programs into `$CONDA_PREFIX/bin` and creates the `BASALT` launcher. Re-run the installer after updating the repository because this is a copied installation, not an editable package.
 
-Add the following to your `~/.bashrc`:
+### 4. Download the trained models
+
+Choose a persistent model directory and keep the path free of shell metacharacters:
 
 ```bash
-export CHECKM2DB=/path/to/checkm2db/CheckM2_database/uniref100.KO.1.dmnd
-export CHECKM_DATA_PATH=/path/to/checkmdb
-export BASALT_WEIGHT=/path/to/BASALT
+python BASALT_models_download.py --path "$PWD/BASALT_WEIGHT"
+export BASALT_WEIGHT="$PWD/BASALT_WEIGHT"
 ```
 
-Then reload:
+Add the export to your shell initialization file only after verifying the path. The extracted directory should contain five `*_ensemble.csv` files and their associated model checkpoints.
 
 ```bash
-source ~/.bashrc
+find "$BASALT_WEIGHT" -maxdepth 1 -name '*_ensemble.csv' | wc -l
 ```
 
-The CheckM and CheckM2 databases, along with the latest Singularity image, are available from [Google Drive](https://drive.google.com/drive/folders/1d0e_2FpYRBAZLwKXl8fA-yDK4b5PBA_E?usp=sharing).
+Expected output: `5`.
 
----
+### 5. Configure CheckM2
 
-## Singularity Installation
-
-For users who prefer containers, or for users in China mainland with network limitations, a prebuilt Singularity image is available.
-
-### Singularity Image
-
-The image (`basalt.sif`) includes all dependencies: CheckM, CheckM2, Semibin2, Bowtie2, BWA, etc.
-
-**Run BASALT directly:**
+CheckM2 is the default quality-control backend:
 
 ```bash
-# When basalt.sif is in your home directory
-singularity run basalt.sif BASALT -a as1.fa \
-    -s S1_R1.fq,S1_R2.fq/S2_R1.fq,S2_R2.fq \
-    -t 32 -m 128
+checkm2 database --download
 ```
 
-**With bind mount for custom paths:**
+If CheckM2 does not discover the database automatically, set the path to its DIAMOND database:
 
 ```bash
-singularity run -B /media/emma basalt.sif BASALT -h
+export CHECKM2DB=/absolute/path/to/CheckM2_database/uniref100.KO.1.dmnd
 ```
 
-**Run in background with screen:**
+The legacy CheckM backend is selected with `-q checkm`. CheckM can impose a different Python and dependency stack from the maintained CheckM2 route. Validate it in a compatible environment or container, install its database, and set the location required by that installation, commonly `CHECKM_DATA_PATH`.
+
+### 6. Verify the executable stack
 
 ```bash
-screen -dmS basalt_job bash -c 'singularity run basalt.sif BASALT -a as1.fa -s reads_R1.fq,reads_R2.fq -t 32 -m 128 > log_basalt'
+BASALT --help
+
+command -v \
+  BASALT checkm2 metabat2 SemiBin2 bowtie2 bwa samtools \
+  minimap2 spades.py unicycler blastn makeblastdb
 ```
 
-**Invoke individual tools inside the image:**
+Then record the environment for provenance:
 
 ```bash
-singularity run basalt.sif bowtie2 -h
-singularity run basalt.sif checkm2 predict -h
-singularity run basalt.sif samtools --help
+conda env export --no-builds > basalt-environment.yml
 ```
 
----
+!!! warning "No built-in dependency audit"
+    The Conda edition documented here does not implement `BASALT --version` or `BASALT --check-deps`. Those options belong to BASALT-Air. Use `BASALT --help`, `command -v`, explicit tool version commands, and the tutorial smoke test.
 
-## Installing from China Mainland
+## Singularity installation
 
-Chinese users experiencing slow network speeds can use mirror sources:
+A prebuilt `basalt.sif` image and associated database resources are distributed through the project [Google Drive folder](https://drive.google.com/drive/folders/1d0e_2FpYRBAZLwKXl8fA-yDK4b5PBA_E?usp=sharing).
+
+Verify the image before production use:
 
 ```bash
-site=https://mirrors.tuna.tsinghua.edu.cn/anaconda
-conda config --add channels ${site}/pkgs/free/
-conda config --add channels ${site}/pkgs/main/
-conda config --add channels ${site}/cloud/conda-forge/
-conda config --add channels ${site}/cloud/bioconda/
+singularity run basalt.sif BASALT --help
+singularity run basalt.sif checkm2 --help
+singularity inspect basalt.sif > singularity-inspect.txt
 ```
 
-Alternatively, use the [Singularity image](#singularity-installation) or download model weights from alternative sources (see [Release Notes](Release_notes.md)).
-
----
-
-## System Requirements
-
-| Resource | Minimum | Recommended |
-|---|---|---|
-| Operating System | Linux x64 | Linux x64 |
-| CPU Cores | 8 | 32+ |
-| RAM | 128 GB | 256 GB+ |
-| Storage | 100 GB free | 500 GB+ |
-| Python | 3.12 | 3.12 |
-
----
-
-## Verifying the Installation
-
-To verify that BASALT is correctly installed:
+Run from a dedicated directory and bind all required storage explicitly:
 
 ```bash
+cd /project/basalt_run
+
+singularity run \
+  --bind /project:/project \
+  basalt.sif \
+  BASALT \
+  -a assembly.fasta \
+  -s sample_R1.fastq,sample_R2.fastq \
+  -t 32 -m 128 --mode new -o study_basalt
+```
+
+The image contents can change when a new file is uploaded under the same human-readable name. Preserve an image checksum with each analysis:
+
+```bash
+sha256sum basalt.sif > basalt.sif.sha256
+```
+
+## China mainland
+
+The repository includes `basalt_new_environment.yml` with Tsinghua mirror channels. Model files are also mirrored on [Baidu Netdisk](https://pan.baidu.com/s/1ouKqabxHYr1GmvpquQCzqw?pwd=embl) with extraction code `embl`.
+
+Do not mix packages from several mirror and upstream channel stacks within the same solved environment unless necessary. Export the final environment and verify each external executable after installation.
+
+## Updating BASALT
+
+The installer copies scripts into the environment. Update and reinstall them explicitly:
+
+```bash
+cd /path/to/BASALT
+git pull --ff-only
+git rev-parse HEAD
 conda activate basalt_env
-BASALT -h
+bash install.sh
 ```
 
-This should print the help message with all available options.
+Start new analyses in a new working directory after an update. Resuming a checkpoint with different code, model weights, databases, or external-tool versions weakens reproducibility and may produce incompatible intermediates.
 
-To test with the demo dataset, refer to the [Tutorial](tutorial.md).
+## Next step
+
+Run the [quick start](quickstart.md), then the [tutorial](tutorial.md) with the public demo dataset.

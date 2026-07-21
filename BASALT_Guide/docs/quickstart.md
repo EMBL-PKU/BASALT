@@ -1,85 +1,153 @@
-# Quick Start
+# Quick start
 
-This page gets you running BASALT in a few minutes.
+This example runs the full Conda-based BASALT workflow on one assembly and one paired-end short-read sample. It is designed to expose path, environment, database, and checkpoint problems before a larger analysis.
 
-## Prerequisites
+## Before you run
 
-- Conda environment created (see [Installation](installation.md))
-- Input files in the current working directory
+Confirm that:
 
-## Minimal Command
+- [BASALT is installed](installation.md) in an active environment;
+- `BASALT_WEIGHT` points to the extracted model directory;
+- CheckM2 can locate its database;
+- the assembly and both read files belong to the intended sample or study design;
+- the working directory is new or contains only this run.
+
+## 1. Create an isolated working directory
+
+```bash
+mkdir -p /project/basalt_runs/study_01
+cd /project/basalt_runs/study_01
+```
+
+BASALT writes checkpoints and intermediates to the current working directory. One directory per run prevents checkpoint collisions and makes provenance easier to audit.
+
+## 2. Link the input files
+
+```bash
+ln -s /project/data/assembly.fasta .
+ln -s /project/data/sample_R1.fastq .
+ln -s /project/data/sample_R2.fastq .
+```
+
+Check the links and record input checksums:
+
+```bash
+test -s assembly.fasta
+test -s sample_R1.fastq
+test -s sample_R2.fastq
+
+sha256sum \
+  assembly.fasta \
+  sample_R1.fastq \
+  sample_R2.fastq \
+  > input.sha256
+```
+
+## 3. Run BASALT
 
 ```bash
 conda activate basalt_env
-BASALT -a assembly.fasta -s sample_R1.fq,sample_R2.fq -t 32 -m 128
+
+BASALT \
+  -a assembly.fasta \
+  -s sample_R1.fastq,sample_R2.fastq \
+  -t 32 \
+  -m 128 \
+  --sensitive sensitive \
+  --refinepara quick \
+  --min-cpn 35 \
+  --max-ctn 20 \
+  -q checkm2 \
+  --mode new \
+  -o study_01_basalt \
+  > basalt.stdout.log 2> basalt.stderr.log
 ```
 
-This runs the full pipeline (autobinning + refinement + reassembly) using default settings.
+`-t` controls requested threads. `-m` reports available RAM in GB to BASALT and influences some internal parallelism; it is not a hard operating-system memory limit.
 
-## Common Workflows
-
-=== "Short-read only"
-
-    ```bash
-    BASALT -a as1.fa,as2.fa \
-        -s s1_R1.fq,s1_R2.fq/s2_R1.fq,s2_R2.fq \
-        -t 60 -m 250
-    ```
-
-=== "Short + Long reads"
-
-    ```bash
-    BASALT -a as1.fa \
-        -s sample_R1.fq,sample_R2.fq \
-        -l nanopore.fastq \
-        -t 60 -m 250
-    ```
-
-=== "Short + HiFi reads"
-
-    ```bash
-    BASALT -a as1.fa \
-        -s sample_R1.fq,sample_R2.fq \
-        -hf hifi_reads.fastq \
-        -t 32 -m 128
-    ```
-
-=== "Fast mode"
-
-    ```bash
-    BASALT -a as1.fa \
-        -s sample_R1.fq,sample_R2.fq \
-        -t 32 -m 128 \
-        --sensitive quick --refinepara quick
-    ```
-
-## Input File Requirements
-
-1. **Place all input files in the working directory** — BASALT does not support absolute paths.
-2. **Assembly files** must be in FASTA format (`.fa`, `.fna`, `.fasta`).
-3. **Read files** must be in FASTQ format (`.fq`, `.fastq`). Compressed files (`.gz`, `.tar.gz`, `.zip`) are automatically decompressed.
-4. **Each paired-end sample** requires read pairs separated by `,`. Multiple samples are separated by `/`.
-
-## Resuming a Run
-
-BASALT uses checkpoints. If your run is interrupted:
+## 4. Monitor without changing the run
 
 ```bash
-BASALT --mode continue
+tail -f Basalt_log.txt
 ```
 
-For a fresh start (discarding previous progress):
+In another shell, inspect the last checkpoint:
 
 ```bash
-BASALT -a assembly.fasta -s reads_R1.fq,reads_R2.fq -t 32 -m 128 --mode new
+tail -n 5 Basalt_checkpoint.txt
 ```
 
-## Expected Output
+Do not launch a second BASALT process in the same directory.
 
-See the [Output Files](output.md) page for details on BASALT's output structure.
+## 5. Inspect completion and outputs
 
-## What's Next?
+A completed full run should contain the final output directory named by `-o`:
 
-- [Usage](usage.md) — full command-line reference
-- [Tutorial](tutorial.md) — step-by-step guide with demo data
-- [FAQ](faq.md) — common questions and answers
+```bash
+test -d study_01_basalt
+find study_01_basalt -maxdepth 1 -type f -name '*.fa' | wc -l
+```
+
+Retain these provenance files with the final MAGs:
+
+```text
+BASALT_command.txt
+Basalt_checkpoint.txt
+Basalt_log.txt
+basalt.stdout.log
+basalt.stderr.log
+input.sha256
+study_01_basalt/
+```
+
+The presence of FASTA files establishes that the workflow produced bins. It does not establish that every bin meets a study-specific quality or taxonomic criterion. Inspect the final CheckM2 report and document all downstream filters.
+
+## Resume an interrupted run
+
+Resume from the same directory, environment, code version, models, and databases:
+
+```bash
+BASALT --mode continue \
+  > basalt.resume.stdout.log 2> basalt.resume.stderr.log
+```
+
+The current CLI defaults omitted arguments to empty values and relies on checkpointed intermediate files during continuation. Preserve the original command in `BASALT_command.txt`. If inputs, parameters, code, models, or databases changed, start a new run directory instead of resuming.
+
+## Common input variants
+
+=== "Short reads and long reads"
+
+    ```bash
+    BASALT \
+      -a assembly.fasta \
+      -s sample_R1.fastq,sample_R2.fastq \
+      -l nanopore.fastq \
+      -t 64 -m 256 --mode new -o study_01_basalt
+    ```
+
+=== "PacBio HiFi"
+
+    ```bash
+    BASALT \
+      -a assembly.fasta \
+      -hf hifi.fastq \
+      -t 32 -m 128 --mode new -o study_01_basalt
+    ```
+
+=== "Two short-read samples"
+
+    ```bash
+    BASALT \
+      -a assembly.fasta \
+      -s sample_1_R1.fastq,sample_1_R2.fastq/sample_2_R1.fastq,sample_2_R2.fastq \
+      -t 64 -m 256 --mode new -o study_01_basalt
+    ```
+
+Read [Inputs and study design](inputs.md) before using several samples or assemblies. The delimiter describes file grouping; it does not encode biological pairing between assemblies and samples.
+
+## Next steps
+
+- [Tutorial](tutorial.md) for the public demo dataset and an HPC submission template.
+- [Command-line reference](usage.md) for every option and its actual default.
+- [Outputs and quality control](output.md) for stage-specific artifacts.
+- [Reproducibility and reporting](reproducibility.md) before interpreting or publishing a MAG set.

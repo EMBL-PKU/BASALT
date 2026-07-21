@@ -1,149 +1,195 @@
-# FAQ
+# Troubleshooting and FAQ
 
-## General
+Start from evidence. Preserve the complete command, stdout, stderr, `Basalt_log.txt`, `Basalt_checkpoint.txt`, software versions, database configuration, and input checksums before changing files or rerunning a stage.
 
-### What is BASALT?
+## Fast diagnostic sequence
 
-BASALT (Binning Across a Series of Assemblies Toolkit) is a tool for binning and post-binning refinement of metagenomic assemblies. It generates high-quality metagenome-assembled genomes (MAGs) from short-read, long-read, and hybrid datasets.
+```bash
+pwd
+conda info --envs
+command -v BASALT checkm2 metabat2 SemiBin2 bowtie2 samtools spades.py
+test -n "$BASALT_WEIGHT" && find "$BASALT_WEIGHT" -maxdepth 1 -name '*_ensemble.csv'
+tail -n 30 Basalt_checkpoint.txt
+tail -n 100 Basalt_log.txt
+grep -Ei 'error|failed|warning|traceback' *.log 2>/dev/null || true
+```
 
-### What makes BASALT different from metaWRAP or DASTool?
+## Installation and environment
 
-Three main differences:
+### `BASALT: command not found`
 
-1. **Multi-assembly support**: BASALT accepts multiple single assemblies and co-assemblies in a single run with automatic dereplication.
-2. **Deep learning refinement**: Neural network-based contamination detection and removal at the individual contig level.
-3. **Long-read integration**: Efficient utilisation of long reads for contig retrieval and polishing.
+Activate the environment used during installation and inspect the launcher:
 
-### What data types does BASALT support?
+```bash
+conda activate basalt_env
+command -v BASALT
+ls -l "$CONDA_PREFIX/bin/BASALT" "$CONDA_PREFIX/bin/BASALT.py"
+```
 
-| Mode | Short Reads | Long Reads (ONT/PacBio) | PacBio HiFi |
-|---|---|---|---|
-| SRS only | :material-check: | — | — |
-| SRS + LRS | :material-check: | :material-check: | — |
-| SRS + HiFi | :material-check: | — | :material-check: |
-| HiFi only | — | — | :material-check: |
+If the launcher is absent, return to the cloned repository and reinstall:
 
-Long-read-only (ONT/CLR) without short reads is not yet supported.
+```bash
+conda activate basalt_env
+cd /path/to/BASALT
+bash install.sh
+```
 
----
+### BASALT models are missing
 
-## Performance
+The pipeline expects `BASALT_WEIGHT` to name a directory containing five ensemble descriptor files and the associated checkpoints.
 
-### How long does BASALT take to run?
+```bash
+export BASALT_WEIGHT=/absolute/path/to/BASALT_WEIGHT
+find "$BASALT_WEIGHT" -maxdepth 1 -name '*_ensemble.csv' | wc -l
+```
 
-This depends on dataset size, complexity, and chosen parameters. A typical run with `--sensitive sensitive` on a 32-core workstation with 256 GB RAM may take 12–24 hours for a moderate-complexity metagenome (e.g., human gut). The demo dataset completes in ~6 hours on a 32-core machine.
+If the count is not `5`, rerun the model downloader and inspect extraction errors:
 
-### How can I speed up BASALT?
+```bash
+python /path/to/BASALT/BASALT_models_download.py --path "$BASALT_WEIGHT"
+```
 
-- Use `--sensitive quick --refinepara quick` for the fastest preset
-- Run only the module you need: `--module autobinning`, `--module refinement`, or `--module reassembly`
-- Increase thread count (`-t`)
-- Ensure sufficient RAM to avoid swap overhead
-- For multiple assemblies, BASALT is already more efficient than running multiple single-assembly jobs
+### `CheckM2 database not found`
 
-### Does BASALT support GPU?
+```bash
+checkm2 database --download
+export CHECKM2DB=/absolute/path/to/CheckM2_database/uniref100.KO.1.dmnd
+```
 
-Yes. BASALT v1.2.0 supports GPU acceleration for Semibin2 and deep learning model inference. Ensure CUDA-compatible PyTorch is installed.
+Test the installed CheckM2 version with a small independent input before rerunning a long BASALT analysis.
 
----
+### `libcrypto.so` or another shared library is missing
 
-## Workflow
+Do not create an ABI-changing symbolic link as a first response. That can make a program start while remaining binary-incompatible.
 
-### Can I run only part of the pipeline?
+Inspect the executable and solve the environment consistently:
 
-Yes. Use `--module`:
+```bash
+command -v samtools
+ldd "$(command -v samtools)" | grep 'not found' || true
+conda list samtools openssl
+```
 
-- `--module autobinning`: Run only binning and bin selection
-- `--module refinement`: Run only contamination removal and contig retrieval (on existing bins)
-- `--module reassembly`: Run only reassembly (on existing refined bins)
-- `--module all`: Run the full pipeline (default)
+Reinstall compatible packages in a clean environment or use the project container.
 
-### Can I use my own bins with BASALT refinement?
+## Inputs and paths
 
-Yes. There are two approaches:
+### `IndexError: list index out of range` near input parsing
 
-1. **Standalone refinement** (`-r`): Point BASALT to a single binset folder.
-2. **Data Feeding** (`-d`): Import multiple external binsets with automatic coverage recalculation.
+Check the paired-end grammar:
 
-### Can the same contig appear in multiple bins?
+```text
+one sample:       R1.fastq,R2.fastq
+two samples:      S1_R1.fastq,S1_R2.fastq/S2_R1.fastq,S2_R2.fastq
+```
 
-Under SA + CA mode, redundant bins can be generated. BASALT's Bin Selection module identifies and removes redundancies automatically through dereplication. The final best binset is non-redundant.
+Also confirm that filenames contain no commas or `/` characters beyond the intended delimiters.
 
-### What if my run is interrupted?
+### Do absolute paths work?
 
-BASALT records progress in `Basalt_checkpoint.txt`. Resume with:
+Absolute paths are not handled consistently across all legacy shell-command paths. Use a dedicated working directory and simple local symlinks. BASALT-Air is the separate implementation intended for first-class absolute-path and separate work/output-directory support.
+
+### Can compressed reads be used?
+
+The pipeline contains handlers for `.gz`, `.tar.gz`, and `.zip`. Plain FASTA and FASTQ inputs remain easier to audit. Test the exact archive layout on a small run because automated extraction can introduce unexpected filenames or overwrite existing files.
+
+### Can I combine single assemblies and co-assemblies?
+
+Yes, provided the supplied read coverage is biologically compatible with each assembly. BASALT compares selected candidates across assemblies to reduce redundancy. Document which samples contributed to every assembly and coverage matrix.
+
+## Runtime and checkpoints
+
+### A scheduler reports success, but the output is incomplete
+
+Some external tools are invoked through shell calls, so a failed subcommand may not always produce a non-zero final BASALT status. Audit:
+
+1. the last checkpoint;
+2. errors in captured stderr;
+3. optional-binner warnings;
+4. the final FASTA count and sizes;
+5. the final quality report.
+
+### How do I resume?
+
+From the same working directory and unchanged environment:
 
 ```bash
 BASALT --mode continue
 ```
 
-For a completely fresh restart:
+Do not resume after changing inputs, code, model files, databases, or major dependency versions. Start a new run directory instead.
 
-```bash
-BASALT --mode new
-```
+### The run is too slow or uses too much storage
 
----
+- use `--sensitive quick --refinepara quick`;
+- remove optional binners;
+- run a pilot on one assembly;
+- request adequate local scratch storage;
+- monitor memory and I/O rather than assuming CPU is the bottleneck.
 
-## Input & Output
+Changing the preset changes the candidate space. Report the change as a method setting, not only as a performance optimization.
 
-### Does BASALT support absolute file paths?
+## Outputs and quality
 
-No. Place all input files in the current working directory, or create soft links using `ln -s`.
+### Where are final MAGs?
 
-### Can I specify an output directory?
+For the default CheckM2 route, they are in the directory named by `-o`. Without `-o`, use `Final_binset/`.
 
-BASALT generates all output in the current working directory. The `-o` flag sets the output folder name prefix, not the path.
+### Why is `quality_report.tsv` missing?
 
-### Where are the final MAGs?
+Possible causes include:
 
-In `<output_prefix>_final_binset/` (default: `Final_binset_final_binset/`). Each bin is a single multi-FASTA file.
+- CheckM2 database or executable failure;
+- no bins reaching a stage;
+- an external stage failing before quality assessment;
+- output being written under a stage-specific directory;
+- cleanup or manual movement.
 
----
+Search logs before lowering scientific quality thresholds. Lowering `--min-cpn` changes which bins enter refinement and is not a general fix for a missing database or failed program.
 
-## Troubleshooting
+### Does a folder named `refined` or `MAGs` guarantee acceptable genomes?
 
-### CheckM2 database not found
+No. Directory names encode workflow state. Apply explicit completeness, contamination, taxonomic, size, and study-specific criteria to the final report.
 
-```bash
-checkm2 database --download
-```
+### Can the same contig appear in several candidate bins?
 
-Refer to [CheckM2 documentation](https://github.com/chklovski/CheckM2) for details.
+Yes, especially before within- and cross-assembly selection. BASALT reduces candidate redundancy, but the final biological interpretation still requires a stated dereplication and taxonomic framework.
 
-### BASALT: command not found
+## Data types and acceleration
 
-Ensure the conda environment is activated and scripts have correct permissions:
+### Which read designs are supported?
 
-```bash
-conda activate basalt_env
-chmod -R 755 $(dirname $(which BASALT))/*
-```
+BASALT accepts assembly FASTA files with paired-end short reads, ONT or PacBio CLR reads, PacBio HiFi reads, or compatible combinations. Reassembly and polishing stages depend on which read types are present and can be skipped when their required inputs are absent.
 
-### IndexError: list index out of range
+### Does BASALT use a GPU?
 
-This typically means BASALT cannot parse file paths. Ensure all input files are in the working directory (no absolute paths) and the `-s` argument uses the correct delimiter format (`/` between samples, `,` between read pairs).
+Some dependencies, including SemiBin 2, PyTorch, and optional VAMB configurations, may use compatible accelerators. Availability depends on the installed packages and drivers. Do not assume GPU use from the BASALT command alone. Record device utilization and software versions if acceleration affects runtime or reproducibility.
 
-### quality_report.tsv not found
+## Optional binners
 
-This occurs when too few bins pass quality thresholds, so CheckM2 produces no output. Try:
+### BASALT finished after an optional binner failed
 
-- Lowering `--min-cpn` (e.g., `--min-cpn 20`)
-- Using `--sensitive more-sensitive` for more thorough binning
-- Ensuring sufficient sequencing coverage
+This is expected failure handling in the current CheckM2 orchestration. Optional-adapter exceptions are logged and the pipeline continues. Inspect the log and verify which candidates actually entered selection.
 
----
+See [Extra binners](extra-binners.md).
 
-## Installation
+## BASALT versus BASALT-Air
 
-### What's the difference between BASALT and BASALT-Air?
+BASALT-Air is a separate Pixi-based implementation with different path and output controls. The Conda BASALT commands on this site do not support `--workdir`, `--outdir`, `--version`, or `--check-deps`.
 
-BASALT-Air (v1.0.0, 2026) is a new lightweight edition that replaces Conda with Pixi for dependency management. Key improvements include absolute path support, `--workdir`/`--outdir` separation, and built-in dependency checks. The core pipeline is identical — both versions produce the same results. See the [home page](index.md) for a comparison table.
+Do not assume two implementations produce byte-identical outputs without a version-matched regression test. Record which repository, release, dependency lock, models, and databases were used.
 
-### Can I install BASALT without Conda?
+## Reporting a bug
 
-Yes. BASALT-Air uses Pixi instead of Conda. Or use the Singularity image for either version.
+Open a [GitHub issue](https://github.com/PKU-EMBL/BASALT/issues) with:
 
-### How do I install on macOS?
+- BASALT commit or release;
+- operating system and resource allocation;
+- Conda environment export;
+- complete command with sensitive paths redacted consistently;
+- `Basalt_log.txt`, `Basalt_checkpoint.txt`, stdout, and stderr;
+- model and database configuration;
+- relevant external-tool versions;
+- a minimal shareable reproducer when possible.
 
-BASALT is designed for Linux x64 systems. macOS is not officially supported. Use the Singularity image in a Linux VM or Docker container on macOS.
+Do not upload human, clinical, or otherwise restricted sequencing data to a public issue.

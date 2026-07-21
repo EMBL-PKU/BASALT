@@ -1,13 +1,6 @@
 {% extends "base.html" %}
 
-{% block content %}
+{% block site_meta %}
   {{ super() }}
-
-  {% if git_page_authors %}
-    <div class="md-source-date">
-      <small>
-          Authors: {{ git_page_authors | default('enable mkdocs-git-authors-plugin') }}
-      </small>
-    </div>
-  {% endif %}
+  <meta name="readthedocs-addons-api-version" content="1" />
 {% endblock %}

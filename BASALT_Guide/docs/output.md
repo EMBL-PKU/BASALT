@@ -1,84 +1,124 @@
-# Output Files
+# Outputs and quality control
 
-All BASALT outputs are generated under the current working directory.
+BASALT writes final and intermediate outputs into the current working directory. The exact intermediate set depends on input read types, selected modules, quality-control backend, optional binners, and whether stages were skipped or resumed.
 
-## Final Output
+## Final output
 
-The final curated MAGs are located in:
+For a normal CheckM2 run, `-o` names the final directory:
 
+```text
+<value supplied to -o>/
 ```
-<output_prefix>_final_binset/
+
+With the default, this is:
+
+```text
+Final_binset/
 ```
 
-Default: `Final_binset_final_binset/`
+The directory contains final bin FASTA files, generally with a `.fa` suffix, and a final quality report when CheckM2 completes successfully.
 
-## Output Directory Structure
+!!! warning "Historical names"
+    Earlier documentation referred to `Final_binset_final_binset/` or `Final_bestbinset/`. Those names do not describe the current `-o` behaviour in the default CheckM2 orchestration.
 
-| Path | Description |
+## Run-level provenance
+
+| File | Role | Retain? |
+|---|---|---:|
+| `BASALT_command.txt` | Recorded input and parameter summary | yes |
+| `Basalt_log.txt` | Runtime events and warnings | yes |
+| `Basalt_checkpoint.txt` | Textual stage completion markers | yes |
+| `Autobinner_checkpoint.txt` | Candidate-generation progress | recommended |
+| captured stdout and stderr | External-tool messages not always duplicated in the BASALT log | yes |
+
+Archive these files with the final MAGs. They are required to distinguish a completed result from a partially successful run.
+
+## Principal intermediate groups
+
+Names can vary, but the following patterns reflect the current workflow.
+
+### Candidate generation
+
+| Pattern | Contents |
 |---|---|
-| `Final_binset_final_binset/` | Final curated MAGs (one FASTA per bin) |
-| `Basalt_checkpoint.txt` | Checkpoint file used for `--mode continue` |
-| `Basalt_log.txt` | Detailed runtime log |
-| `BASALT_command.txt` | Record of the BASALT command and parameters used |
+| `*_metabat_genomes/` | MetaBAT 2 candidate bins |
+| `*_maxbin2_genomes/` | MaxBin 2.0 candidates in `more-sensitive` mode |
+| `*_concoct_genomes/` | CONCOCT candidates in non-quick modes |
+| `*_semibin_genomes/` | SemiBin 2 candidates |
+| `*_checkm2/` or `*_checkm/` | Stage-specific quality estimates |
+| `Coverage_matrix_*.txt` | Coverage matrices used by downstream stages |
+| `condense_connections_*.txt` | Summarized paired-end connectivity |
 
-## Intermediate Outputs
+### Selection and refinement
 
-BASALT generates intermediate outputs at each stage. These can be useful for debugging or if you want to use intermediate results:
-
-### Autobinning Stage
-
-| Path | Description |
+| Pattern | Contents |
 |---|---|
-| `1_<assembly>_<param>_<binner>_genomes/` | Raw bins from each binner/parameter combination |
-| `*_checkm2/` or `*_checkm/` | Quality assessment for each binset |
-| `Bins_folder.txt` | Mapping of assembly names to binset folders |
-| `Depth_total.txt` | Coverage depth data for all assemblies |
-| `Connections_total_dict.txt` | Paired-end connection data for all assemblies |
-| `Assembly_MoDict.txt` | Modified assembly file mappings |
+| `*BestBinsSet*` or `BestBinset*` | Selected or dereplicated binsets at successive stages |
+| `*outlier_refined*` | Bins after model-based contig screening |
+| `*filtrated_retrieved*` | Bins after thresholding and contig retrieval |
+| `Predicted_potential_outlier.txt` | Contig-level model predictions where produced |
 
-### BestBins Selection
+### Reassembly and polishing
 
-| Path | Description |
+| Pattern | Contents |
 |---|---|
-| `BestBinsSet/` | Non-redundant bins selected after within-assembly and cross-assembly dereplication |
-| `BestBinsSet_comparison_files/` | Comparison data used for dereplication |
-| `Coverage_matrix_list.txt` | List of coverage matrices for each assembly |
-| `Bestbinset_list.txt` | List of best binsets selected |
+| `*_re-assembly*` | Reassembled bin candidates |
+| `*_OLC*` | Bins processed by OLC comparison or extension |
+| `Remained_seq.tar.gz` | Unassigned or remaining reads from compatible polishing paths |
 
-### Refinement Stage
+Cleanup can archive or remove intermediate groups after a full run. Copy required audit artifacts before manual cleanup.
 
-| Path | Description |
-|---|---|
-| `BestBinsSet_outlier_refined/` | Bins after DL-based contamination removal |
-| `Predicted_potential_outlier.txt` | Per-contig contamination predictions |
-| `BestBinsSet_outlier_refined_filtrated/` | Bins after filtration by completeness/contamination |
-| `BestBinsSet_outlier_refined_filtrated_retrieved/` | Bins after PE-based and LR-based contig retrieval |
-| `BestBinsSet_outlier_refined_filtrated_retrieved_MAGs/` | Final MAGs after intra-group contig retrieval |
+## Quality reports
 
-### Reassembly Stage
+CheckM2 commonly writes `quality_report.tsv`. BASALT may copy the final report to `Final_bestbinset_quality_report.tsv` inside the output directory when a final report is generated after selection.
 
-| Path | Description |
-|---|---|
-| `*_reassembly/` | Bins reassembled with SPAdes (short-read only) |
-| `*_hybrid_reassembly/` | Bins reassembled with Unicycler (hybrid) |
-| `*_reassembly_OLC/` | Final bins after Overlap-Layout-Consensus refinement |
+CheckM2 columns and their precise meaning are defined by the installed CheckM2 version. Do not assume a fixed column order in downstream scripts without inspecting the header.
 
-## Quality Reports
+For the legacy CheckM path, stage outputs include CheckM lineage-workflow files such as `bin_stats_ext.tsv`.
 
-Each binset folder contains a quality report:
+## Interpreting quality estimates
 
-| File | Backend | Contents |
-|---|---|---|
-| `quality_report.tsv` | CheckM2 | Bin name, completeness, contamination, N50, genome size |
-| `bin_stats_ext.tsv` | CheckM | Bin name, marker lineage, completeness, contamination, genome size, mean scaffold length |
+Completeness and contamination are model- or marker-based estimates. They are not direct measurements of genome truth. Interpret them together with:
 
-## Log Files
+- genome size and sequence count;
+- N50 or other contiguity summaries;
+- taxonomic assignment and marker consistency;
+- read support and coverage distribution;
+- unexpected composition or duplicated regions;
+- the biological and environmental context.
 
-| File | Description |
-|---|---|
-| `Basalt_log.txt` | Runtime event log with timestamps |
-| `Basalt_checkpoint.txt` | Last completed step (1st–9th) |
+State the software version, database, and threshold logic whenever quality classes are reported.
 
-## Cleanup
+## Completion audit
 
-BASALT performs automatic cleanup of intermediate files (temporary BAM files, SAM files, etc.) between steps. Intermediate binsets from earlier stages are preserved on disk.
+Before accepting the result:
+
+```bash
+test -d study_01_basalt
+test -s Basalt_log.txt
+test -s Basalt_checkpoint.txt
+
+find study_01_basalt -maxdepth 1 -type f -name '*.fa' -size +0c | wc -l
+tail -n 20 Basalt_checkpoint.txt
+tail -n 50 Basalt_log.txt
+```
+
+Then verify that:
+
+1. the expected final stage completed or was intentionally skipped;
+2. optional-binner failures were understood;
+3. each retained FASTA is non-empty and parseable;
+4. a matching final quality report exists;
+5. all post-processing filters are scripted and recorded;
+6. final files have checksums.
+
+```bash
+find study_01_basalt -maxdepth 1 -type f -print0 \
+  | sort -z \
+  | xargs -0 sha256sum \
+  > study_01_basalt.sha256
+```
+
+## Do not infer from directory names
+
+Intermediate names encode program stages, not validated biological categories. A folder containing `MAGs`, `refined`, `polished`, `retrieved`, or `Best` is not evidence that every contained genome passes a publication-specific standard. Apply and report explicit acceptance criteria.

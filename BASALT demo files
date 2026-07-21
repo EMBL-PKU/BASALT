@@ -1,3 +1,7 @@
-### BASALT - demo files
+# BASALT demo files
 
-The demo file can be downloaded at the following link https://figshare.com/articles/dataset/BASALT_demo_files/22323424
+Download the versioned public demo dataset from Figshare:
+
+https://doi.org/10.6084/m9.figshare.22323424
+
+The maintained execution and validation protocol is in `BASALT_Guide/docs/tutorial.md`.

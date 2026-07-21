@@ -1,0 +1,6 @@
+.DS_Store
+__pycache__/
+*.py[cod]
+
+# MkDocs build output is generated from BASALT_Guide/docs/.
+BASALT_Guide/site/

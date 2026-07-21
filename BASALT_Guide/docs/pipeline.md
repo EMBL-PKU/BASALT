@@ -1,106 +1,113 @@
-# Pipeline Architecture
+# Pipeline and methods
 
-BASALT is organised into three main functional modules operating in sequence:
+BASALT is organized as a sequence of candidate generation, selection, refinement, and reassembly stages. The description below distinguishes executable operations from biological interpretation.
 
 ```mermaid
 flowchart LR
-    A[Raw Reads + Assemblies] --> B[Autobinning]
-    B --> C[Bin Selection]
-    C --> D[Refinement<br/>DL + Contig Retrieval]
-    D --> E[Reassembly]
-    E --> F[Final MAGs]
+    A["Assemblies and reads"] --> B["Autobinning"]
+    B --> C["Within-assembly selection"]
+    C --> D["Cross-assembly dereplication"]
+    D --> E["Contig-level refinement"]
+    E --> F["Read-supported retrieval"]
+    F --> G["Reassembly and OLC"]
+    G --> H["Final MAG set and quality report"]
 ```
 
-## Module 1: Autobinning + Bin Selection
+## Stage 0: preprocessing and coverage
 
-Runs multiple binning algorithms in parallel across all assemblies, evaluates quality, and selects the optimal non-redundant binset.
+BASALT filters assembly sequences shorter than 1,000 bp, maps the supplied reads, and derives depth and connectivity files. Paired-end reads are mapped with Bowtie 2. Long reads use long-read-aware mapping paths, including minimap2 where applicable.
 
-### Steps
+**Interpretive boundary.** Coverage is informative only when the supplied reads and assemblies belong to a coherent study design. BASALT does not test whether files were paired correctly at the biological level.
 
-| Step | Script | Description |
-|---|---|---|
-| S1 | `S1_Autobinners_2qc_11152023.py` | Run MetaBAT2, Maxbin2, CONCOCT, Semibin2 with multiple parameter sets |
-| S1e | `S1e_extra_binners.py` | Run optional extra binners (MetaBinner, VAMB, LorBin) |
-| S2 | `S2_BinsAbundance_PE_connections_*.py` | Compute abundance profiles and paired-end connectivity |
-| S3 | `S3_Bins_comparator_within_group_*.py` | Compare bins within each assembly group, select best |
-| S4 | `S4_Multiple_Assembly_Comparitor_*.py` | Cross-assembly dereplication to remove redundant bins |
+## Stage 1: candidate generation
 
-### Binners and Parameters
+The selected `--sensitive` preset controls candidate diversity:
 
-| Binner | Parameter Values | Sensitivity |
-|---|---|---|
-| MetaBAT2 | 200, 300, 400, 500 | All presets |
-| Maxbin2 | 0.3, 0.5, 0.7, 0.9 | `more-sensitive` only |
-| CONCOCT | 1–3 flexible thresholds | `sensitive`, `more-sensitive` |
-| Semibin2 | 100 (default) | All presets |
-| MetaBinner | 100 | Extra (`-e m`) |
-| VAMB | 100 | Extra (`-e v`) |
-| LorBin | 100 | Extra (`-e l`) |
+| Preset | Candidate generators |
+|---|---|
+| `quick` | MetaBAT 2 and SemiBin 2 |
+| `sensitive` | MetaBAT 2, CONCOCT, and SemiBin 2 |
+| `more-sensitive` | MaxBin 2.0, MetaBAT 2, CONCOCT, and SemiBin 2 |
 
-## Module 2: Refinement
+MetaBAT 2 is run across four internal threshold settings. CONCOCT cluster counts are derived from preliminary bin counts. MaxBin 2.0 uses four probability thresholds in `more-sensitive` mode. Optional adapters can add MetaBinner, VAMB, or LorBin candidates.
 
-Removes contamination from individual bins using a deep learning ensemble, then retrieves missed contigs.
+**Interpretive boundary.** Candidate multiplicity increases the space evaluated by later selection stages. It does not make every candidate independent or biologically valid.
 
-### Steps
+## Stages 2–4: bin characterization and selection
 
-| Step | Script | Description |
-|---|---|---|
-| S5 | `S5_Outlier_remover_DL_*.py` | DL ensemble classifies each contig as Real or Contaminated; contaminated contigs are removed |
-| S6 | `S6_retrieve_contigs_from_PE_contigs_*.py` | Retrieve missing contigs using paired-end connectivity patterns |
-| S7 | `S7_Contigs_retrieve_within_group_*.py` | Intra-group contig retrieval and OLC refinement |
-| S7lr | `S7lr_finding_sr_contigs_basing_lr_and_polishing_*.py` | Long-read-based contig retrieval + Racon polishing |
-| S8 | `S8_OLC_new_*.py` | Overlap-Layout-Consensus contig merging |
+BASALT computes abundance and paired-end connectivity summaries, compares candidates within an assembly, and then compares selected bins across assemblies. The selection logic uses combinations of contig overlap, coverage, sequence composition, and CheckM or CheckM2 quality estimates.
 
-### Deep Learning Architecture
+These stages reduce redundant candidates and retain representatives for downstream refinement.
 
-The S5 outlier remover uses an **ensemble of 5 MLP models** with the following architecture:
+**Interpretive boundary.** Computational dereplication is not a taxonomic or strain-definition procedure. Use an explicit downstream species or strain criterion if the scientific question requires one.
 
-```
-Input (TNF + Coverage + Coverage Change Ratio)
-    → Linear(hidden_size)
-    → LBR Block × 2 (Linear → BatchNorm → ReLU → residual skip)
-    → Linear(num_classes=2)
-    → Softmax → Real / Contaminated
-```
+## Stage 5: contig-level contamination screening
 
-Each LBR block expands to 4× hidden size and contracts back with a residual connection. The 5 models are trained independently and their predictions are combined via majority voting.
+The outlier-removal stage derives tetranucleotide-frequency and coverage-related features for contigs. An ensemble of five multilayer perceptrons classifies contigs into retained and predicted-contaminant classes. The ensemble combines model predictions by voting.
 
-## Module 3: Reassembly
+The model architecture contains linear, batch-normalization, and rectified-linear layers with residual blocks. Model weights are distributed separately and are located through `BASALT_WEIGHT`.
 
-Reassembles refined bins to improve genome quality and contiguity.
+**Interpretive boundary.** The output is a model prediction conditioned on the training distribution and available features. It is not direct experimental proof that a contig is foreign to a population genome. Report the model version or checksum when refinement affects the main result.
 
-### Steps
+## Stages 6–8: contig retrieval and OLC
 
-| Step | Script | Description |
-|---|---|---|
-| S9 | `S9_Reassembly_*.py` | Short-read reassembly using SPAdes |
-| S9p | `S9p_Hybrid_Reassembly_*.py` | Hybrid reassembly using Unicycler (requires long reads) |
-| S10 | `S10_OLC_new_*.py` | Final Overlap-Layout-Consensus refinement |
+BASALT evaluates unbinned or excluded contigs using paired-end connectivity, long-read connectivity, coverage consistency, and sequence-composition criteria. Compatible contigs may be added to a bin. Overlap–layout–consensus (OLC) operations can merge or extend sequences in applicable routes.
 
-## Checkpoint System
+`--refinepara deep` extends retrieval in compatible code paths. The effect depends on the available read types and checkpoint state.
 
-BASALT records progress after each step in `Basalt_checkpoint.txt`. The checkpoint file tracks:
+**Interpretive boundary.** Retrieved contigs should be treated as read- and feature-supported candidates. Evaluate quality changes, taxonomic consistency, and unexpected sequence composition before interpreting an expanded bin.
 
-```
-1st autobinner done!
-2nd bin selection within group done!
-3rd bin selection within multiple groups done!
-4th outlier removal done!
-5th contig retrieval done!
-6th long-read contig retrieval done!
-7th intra-group contig retrieval done!
-8th reassembly done!
-9th final OLC done!
-```
+## Stages 9–10: reassembly and final OLC
 
-Use `--mode continue` to resume from the last completed step. Use `--mode new` to start fresh.
+When paired-end short reads are available, BASALT performs bin-level reassembly using SPAdes-related paths. Hybrid routes use long reads where supported. Reassembled and original candidates are compared, followed by another OLC step in compatible workflows.
 
-## Data Feeding Workflow
+Reassembly is skipped when the required short-read inputs are absent. Individual bins may also lack sufficient reads for successful reassembly.
 
-The Data Feeding module (`Data_feeding.py`) allows users to bypass the Autobinning module entirely:
+**Interpretive boundary.** Higher contiguity is not sufficient evidence of higher genome accuracy. Examine completeness, contamination, assembly size, N50, read support, and taxonomic coherence together.
 
-1. Rename and reindex external bins to be compatible with BASALT
-2. Recompute coverage matrices using Bowtie2 mapping
-3. Generate paired-end connection files
-4. Run CheckM/CheckM2 quality assessment
-5. Feed the prepared data directly into the Refinement module
+## Finalization
+
+The final selected directory is moved to the name supplied by `-o`. FASTA files are normalized to `.fa` names where possible, and a final CheckM2 report is generated when one is not already present. Cleanup then archives or removes several intermediate groups.
+
+Retain logs and checksums before applying additional filtering or renaming.
+
+## Checkpoint model
+
+`Basalt_checkpoint.txt` records textual completion markers for major stages. `--mode continue` reads these markers and attempts to resume from the last recognized state.
+
+Checkpointing provides operational recovery, not environment reproducibility. A valid resume requires compatible inputs, code, models, databases, software versions, and intermediate filenames.
+
+## Implementation map
+
+| Stage | Main implementation |
+|---|---|
+| CLI and dispatch | `BASALT.py` |
+| CheckM2 orchestration | `BASALT_main_d.py` |
+| Autobinning | `S1_Autobinners_2qc_11152023.py` |
+| Optional binners | `S1e_extra_binners.py` |
+| Abundance and PE connectivity | `S2_BinsAbundance_PE_connections_multiple_processes_pool_10032023.py` |
+| Within-assembly comparison | `S3_Bins_comparator_within_group_10042023.py` |
+| Cross-assembly comparison | `S4_Multiple_Assembly_Comparitor_multiple_processes_bwt_10242023.py` |
+| Outlier screening | `S5_Outlier_remover_DL_11012023.py` |
+| PE-supported retrieval | `S6_retrieve_contigs_from_PE_contigs_10302023.py` |
+| Additional retrieval and polishing | `S7_Contigs_retrieve_within_group_10262023.py`, `S7lr_finding_sr_contigs_basing_lr_and_polishing_11022023.py` |
+| OLC | `S8_OLC_new_10262023.py` |
+| Reassembly | `S9_Reassembly_10262023.py`, `S9p_Hybrid_Reassembly_10262023.py` |
+| Final OLC | `S10_OLC_new_10262023.py` |
+
+The dated filenames are implementation identifiers, not software release numbers. Cite the BASALT release or commit used for analysis.
+
+## Methodological reporting
+
+A Methods section should state:
+
+- BASALT release or Git commit;
+- input assemblies and read datasets, including preprocessing;
+- selected quality-control backend and database;
+- sensitivity and refinement settings;
+- completeness and contamination thresholds;
+- optional binners and their versions;
+- compute environment and external-tool versions;
+- post-BASALT filtering, dereplication, taxonomy, and quality criteria.
+
+See [Reproducibility and reporting](reproducibility.md) for a reusable template.

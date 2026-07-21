@@ -1,91 +1,99 @@
 site_name: BASALT
-repo_url: https://github.com/EMBL-PKU/BASALT
-site_author: "Zhaorui Jiang"
-copyright: "Copyright &copy; PKU EMBL Lab 2025"
+site_description: Reproducible installation and use of the BASALT metagenomic binning and refinement workflow
+site_author: PKU-EMBL Laboratory
+site_url: !ENV [READTHEDOCS_CANONICAL_URL, ""]
+
+repo_name: PKU-EMBL/BASALT
+repo_url: https://github.com/PKU-EMBL/BASALT
+edit_uri: edit/master/BASALT_Guide/docs/
+copyright: Copyright &copy; PKU-EMBL Laboratory 2023–2026
+
+docs_dir: docs
+site_dir: site
+strict: true
 
 nav:
-  - Home: index.md
-  - Quick Start: quickstart.md
-  - Installation: installation.md
-  - Usage: usage.md
-  - Tutorial: tutorial.md
-  - Pipeline: pipeline.md
-  - Output Files: output.md
-  - FAQ: faq.md
-  - Release Notes: Release_notes.md
-  - API Reference: api/index.md
-
-plugins:
-  - mkdocs-jupyter
-  - glightbox
-  - mkdocstrings:
-      enabled: !ENV [ENABLE_MKDOCSTRINGS, true]
-      default_handler: python
-      handlers:
-        python:
-          options:
-            show_source: false
-  - search:
-      lang: en
+  - Overview: index.md
+  - Getting started:
+      - Installation: installation.md
+      - Quick start: quickstart.md
+      - Tutorial: tutorial.md
+  - User guide:
+      - Inputs and study design: inputs.md
+      - Command-line reference: usage.md
+      - Pipeline and methods: pipeline.md
+      - Outputs and quality control: output.md
+      - Extra binners: extra-binners.md
+  - Reproducibility and reporting: reproducibility.md
+  - Help:
+      - Troubleshooting and FAQ: faq.md
+      - Release notes: release-notes.md
+  - Developer reference: api/index.md
 
 theme:
   name: material
   custom_dir: docs/overrides
-  logo: img/ico.png
-  favicon: img/favicon.ico
-
+  logo: img/pku-embl-logo.png
+  favicon: img/pku-embl-logo.png
+  language: en
   palette:
     - media: "(prefers-color-scheme: light)"
       scheme: default
+      primary: custom
+      accent: custom
       toggle:
-        icon: material/toggle-switch-off-outline
+        icon: material/weather-night
         name: Switch to dark mode
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
+      primary: custom
+      accent: custom
       toggle:
-        icon: material/toggle-switch
+        icon: material/weather-sunny
         name: Switch to light mode
-
   features:
     - navigation.instant
+    - navigation.instant.progress
     - navigation.tracking
-    - navigation.indexes
-    - navigation.tabs
     - navigation.sections
+    - navigation.footer
     - navigation.top
+    - toc.follow
     - search.suggest
     - search.highlight
     - content.code.copy
     - content.tabs.link
+    - content.action.edit
+    - content.action.view
+
+plugins:
+  - search:
+      lang: en
 
 markdown_extensions:
   - admonition
-  - pymdownx.details
-  - pymdownx.tabbed:
-      alternate_style: true
   - attr_list
   - md_in_html
+  - tables
   - toc:
       permalink: true
-  - pymdownx.arithmatex:
-      generic: true
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
   - pymdownx.highlight:
-      linenums: true
-      linenums_style: pymdownx-inline
+      anchor_linenums: true
+  - pymdownx.inlinehilite
   - pymdownx.superfences:
       custom_fences:
         - name: mermaid
           class: mermaid
           format: !!python/name:pymdownx.superfences.fence_code_format
-  - pymdownx.inlinehilite
-  - pymdownx.emoji:
-      emoji_index: !!python/name:material.extensions.emoji.twemoji
-      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.tabbed:
+      alternate_style: true
 
 extra_javascript:
-  - javascripts/config.js
-  - https://polyfill.io/v3/polyfill.min.js?features=es6
-  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+  - javascripts/readthedocs.js
 
 extra_css:
   - css/custom.css
