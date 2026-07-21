@@ -29,28 +29,29 @@ dependencies:
   - racon
   - pplacer
   - pilon
-  - ncbi-vdb
   - minimap2
   - miniasm
   - idba
   - hmmer
   - entrez-direct
 
-  # Python runtime and installer
+  # Python runtime. Keep the scientific stack in the Conda transaction so a
+  # second package manager cannot replace it with incompatible GPU wheels.
   - biopython
+  - pytorch=2.4.*=cpu_generic*
+  - nomkl
+  - tensorboardx
+  - scikit-learn
+  - numpy=1.26.4
+  - scipy
+  - pandas>=2.2,<3
+  - matplotlib-base
+  - pillow
+  - joblib
+  - tqdm
+  - requests
+  - huggingface_hub
+
+  # Installers retained for optional, separately validated adapters.
   - pip
   - uv
-  - pip:
-      - vamb>=5.0.0,<6
-      - torch
-      - tensorboardx
-      - scikit-learn
-      - numpy==1.26.4
-      - scipy
-      - pandas
-      - matplotlib
-      - pillow
-      - joblib
-      - tqdm
-      - requests
-      - huggingface_hub

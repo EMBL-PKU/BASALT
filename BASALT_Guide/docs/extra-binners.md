@@ -53,14 +53,18 @@ Verify the MetaBinner installation outside BASALT before using this route. The a
 
 ## VAMB
 
-The repository contains an adapter for the VAMB 5 command form. VAMB uses mapped BAM files produced during BASALT preprocessing.
+The repository contains an adapter for the VAMB 5 command form. VAMB uses mapped BAM files produced during BASALT preprocessing. VAMB is not part of the validated base environment: VAMB 5.0.4 pins PyTorch 2.6.0, whereas the current BASALT model stack uses the CPU-generic PyTorch 2.4 release. A plain `pip install vamb` inside `basalt` can therefore replace the tested PyTorch and scientific-Python packages.
 
-Install and verify a compatible VAMB version in the active environment:
+Create an isolated VAMB environment and verify it independently:
 
 ```bash
-python -m pip install 'vamb>=5,<6'
-vamb --help
+micromamba create -n basalt-vamb python=3.12 pip --yes
+micromamba run -n basalt-vamb \
+  python -m pip install 'vamb==5.0.4'
+micromamba run -n basalt-vamb vamb --help
 ```
+
+The safest route is to run VAMB independently, retain its version and environment export, and import its FASTA bins through [data feeding](#manual-recovery-through-data-feeding). The direct `-e v` adapter requires a validated `vamb` executable on the BASALT process `PATH`; a separately activated environment is not automatically visible. Do not expose it by installing or upgrading packages inside the validated `basalt` environment. If a site administrator provides a wrapper to the isolated executable, test that wrapper on a small dataset and record it as part of the workflow.
 
 Run the adapter:
 
@@ -72,7 +76,7 @@ BASALT \
   -t 32 -m 128 --mode new -o study_vamb
 ```
 
-VAMB GPU behaviour depends on its PyTorch installation and local accelerator stack. Record `vamb`, Python, PyTorch, CUDA, and driver versions when GPU execution is used.
+VAMB GPU behaviour depends on its isolated PyTorch installation and local accelerator stack. Record `vamb`, Python, PyTorch, CUDA, and driver versions when GPU execution is used.
 
 ## LorBin
 

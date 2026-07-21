@@ -110,7 +110,7 @@ Resource use is dataset-dependent. Run a pilot or request more memory for large 
 The Conda-compatible installation below is the maintained route for this repository. [Micromamba](https://mamba.readthedocs.io/en/stable/installation/micromamba-installation.html) is recommended for faster dependency solving and parallel package downloads; current Conda with the libmamba solver is also supported. See the [installation guide](BASALT_Guide/docs/installation.md) for databases, model weights, mainland-China mirrors, verification, and container execution notes.
 
 ```bash
-git clone https://github.com/PKU-EMBL/BASALT.git
+git clone --depth 1 https://github.com/PKU-EMBL/BASALT.git
 cd BASALT
 
 micromamba create -n basalt -f basalt_environment.yml \
@@ -118,7 +118,7 @@ micromamba create -n basalt -f basalt_environment.yml \
 micromamba run -n basalt bash install.sh
 ```
 
-Conda users can run `CONDA_CHANNEL_PRIORITY=strict conda env create -n basalt -f basalt_environment.yml --solver libmamba --yes` and replace `micromamba run` with `conda run`. [`basalt_environment.yml`](basalt_environment.yml) is the sole environment definition. It uses the portable `conda-forge` and `bioconda` channel names with a narrow dependency scope; it does not hard-code a site mirror.
+Conda users can run `CONDA_CHANNEL_PRIORITY=strict conda env create -n basalt -f basalt_environment.yml --solver libmamba --yes` and replace `micromamba run` with `conda run`. [`basalt_environment.yml`](basalt_environment.yml) is the sole environment definition. It uses the portable `conda-forge` and `bioconda` channel names and resolves the complete base stack in one Conda transaction; it does not hard-code a site mirror. Remove `--depth 1` only when the full Git history is required for development.
 
 For mainland China, the network-aware installer probes TUNA, BFSU, USTC, and upstream endpoints, prefers `micromamba`, applies matching Conda and PyPI mirrors only to the installation subprocess, and leaves `~/.condarc` and pip configuration unchanged:
 
@@ -131,14 +131,32 @@ python3 BASALT_setup_China_mainland.py \
 
 Use `--dry-run` to inspect all commands first, `--mirror tuna|bfsu|ustc|upstream` to pin a route, or `--update` to synchronize an existing environment.
 
-Download the trained BASALT models and expose their directory:
+Download the trained BASALT models into a persistent directory and verify them before configuring the shell:
 
 ```bash
-BASALT_models_download.py --source auto --path "$PWD/BASALT_WEIGHT"
-export BASALT_WEIGHT="$PWD/BASALT_WEIGHT"
+micromamba run -n basalt BASALT_models_download.py \
+  --source auto \
+  --path /absolute/persistent/path/BASALT_WEIGHT
+
+find /absolute/persistent/path/BASALT_WEIGHT \
+  -maxdepth 1 -name '*_ensemble.csv' | wc -l
 ```
 
-Automatic mode downloads concurrently from the official [PKU-EMBL/BASALT_WEIGHT](https://huggingface.co/PKU-EMBL/BASALT_WEIGHT) repository first and falls back to the legacy Figshare archive. A local ZIP, a custom URL, and the documented Baidu Netdisk route are available when either service is unsuitable.
+The expected count is `5`. Persist the validated path for future login and batch shells:
+
+```bash
+printf '%s\n' \
+  'export BASALT_WEIGHT="/absolute/persistent/path/BASALT_WEIGHT"' \
+  >> ~/.bashrc
+source ~/.bashrc
+test -d "$BASALT_WEIGHT"
+```
+
+Before appending, remove or update any older `BASALT_WEIGHT` line in `~/.bashrc`; keep exactly one authoritative export.
+
+Automatic mode performs a bounded reachability check, downloads concurrently from the official [PKU-EMBL/BASALT_WEIGHT](https://huggingface.co/PKU-EMBL/BASALT_WEIGHT) repository first, and falls back to the legacy Figshare archive when Hugging Face is unreachable. Adjust the check with `--hf-timeout SECONDS`. A local ZIP, a custom URL, and the documented Baidu Netdisk route are available when either service is unsuitable.
+
+The downloader pins the release model revision by default. If a site-approved Hugging Face-compatible endpoint is required, pass `--hf-endpoint URL`; record the selected revision and hash the downloaded files for the analysis record.
 
 Set the CheckM2 database path if it is not already configured by your environment:
 

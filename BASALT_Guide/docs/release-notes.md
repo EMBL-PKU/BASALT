@@ -9,7 +9,11 @@ Release notes summarize intended changes. For reproducible analysis, also record
 - Reworked the mainland-China installer to prefer micromamba, support TUNA, BFSU, USTC, upstream, and institutional channels, and keep mirror settings out of global user configuration.
 - Added dry-run, cached/offline, update, local model archive, custom model URL, and explicit manager/path options.
 - Made the official `PKU-EMBL/BASALT_WEIGHT` Hugging Face repository the first automatic model source, with Figshare and Baidu Netdisk fallbacks.
-- Removed the obsolete `esteinig` and `defaults` channel requirements, separated legacy CheckM from the maintained Python 3.12 environment, and removed redundant direct declarations of large Python dependencies already managed transitively by CheckM2.
+- Removed the obsolete `esteinig` and `defaults` channel requirements and separated legacy CheckM from the maintained Python 3.12 environment.
+- Removed the duplicate uv/pip scientific-stack transaction from `basalt_environment.yml`; the base runtime is now solved once through Conda, while VAMB and LorBin remain explicitly optional adapters.
+- Added shallow-clone installation guidance and a validated, persistent `~/.bashrc` configuration for `BASALT_WEIGHT`.
+- Added a bounded Hugging Face reachability check, a release-pinned model revision, and matching mainland-installer controls so model installation remains auditable on blocked or mirrored routes.
+- Documented VAMB as an isolated optional environment because its pinned PyTorch stack conflicts with the validated BASALT model runtime.
 - Documented `PKU-EMBL/LorBin-BASALT-Extrabinner` as the maintained `-e l` integration target, including pinned-source installation, dependency validation, warning-only failure semantics, and fork-commit reporting.
 
 ## BASALT 1.2.1

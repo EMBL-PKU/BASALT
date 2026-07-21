@@ -19,9 +19,11 @@ macOS and Windows are not supported as native execution platforms. Use a Linux h
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/PKU-EMBL/BASALT.git
+git clone --depth 1 https://github.com/PKU-EMBL/BASALT.git
 cd BASALT
 ```
+
+The shallow clone downloads only the current revision and is sufficient for an installation. Omit `--depth 1` when the full history is required for development or historical comparison.
 
 Record the version you installed:
 
@@ -46,7 +48,7 @@ CONDA_CHANNEL_PRIORITY=strict \
   --solver libmamba --yes
 ```
 
-`basalt_environment.yml` is the sole repository environment definition. It uses only `conda-forge` and `bioconda`; the commands above enforce strict channel priority without editing global configuration. The file pins NumPy for the trained-model stack and omits redundant direct dependencies. The legacy CheckM package is intentionally excluded because its dependency stack conflicts with the maintained Python 3.12/CheckM2 route; install it in a separate compatible environment only when `-q checkm` is required.
+`basalt_environment.yml` is the sole repository environment definition. It uses only `conda-forge` and `bioconda`; the commands above enforce strict channel priority without editing global configuration. The file resolves the base bioinformatics and scientific-Python stack in one Conda transaction, selects the CPU-generic PyTorch build with OpenBLAS, and uses the headless Matplotlib base package. It deliberately avoids a second pip or uv dependency transaction, which could replace the solved stack with large CUDA or graphical-interface dependencies. Optional extra binners remain separate installations. The legacy CheckM package is intentionally excluded because its dependency stack conflicts with the maintained Python 3.12/CheckM2 route; install it in a separate compatible environment only when `-q checkm` is required.
 
 If package access is slow or unreliable in mainland China, use the [network-aware installer](#china-mainland) rather than changing this portable YAML or the global Conda configuration.
 
@@ -65,18 +67,16 @@ Optional extra binners are not part of the base installation. In particular, `-e
 
 ### 4. Download the trained models
 
-Choose a persistent model directory and keep the path free of shell metacharacters. Automatic mode first uses the official [PKU-EMBL/BASALT_WEIGHT repository](https://huggingface.co/PKU-EMBL/BASALT_WEIGHT), whose client supports concurrent and resumable downloads, and then falls back to the legacy Figshare ZIP:
+Choose a persistent absolute model directory outside temporary or run-specific storage, and keep the path free of shell metacharacters. Automatic mode first uses the official [PKU-EMBL/BASALT_WEIGHT repository](https://huggingface.co/PKU-EMBL/BASALT_WEIGHT), whose client supports concurrent and resumable downloads, and then falls back to the legacy Figshare ZIP:
 
 ```bash
 micromamba run -n basalt \
   BASALT_models_download.py \
   --source auto \
-  --path "$PWD/BASALT_WEIGHT"
-
-export BASALT_WEIGHT="$PWD/BASALT_WEIGHT"
+  --path /absolute/persistent/path/BASALT_WEIGHT
 ```
 
-Conda users can replace `micromamba run` with `conda run`. A public Hugging Face repository does not require login. To force one source or use a file obtained through another route:
+Conda users can replace `micromamba run` with `conda run`. A public Hugging Face repository does not require login. The downloader pins the model revision associated with this BASALT release instead of following a moving `main` branch. Automatic mode bounds its Hugging Face reachability check at 15 seconds before falling back to Figshare; use `--hf-timeout SECONDS` to adjust that check for the site network. To force one source or use a file obtained through another route:
 
 ```bash
 # Official Hugging Face only
@@ -93,13 +93,28 @@ BASALT_models_download.py --source url \
   --path "$BASALT_WEIGHT"
 ```
 
-Add the export to your shell initialization file only after verifying the path. The downloader checks both the five top-level `*_ensemble.csv` descriptors and their corresponding checkpoint directories.
+The downloader checks both the five top-level `*_ensemble.csv` descriptors and their corresponding checkpoint directories. Verify the result independently:
 
 ```bash
-find "$BASALT_WEIGHT" -maxdepth 1 -name '*_ensemble.csv' | wc -l
+find /absolute/persistent/path/BASALT_WEIGHT \
+  -maxdepth 1 -name '*_ensemble.csv' | wc -l
 ```
 
 Expected output: `5`.
+
+After verification, place one authoritative export in `~/.bashrc` so interactive logins and Bash-based batch jobs resolve the same models:
+
+```bash
+printf '%s\n' \
+  'export BASALT_WEIGHT="/absolute/persistent/path/BASALT_WEIGHT"' \
+  >> ~/.bashrc
+source ~/.bashrc
+
+test -d "$BASALT_WEIGHT"
+find "$BASALT_WEIGHT" -maxdepth 1 -name '*_ensemble.csv' | wc -l
+```
+
+Before appending, search `~/.bashrc` for an older `BASALT_WEIGHT` definition and update or remove it; multiple exports make interactive and scheduled runs difficult to audit. Some schedulers do not source `~/.bashrc` for non-interactive jobs. In that case, source it explicitly in the job script or export the same absolute path there.
 
 ### 5. Configure CheckM2
 
@@ -242,7 +257,7 @@ BASALT_models_download.py \
   --path /persistent/path/BASALT_WEIGHT
 ```
 
-Use `--hf-endpoint` only for a trusted Hugging Face-compatible service operated or approved by your institution. Proxy variables such as `HTTPS_PROXY` are inherited automatically.
+Use `--hf-endpoint` only for a trusted Hugging Face-compatible service operated or approved by your institution, and retain the pinned `--revision` plus model-file checksums in the run record. `--hf-timeout` controls the initial reachability check. Proxy variables such as `HTTPS_PROXY` are inherited automatically.
 
 After installation, export the final environment, record the selected mirror, and verify every external executable. Database downloads are separate from package and model installation; run `checkm2 database --download` through the network route approved for the compute site.
 

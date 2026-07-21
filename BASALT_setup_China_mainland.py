@@ -484,6 +484,7 @@ def install_models(
         command.extend(["--url", args.model_url])
     if args.hf_endpoint:
         command.extend(["--hf-endpoint", args.hf_endpoint])
+    command.extend(["--hf-timeout", str(args.hf_timeout)])
     run_command(
         manager_run(executable, env_name, command),
         env=environment,
@@ -581,6 +582,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="Optional Hugging Face-compatible endpoint; official HF is the default.",
     )
     parser.add_argument(
+        "--hf-timeout",
+        type=int,
+        default=15,
+        help="Seconds allowed for the Hugging Face reachability check.",
+    )
+    parser.add_argument(
         "--skip-verify", action="store_true", help="Skip the BASALT --help smoke test."
     )
     parser.add_argument(
@@ -616,6 +623,8 @@ def validate_arguments(args: argparse.Namespace) -> None:
         raise InstallationError(
             "--model-archive and --model-url are mutually exclusive."
         )
+    if args.hf_timeout <= 0:
+        raise InstallationError("--hf-timeout must be a positive integer.")
 
 
 def main(argv: Optional[Sequence[str]] = None) -> int:

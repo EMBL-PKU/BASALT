@@ -77,6 +77,16 @@ If the count is not `5`, rerun the model downloader and inspect extraction error
 BASALT_models_download.py --source auto --path "$BASALT_WEIGHT"
 ```
 
+For a persistent correction, keep one validated absolute path in `~/.bashrc`:
+
+```bash
+grep -n 'BASALT_WEIGHT' ~/.bashrc
+# Edit or remove stale entries, then retain one line such as:
+export BASALT_WEIGHT="/absolute/persistent/path/BASALT_WEIGHT"
+```
+
+Run `source ~/.bashrc` in the current interactive shell. For a scheduler that does not read `~/.bashrc`, export the same path in the submission script.
+
 Automatic mode tries the official Hugging Face repository before Figshare. For a manually obtained Baidu Netdisk ZIP or another trusted local copy:
 
 ```bash
