@@ -9,8 +9,14 @@
 
 <p class="basalt-hero__actions"><a class="basalt-button basalt-button--primary" href="quickstart.html">Get started</a><a class="basalt-button basalt-button--secondary" href="basalt-air.html">Discover BASALT-Air</a><a class="basalt-button basalt-button--quiet" href="study-design.html">Plan a study</a><a class="basalt-button basalt-button--quiet" href="pipeline.html">Explore the method</a></p>
 
-<p class="basalt-hero__badges"><a href="https://doi.org/10.1038/s41467-024-46539-7">Nature Communications 2024</a><a href="https://github.com/PKU-EMBL/BASALT-Air">New: BASALT-Air v1.0.0</a><span>Multi-assembly</span><span>MIT licensed</span></p>
+<p class="basalt-hero__badges"><a href="release-notes.html">BASALT v1.2.2</a><a href="https://doi.org/10.1038/s41467-024-46539-7">Nature Communications 2024</a><a href="https://github.com/PKU-EMBL/BASALT-Air">New: BASALT-Air v1.0.0</a><span>Multi-assembly</span><span>MIT licensed</span></p>
 ::::
+
+:::{admonition} Current release: BASALT v1.2.2
+:class: tip
+
+Version 1.2.2 improves environment reproducibility, model downloads, mainland-China installation, and documentation. Read the concise [release notes](release-notes.md#basalt-122) before updating an existing environment or resuming an older analysis.
+:::
 
 :::{admonition} New implementation: BASALT-Air v1.0.0
 :class: note

@@ -2,19 +2,39 @@
 
 Release notes summarize intended changes. For reproducible analysis, also record the exact Git commit, model files, quality-control database, and dependency environment.
 
-## Unreleased
+## BASALT 1.2.2
 
-### Installation changes
+Released 21 July 2026.
 
-- Reworked the mainland-China installer to prefer micromamba, support TUNA, BFSU, USTC, upstream, and institutional channels, and keep mirror settings out of global user configuration.
-- Added dry-run, cached/offline, update, local model archive, custom model URL, and explicit manager/path options.
-- Made the official `PKU-EMBL/BASALT_WEIGHT` Hugging Face repository the first automatic model source, with Figshare and Baidu Netdisk fallbacks.
-- Removed the obsolete `esteinig` and `defaults` channel requirements and separated legacy CheckM from the maintained Python 3.12 environment.
-- Removed the duplicate uv/pip scientific-stack transaction from `basalt_environment.yml`; the base runtime is now solved once through Conda, while VAMB and LorBin remain explicitly optional adapters.
-- Added shallow-clone installation guidance and a validated, persistent `~/.bashrc` configuration for `BASALT_WEIGHT`.
-- Added a bounded Hugging Face reachability check, a release-pinned model revision, and matching mainland-installer controls so model installation remains auditable on blocked or mirrored routes.
-- Documented VAMB as an isolated optional environment because its pinned PyTorch stack conflicts with the validated BASALT model runtime.
-- Documented `PKU-EMBL/LorBin-BASALT-Extrabinner` as the maintained `-e l` integration target, including pinned-source installation, dependency validation, warning-only failure semantics, and fork-commit reporting.
+BASALT 1.2.2 improves installation reliability, model reproducibility, and documentation. It retains the Python 3.12 workflow introduced in 1.2.1 while preventing optional packages from silently replacing the validated BASALT runtime.
+
+### Highlights
+
+- Resolves the Python 3.12 base runtime in one Conda transaction using the CPU-generic PyTorch stack.
+- Downloads models from `PKU-EMBL/BASALT_WEIGHT` with a pinned revision, resumable transfers, connection timeouts, and documented fallback routes.
+- Improves mainland-China installation with micromamba and selectable TUNA, BFSU, USTC, upstream, or institutional mirrors without modifying global Conda or pip configuration.
+- Keeps VAMB and other conflicting optional adapters outside the validated base environment.
+- Expands the README and Read the Docs guide, including LorBin integration, multi-assembly study design, troubleshooting, reproducibility, and BASALT-Air guidance.
+
+### Fixed
+
+- Removed the duplicate uv/pip scientific-stack transaction that could download a second PyTorch build and large CUDA dependencies.
+- Added `--hf-timeout` so blocked Hugging Face routes fail promptly instead of hanging indefinitely.
+- Pinned the default model revision to `bc98b102522d1c80dd8c2594df4ab3155438320e`.
+- Isolated VAMB because VAMB 5.0.4 requires PyTorch 2.6, whereas the validated BASALT model runtime uses CPU-generic PyTorch 2.4.
+- Standardized model discovery around one validated absolute `BASALT_WEIGHT` path, preferably configured once in `~/.bashrc`.
+- Removed obsolete channel requirements and separated legacy CheckM from the maintained CheckM2/Python 3.12 route.
+
+### Validation
+
+The release was installed and tested on Ubuntu 22.04 x86-64 with micromamba. The BASALT launcher, Python stack, CheckM2 database, required executables, 81 model checkpoints, five ensemble descriptors, and CPU model loading all passed validation. The complete documentation also passed strict Sphinx and external-link checks. These checks do not constitute a new biological-performance benchmark.
+
+### Compatibility and upgrade notes
+
+- Recreate or update the environment from `basalt_environment.yml`, then rerun `install.sh` because BASALT scripts are copied into the environment.
+- Keep VAMB, LorBin, MetaBinner, legacy CheckM, and GPU-specific stacks isolated unless independently validated.
+- Record the BASALT commit, model revision and checksums, CheckM2 database, environment export, commands, and warnings for production analyses.
+- Start updated analyses in a new working directory rather than resuming checkpoints created with a different software stack.
 
 ## BASALT 1.2.1
 

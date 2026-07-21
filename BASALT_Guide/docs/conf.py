@@ -8,6 +8,8 @@ import os
 project = "BASALT"
 author = "PKU-EMBL Laboratory"
 copyright = "2023–2026, PKU-EMBL Laboratory"
+version = "1.2.2"
+release = "1.2.2"
 
 extensions = [
     "myst_parser",
