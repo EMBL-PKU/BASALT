@@ -80,5 +80,16 @@ Read the Docs uses the repository-root `.readthedocs.yaml`. A local warnings-as-
 2. Add a bounded test or demo case for changed workflow behavior.
 3. Preserve or explicitly migrate checkpoint semantics.
 4. Document required external-tool and database versions.
-5. Run a strict documentation build.
-6. Report limitations and failure modes with the feature description.
+5. Run the release checks from the repository root:
+
+   ```bash
+   python -m compileall -q BASALT
+   ruff check BASALT --select E9,F63,F7,F81,F82
+   bash -n install.sh
+   perl -c BASALT/calc.kmerfreq.pl
+   perl -c BASALT/Cytoscapeviz.pl
+   python -m unittest discover -s tests -v
+   ```
+
+6. Run a strict documentation build.
+7. Report limitations and failure modes with the feature description.

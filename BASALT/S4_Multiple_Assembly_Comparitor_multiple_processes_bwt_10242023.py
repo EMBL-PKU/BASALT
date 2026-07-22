@@ -116,6 +116,44 @@ def PCA_slector(data_array, num_contig):
             newData_list_item=item
     return newData_list_item, explained_variance_ratio
 
+def splitting_kmer_file(bin_name, assembly, bin_contigs_mock, pwd):
+    """Write the assembly k-mer rows belonging to one candidate bin."""
+    source_path = os.path.join(pwd, str(assembly) + '.kmer.txt')
+    output_path = os.path.join(os.getcwd(), str(bin_name) + '_kmer.txt')
+    retained = bin_contigs_mock[bin_name]
+    with open(source_path, 'r') as source, open(output_path, 'w') as output:
+        for line in source:
+            contig_id = line.split('\t', 1)[0].strip()
+            if contig_id in retained:
+                output.write(line)
+
+
+def outlier_remover(
+    bin_id,
+    contig_ids,
+    thresholds,
+    item_data,
+    explained_variance_ratio,
+    bin_outliers,
+    feature_type,
+):
+    """Record per-threshold IQR outliers for the legacy TNF refinement helper."""
+    del explained_variance_ratio, feature_type
+    summary = pd.Series(item_data).describe()
+    q1 = summary['25%']
+    q3 = summary['75%']
+    iqr = q3 - q1
+    for threshold in thresholds:
+        lower = q1 - float(threshold) * iqr
+        upper = q3 + float(threshold) * iqr
+        bin_outliers[bin_id][threshold] = [
+            contig_ids[index]
+            for index, value in enumerate(item_data)
+            if value < lower or value > upper
+        ]
+    return bin_outliers
+
+
 def core_contigs_filtration(bin_contig_cov, bin_contig, contig_cov,
                             folder_binset, contig_file):
     """
@@ -2907,7 +2945,11 @@ def multiple_assembly_comparitor_main(Contig_list_o, BestBinSet_list_o,
         # fcheck.close()
 
     elif step == 'second_drep' or step == 'final_drep':
-        final_binset_comparitor(final_folder_list, Coverage_list, datasets, num_threads, pwd, step) ### Awaiting for alteration
+        if len(BestBinSet_list) != 1:
+            raise ValueError(
+                "{} requires exactly one final binset folder".format(step)
+            )
+        final_binset_comparitor(BestBinSet_list[0], Coverage_list, datasets, num_threads, pwd, step)
 
     print(str(step)+' bin de-replacation done!')
 

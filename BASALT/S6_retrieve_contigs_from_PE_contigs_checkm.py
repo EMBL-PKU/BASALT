@@ -355,27 +355,6 @@ def PCA_slector(data_array, num_contig):
             newData_list_item=item
     return newData_list_item, explained_variance_ratio
 
-# def checkm(bin_folder, num_threads):
-#     pwd=os.getcwd()
-#     os.system('checkm lineage_wf -t '+str(num_threads)+' -x fa '+str(bin_folder)+' '+str(bin_folder)+'_checkm')
-#     # os.chdir(str(bin_folder)+'_checkm/storage/')
-    # print('Parsing '+bin_folder+' checkm output')
-    # refined_checkm={}
-    # for line in open('bin_stats_ext.tsv','r'):
-    #     binID=str(line).strip().split('{\'')[0].strip()
-    #     genome_size=str(line).strip().split('Genome size\':')[1].split(',')[0].strip()
-    #     taxon=str(line).strip().split('lineage')[1].split('\'')[2].strip()
-    #     completeness=str(line).strip().split('Completeness')[1].split(':')[1].split(',')[0].strip()
-    #     contamination=str(line).strip().split('Contamination')[1].split(':')[1].split(',')[0].split('}')[0].strip()
-    #     # GC=round(float(str(line).strip().split('\'GC\':')[1].split(', \'GCN4\'')[0].strip())*100, 1)
-    #     refined_checkm[str(binID)]={}
-    #     refined_checkm[str(binID)]['marker lineage']=str(taxon)
-    #     refined_checkm[str(binID)]['Completeness']=float(completeness)
-    #     refined_checkm[str(binID)]['Genome size']=float(eval(genome_size))
-    #     refined_checkm[str(binID)]['Contamination']=float(contamination)
-    os.chdir(pwd)
-    return refined_checkm
-
 def bin_comparison(original_bin_folder, new_bins_checkm, new_bin_folder, refinement_mode, num_threads):
     pwd=os.getcwd()
     print('Comparing bins before and after refining process')

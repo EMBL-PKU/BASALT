@@ -45,8 +45,12 @@ sha256sum \
 
 ## 3. Run BASALT
 
+Activate the environment with the manager used for installation:
+
 ```bash
-conda activate basalt
+eval "$(micromamba shell hook --shell bash)"
+micromamba activate basalt
+# Conda alternative: conda activate basalt
 
 BASALT \
   -a assembly.fasta \
@@ -62,6 +66,8 @@ BASALT \
   -o study_01_basalt \
   > basalt.stdout.log 2> basalt.stderr.log
 ```
+
+For an activation-free run, replace the first `BASALT` token with `micromamba run -n basalt BASALT`. All subsequent BASALT examples on this page assume that the environment remains active.
 
 `-t` controls requested threads. `-m` reports available RAM in GB to BASALT and influences some internal parallelism; it is not a hard operating-system memory limit.
 

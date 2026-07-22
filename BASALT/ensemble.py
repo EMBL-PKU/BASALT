@@ -11,6 +11,7 @@ an output file. It is used internally during BASALT outlier removal.
 import math
 import argparse
 import os
+from pathlib import Path
 
 from collections import Counter
 from glob import glob
@@ -18,7 +19,6 @@ from glob import glob
 import scipy.io as scio
 import torch
 import numpy as np
-import torch
 import torch.optim as optim
 from tensorboardX import SummaryWriter
 from torch.utils.data import random_split
@@ -28,11 +28,12 @@ from model import MLP
 import torch.optim.lr_scheduler as lr_scheduler
 from os.path import join
 from my_dataset import MyDataSet_test
-from utils import train_one_epoch, evaluate_ensemble, get_log_dir, del_best_ckpt, save_confusion_mat, download_model
+from basalt_runtime import require_model_directory
+from utils import train_one_epoch, evaluate_ensemble, get_log_dir, del_best_ckpt, save_confusion_mat
 
 
 def main(args):
-    op=opt.output
+    op=args.output
     device = torch.device(args.device if torch.cuda.is_available() else "cpu")
     # device = torch.device("cpu")
 
@@ -50,25 +51,35 @@ def main(args):
     # 0.944 0.792 # 0.942 0.742 # 0.933 0.746 # 0.924 0.748 # 0.922 0.740
     ensemble_dict = {5: '5_92_76_ensemble', 4: '4_90_71_ensemble', 3: '3_89_70_ensemble',
                      2: '2_89_70_ensemble', 1: '1_89_69_ensemble'}
-    if not args.ckpt_dir:
-        # args.ckpt_dir = f"{os.path.expanduser('~')}/.cache/BASALT"
-        BASALT_WEIGHT = os.environ.get("BASALT_WEIGHT")
-        args.ckpt_dir = BASALT_WEIGHT
-    try:
-        ckpts = np.loadtxt(join(args.ckpt_dir, ensemble_dict[dataset.n_col]+'.csv'), dtype=str)
-    except Exception as e:
-        local_dir = download_model(join(args.url_prefix, ensemble_dict[dataset.n_col]+'.csv'), local_dir=None)
-        ckpts = np.loadtxt(join(args.ckpt_dir, ensemble_dict[dataset.n_col]+'.csv'), dtype=str)
+    if args.ckpt_dir:
+        model_dir = Path(args.ckpt_dir).expanduser().resolve()
+    else:
+        model_dir = require_model_directory()
+
+    descriptor = model_dir / (ensemble_dict[dataset.n_col] + '.csv')
+    if not descriptor.is_file():
+        raise FileNotFoundError(
+            "BASALT model descriptor not found: {}. Re-run the canonical "
+            "BASALT_models_download.py installer.".format(descriptor)
+        )
+    ckpts = np.atleast_1d(np.loadtxt(descriptor, dtype=str))
 
     for ckpt in tqdm(ckpts):
         # print(str(ckpt))
-        try:
-            model.load_state_dict(torch.load(join(args.ckpt_dir, ensemble_dict[dataset.n_col]+'/'+ckpt), map_location='cpu'))
-            # model.load_state_dict(torch.load(join(args.ckpt_dir, 'pytorch_model.bin'), map_location='cpu'))
-        except Exception as e:
-            local_dir = download_model(join(args.url_prefix, ensemble_dict[dataset.n_col]+'/'+ckpt), local_dir=None)
-            # local_dir = download_model(join(args.url_prefix, 'pytorch_model.bin'), local_dir=None)
-            model.load_state_dict(torch.load(join(local_dir, ensemble_dict[dataset.n_col]+'/'+ckpt), map_location='cpu'))
+        checkpoint_root = (model_dir / ensemble_dict[dataset.n_col]).resolve()
+        checkpoint = (checkpoint_root / str(ckpt)).resolve()
+        if checkpoint_root not in checkpoint.parents:
+            raise ValueError(
+                "Unsafe checkpoint path in BASALT model descriptor: {}".format(ckpt)
+            )
+        if not checkpoint.is_file():
+            raise FileNotFoundError(
+                "BASALT model checkpoint not found: {}. Re-run the canonical "
+                "BASALT_models_download.py installer.".format(checkpoint)
+            )
+        model.load_state_dict(
+            torch.load(checkpoint, map_location='cpu', weights_only=True)
+        )
         pr = evaluate_ensemble(model=model,
                                data_loader=val_loader,
                                device=device)
@@ -131,15 +142,6 @@ if __name__ == '__main__':
     parser.add_argument('--dec', type=int, default=3)
     parser.add_argument('--mode', type=int, default=2)
     parser.add_argument('--ckpt_dir', type=str, default='', help='path to model checkpoint')
-    parser.add_argument('--url_prefix', type=str, default='https://github.com/LinB203/test/releases/download/v1', help='path to model checkpoint online')
-
-    '''
-    https://github.com/LinB203/test/releases/download/v1/1_89_69_ensemble/2-0.902-0.692.pth
-    https://github.com/LinB203/test/releases/download/v1/1_89_69_ensemble/3-0.902-0.691.pth
-    https://github.com/LinB203/test/releases/download/v1/1_89_69_ensemble/2-0.893-0.713.pth
-    https://github.com/LinB203/test/releases/download/v1/1_89_69_ensemble/4-0.897-0.699.pth
-    '''
-
     parser.add_argument('--num_classes', type=int, default=2)
     parser.add_argument('--batch_size', type=int, default=512)
     parser.add_argument('-o', '--output', type=str, dest='output', default='Predicted_potential_outlier.txt')

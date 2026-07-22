@@ -1,0 +1,61 @@
+name: Release checks
+
+on:
+  pull_request:
+    paths:
+      - "BASALT/**"
+      - "tests/**"
+      - "install.sh"
+      - ".github/workflows/release-checks.yml"
+  push:
+    branches:
+      - master
+    paths:
+      - "BASALT/**"
+      - "tests/**"
+      - "install.sh"
+      - ".github/workflows/release-checks.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  static-and-smoke:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install bounded test dependencies
+        run: python -m pip install biopython ruff
+
+      - name: Check Python, Bash, and Perl syntax
+        run: |
+          python -m compileall -q BASALT
+          ruff check BASALT tests --select E9,F63,F7,F81,F82
+          bash -n install.sh
+          perl -c BASALT/calc.kmerfreq.pl
+          perl -c BASALT/Cytoscapeviz.pl
+
+      - name: Run release-smoke tests
+        run: python -m unittest discover -s tests -v
+
+      - name: Test installed launcher and permissions
+        run: |
+          test_root="$(mktemp -d)"
+          mkdir -p "$test_root/env/bin"
+          ln -s "$(command -v python)" "$test_root/env/bin/python"
+          touch "$test_root/env/bin/jgi_summarize_bam_contig_depths"
+          chmod 0755 "$test_root/env/bin/jgi_summarize_bam_contig_depths"
+          touch "$test_root/env/bin/unrelated.py"
+          chmod 0644 "$test_root/env/bin/unrelated.py"
+          CONDA_PREFIX="$test_root/env" bash install.sh
+          env -u CONDA_PREFIX "$test_root/env/bin/BASALT" --help >/dev/null
+          test "$(stat -c '%a' "$test_root/env/bin/BASALT")" = "755"
+          test "$(stat -c '%a' "$test_root/env/bin/unrelated.py")" = "644"
+          test ! -e "$test_root/env/bin/__pycache__"

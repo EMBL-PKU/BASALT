@@ -71,6 +71,8 @@ html_context = {
 copybutton_prompt_text = r"^(\$ |>>> |\.\.\. )"
 copybutton_prompt_is_regexp = True
 linkcheck_report_timeouts_as_broken = True
+linkcheck_retries = 3
+linkcheck_timeout = 30
 # Figshare resolves this DOI in normal browsers but returns HTTP 403 to
 # Sphinx's automated link checker.
 linkcheck_ignore = [r"https://doi\.org/10\.6084/m9\.figshare\.22323424"]

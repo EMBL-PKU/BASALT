@@ -2,6 +2,26 @@
 
 Release notes summarize intended changes. For reproducible analysis, also record the exact Git commit, model files, quality-control database, and dependency environment.
 
+## Unreleased
+
+This development snapshot hardens the code paths audited after the `V1.2.2` tag. It must receive a new release tag before these changes are described as part of a published version.
+
+### Fixed
+
+- Corrected MetaBinner, VAMB 5, and LorBin command construction, executable discovery, sorted-BAM inputs, output-table parsing, and normalized candidate-folder names.
+- Added strict `BASALT_WEIGHT` validation down to every descriptor-referenced checkpoint, rejected unsafe descriptor/archive paths, and removed the unpinned legacy model fallback.
+- Added CLI validation for positive resource values, percentage ranges, paired-read grammar, optional-binner identifiers, and route-specific input requirements.
+- Fixed undefined variables and imports identified by Python 3.12 compilation and Ruff critical-error checks in comparison, retrieval, mapping, dataset, and dereplication paths.
+- Made the installed launcher independent of the caller's active `$CONDA_PREFIX` and changed installation to fail clearly when MetaBAT 2 does not supply `jgi_summarize_bam_contig_depths`.
+- Removed an ineffective Pilon probe and redundant post-reassembly moves that could emit errors or reference an undefined final loop item.
+
+### Repository maintenance
+
+- Removed the obsolete general-purpose `BASALT_setup.py`, duplicate `BASALT/BASALT` launcher, tracked bytecode and Finder metadata, and the stale bundled x86-64 `jgi_summarize_bam_contig_depths` binary.
+- Added `unzip` to the canonical environment because compressed read inputs use it at runtime, and removed the unused direct Pilon dependency.
+- Standardized installed executable permissions on mode `0755`; world-writable `0777` permissions are neither required nor recommended.
+- Added Linux CI for Python, Bash and Perl syntax, critical Ruff diagnostics, release-smoke tests, launcher isolation, and permission behavior.
+
 ## BASALT 1.2.2
 
 Released 21 July 2026.

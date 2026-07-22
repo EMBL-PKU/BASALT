@@ -4,9 +4,16 @@ Start from evidence. Preserve the complete command, stdout, stderr, `Basalt_log.
 
 ## Fast diagnostic sequence
 
+Activate the environment first, or add `micromamba run -n basalt` before environment commands:
+
 ```bash
+eval "$(micromamba shell hook --shell bash)"
+micromamba activate basalt
+# Conda alternative: conda activate basalt
+
 pwd
-conda info --envs
+command -v micromamba >/dev/null && micromamba env list
+command -v conda >/dev/null && conda info --envs
 command -v BASALT checkm2 metabat2 SemiBin2 bowtie2 samtools spades.py
 test -n "$BASALT_WEIGHT" && find "$BASALT_WEIGHT" -maxdepth 1 -name '*_ensemble.csv'
 tail -n 30 Basalt_checkpoint.txt
@@ -36,18 +43,47 @@ Remove `--dry-run` when the selected route is correct. The installer prefers mic
 Activate the environment used during installation and inspect the launcher:
 
 ```bash
-conda activate basalt
+eval "$(micromamba shell hook --shell bash)"
+micromamba activate basalt
+# Conda alternative: conda activate basalt
 command -v BASALT
 ls -l "$CONDA_PREFIX/bin/BASALT" "$CONDA_PREFIX/bin/BASALT.py"
 ```
 
+Without activation, verify the launcher with `micromamba run -n basalt BASALT --help`.
+
 If the launcher is absent, return to the cloned repository and reinstall:
 
 ```bash
-conda activate basalt
 cd /path/to/BASALT
-bash install.sh
+micromamba run -n basalt bash install.sh
+# Conda alternative: conda run -n basalt bash install.sh
 ```
+
+### `Permission denied`, or should I run `chmod 777`?
+
+No. `chmod 777` makes a file or directory writable by every local user, and `chmod -R 777` can expose launchers, Python code, model weights, databases, and results to accidental or malicious replacement. `chmod +x FILE` only adds executable permission; it does not mean `777`.
+
+The repository installer should be run as `bash install.sh`, so the source installer does not need an executable bit. It verifies that the active environment is writable and installs executable files with mode `0755`. Diagnose the target before changing any permission:
+
+```bash
+printf 'user: %s\nenvironment: %s\n' "$(id -un)" "$CONDA_PREFIX"
+ls -ld "$CONDA_PREFIX" "$CONDA_PREFIX/bin"
+ls -l \
+  "$CONDA_PREFIX/bin/BASALT" \
+  "$CONDA_PREFIX/bin/BASALT.py" \
+  "$CONDA_PREFIX/bin/jgi_summarize_bam_contig_depths"
+test -w "$CONDA_PREFIX/bin" && echo 'environment bin is writable'
+```
+
+If the environment is writable but an older installation has incorrect executable modes, return to the matching BASALT checkout and rerun the installer:
+
+```bash
+micromamba run -n basalt bash install.sh
+micromamba run -n basalt BASALT --help
+```
+
+For Conda, replace `micromamba run` with `conda run`. If the environment belongs to another account or to root, create a new user-owned environment or ask the administrator to configure controlled group access. Do not repair ownership problems with `sudo chmod -R 777`. On clusters, shared software permissions and ACLs should follow the local administrator's policy.
 
 ### `LorBin: command not found`
 
@@ -74,7 +110,8 @@ find "$BASALT_WEIGHT" -maxdepth 1 -name '*_ensemble.csv' | wc -l
 If the count is not `5`, rerun the model downloader and inspect extraction errors:
 
 ```bash
-BASALT_models_download.py --source auto --path "$BASALT_WEIGHT"
+micromamba run -n basalt \
+  BASALT_models_download.py --source auto --path "$BASALT_WEIGHT"
 ```
 
 For a persistent correction, keep one validated absolute path in `~/.bashrc`:
@@ -90,7 +127,7 @@ Run `source ~/.bashrc` in the current interactive shell. For a scheduler that do
 Automatic mode tries the official Hugging Face repository before Figshare. For a manually obtained Baidu Netdisk ZIP or another trusted local copy:
 
 ```bash
-BASALT_models_download.py \
+micromamba run -n basalt BASALT_models_download.py \
   --source archive \
   --archive /absolute/path/BASALT.zip \
   --path "$BASALT_WEIGHT"
@@ -99,9 +136,12 @@ BASALT_models_download.py \
 ### `CheckM2 database not found`
 
 ```bash
-checkm2 database --download
+micromamba run -n basalt checkm2 database --download
+micromamba run -n basalt checkm2 database --current
 export CHECKM2DB=/absolute/path/to/CheckM2_database/uniref100.KO.1.dmnd
 ```
+
+Only export `CHECKM2DB` when automatic discovery fails. If it must persist, keep one validated absolute definition in `~/.bashrc` and repeat it explicitly in scheduler jobs that do not source the file.
 
 Test the installed CheckM2 version with a small independent input before rerunning a long BASALT analysis.
 

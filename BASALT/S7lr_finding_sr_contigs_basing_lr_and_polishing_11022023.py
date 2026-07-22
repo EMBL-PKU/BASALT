@@ -244,65 +244,6 @@ def mod_bin(binset_folder, pwd):
     os.chdir(pwd)
     return str(binset_folder)+'_mod', 'Total_bins.fa', mod_bin_list, bins_checkm, bin_name_change
 
-def parse_sam_bwa(sam_file, fq, pair, n, batch, mp_run):
-    print('Reading reads id')
-    f_not_mapped_reads=open('Not_mapped_reads_'+str(batch)+'_'+str(mp_run)+'.txt','a')
-    m, m1, m2 = 0, 0, 0
-    for line in open(sam_file,'r'):
-        m1+=1
-        flist=str(line).split('\t')
-        if len(flist) >= 12:
-            bin_id_o=flist[2]
-            if bin_id_o != '*':
-                bin_id=flist[2].split('_')[0]
-                read_id=flist[0]
-                read_id_name=str(n)+'_'+read_id
-                try:
-                    pair[bin_id][read_id_name]+=1
-                except:
-                    pair[bin_id][read_id_name]=1
-        if m1 % 1000000 == 0:
-            print('Read', m1,'lines')
-
-    for bin_id in pair.keys():
-        for read_id_name in pair[bin_id].keys():
-            if pair[bin_id][read_id_name] == 2:
-                fq[bin_id][read_id_name]=0
-
-    pair={}
-    f_summary=open('Bin_reads_summary.txt','a')
-    for item in fq.keys():
-        f_summary.write(str(item)+' SEQ number:'+str(len(fq[item]))+'\n')
-    f_summary.close()
-
-    print('Parsing', sam_file)
-    for line in open(sam_file,'r'):
-        m+=1
-        flist=str(line).split('\t')
-        if len(flist) >= 12:
-            bin_id_o=flist[2]
-            if bin_id_o != '*':
-                bin_id=flist[2].split('_')[0]
-                read_id=flist[0]
-                read_id_name=str(n)+'_'+read_id #
-                fq_seq=flist[9]+'\n'+'+'+'\n'+flist[10]+'\n'
-                try:
-                    fq[bin_id][read_id_name]+=1
-                    i=fq[bin_id][read_id_name]
-                    f1=open(str(bin_id)+'_seq_R'+str(i)+'.fq','a')
-                    f1.write('@'+str(read_id_name)+' '+str(i)+'\n'+str(fq_seq))
-                    # f1.write('@'+str(read_id_name)[:-2]+' '+str(i)+'\n'+str(fq_seq))
-                    f1.close()
-                    if i == 2:
-                        del fq[bin_id][read_id_name]
-                except:
-                    f_not_mapped_reads.write(str(read_id_name)+'\n')
-    
-        if m % 1000000 == 0:
-            print('Parsed', m,'lines')
-    f_not_mapped_reads.close()
-    # return fq
-
 def parse_sam(sam_file, fq, pair, n, batch, mp_run):
     print('Reading reads id')
     f_not_mapped_reads=open('Not_mapped_reads_'+str(batch)+'_'+str(mp_run)+'.txt','a')

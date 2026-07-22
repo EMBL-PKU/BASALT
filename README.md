@@ -1,6 +1,7 @@
 # BASALT: Binning Across a Series of Assemblies Toolkit
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-2f855a.svg)](LICENSE)
+[![Release: v1.2.2](https://img.shields.io/badge/release-v1.2.2-2563eb.svg)](https://github.com/PKU-EMBL/BASALT/releases/tag/V1.2.2)
 [![Python 3.12](https://img.shields.io/badge/Python-3.12-3776ab.svg)](https://www.python.org/)
 [![Nature Communications](https://img.shields.io/badge/Nature%20Communications-2024-b31b1b.svg)](https://doi.org/10.1038/s41467-024-46539-7)
 [![Documentation](https://readthedocs.org/projects/basalt-guide/badge/?version=latest)](https://basalt-guide.readthedocs.io/en/latest/)
@@ -110,7 +111,8 @@ Resource use is dataset-dependent. Run a pilot or request more memory for large 
 The Conda-compatible installation below is the maintained route for this repository. [Micromamba](https://mamba.readthedocs.io/en/stable/installation/micromamba-installation.html) is recommended for faster dependency solving and parallel package downloads; current Conda with the libmamba solver is also supported. See the [installation guide](BASALT_Guide/docs/installation.md) for databases, model weights, mainland-China mirrors, verification, and container execution notes.
 
 ```bash
-git clone --depth 1 https://github.com/PKU-EMBL/BASALT.git
+git clone --branch V1.2.2 --depth 1 \
+  https://github.com/PKU-EMBL/BASALT.git BASALT
 cd BASALT
 
 micromamba create -n basalt -f basalt_environment.yml \
@@ -118,20 +120,33 @@ micromamba create -n basalt -f basalt_environment.yml \
 micromamba run -n basalt bash install.sh
 ```
 
-Conda users can run `CONDA_CHANNEL_PRIORITY=strict conda env create -n basalt -f basalt_environment.yml --solver libmamba --yes` and replace `micromamba run` with `conda run`. [`basalt_environment.yml`](basalt_environment.yml) is the sole environment definition. It uses the portable `conda-forge` and `bioconda` channel names and resolves the complete base stack in one Conda transaction; it does not hard-code a site mirror. Remove `--depth 1` only when the full Git history is required for development.
+The release tag makes this installation reproducible instead of following a moving `master` branch. Clone `master` without `--branch V1.2.2` only for development.
 
-For mainland China, the network-aware installer probes TUNA, BFSU, USTC, and upstream endpoints, prefers `micromamba`, applies matching Conda and PyPI mirrors only to the installation subprocess, and leaves `~/.condarc` and pip configuration unchanged:
+Run the installer with `bash install.sh`; the source file does not need to be executable. The installer assigns mode `0755` only to installed Python and Perl scripts and the generated `BASALT` launcher. The platform-compatible `jgi_summarize_bam_contig_depths` executable is supplied by the maintained MetaBAT 2 package and is validated during installation; BASALT no longer ships a stale Linux binary. Do not use `sudo`, `chmod 777`, or `chmod -R 777` on the repository or environment. If installation reports a permission error, use a user-owned Conda/Micromamba environment and follow the [permission troubleshooting guide](BASALT_Guide/docs/faq.md#permission-denied-or-should-i-run-chmod-777).
+
+Activate the environment before using the unprefixed commands shown later in this README:
+
+```bash
+eval "$(micromamba shell hook --shell bash)"
+micromamba activate basalt
+# Conda alternative: conda activate basalt
+```
+
+If shell activation is undesirable, prefix each command with `micromamba run -n basalt`, for example `micromamba run -n basalt BASALT --help`. Conda users can create the environment with `CONDA_CHANNEL_PRIORITY=strict conda env create -n basalt -f basalt_environment.yml --solver libmamba --yes` and replace `micromamba run` with `conda run`. [`basalt_environment.yml`](basalt_environment.yml) is the sole environment definition. It uses the portable `conda-forge` and `bioconda` channel names and resolves the complete base stack in one Conda transaction; it does not hard-code a site mirror.
+
+As an alternative to the manual environment commands above, mainland-China users can run the network-aware installer. It probes TUNA, BFSU, USTC, and upstream endpoints, prefers `micromamba`, applies matching Conda and PyPI mirrors only to the installation subprocess, and leaves `~/.condarc` and pip configuration unchanged:
 
 ```bash
 python3 BASALT_setup_China_mainland.py \
   --manager micromamba \
   --bootstrap-micromamba \
-  --mirror auto
+  --mirror auto \
+  --model-dir /absolute/persistent/path/BASALT_WEIGHT
 ```
 
-Use `--dry-run` to inspect all commands first, `--mirror tuna|bfsu|ustc|upstream` to pin a route, or `--update` to synchronize an existing environment.
+Use `--dry-run` to inspect all commands first, `--mirror tuna|bfsu|ustc|upstream` to pin a route, or `--update` to synchronize an existing environment. When this installer completes the model step successfully, do not download the same weights again; continue with validation and the shell configuration below.
 
-Download the trained BASALT models into a persistent directory and verify them before configuring the shell:
+Download the trained BASALT models into a persistent directory and verify them before configuring the shell. The downloader validates all five ensemble descriptors and every checkpoint they reference:
 
 ```bash
 micromamba run -n basalt BASALT_models_download.py \
@@ -142,9 +157,11 @@ find /absolute/persistent/path/BASALT_WEIGHT \
   -maxdepth 1 -name '*_ensemble.csv' | wc -l
 ```
 
-The expected count is `5`. Persist the validated path for future login and batch shells:
+The expected count is `5`. Inspect `~/.bashrc` before adding the validated path for future login and batch shells:
 
 ```bash
+grep -n '^export BASALT_WEIGHT=' ~/.bashrc || true
+# If no current definition was printed, append one:
 printf '%s\n' \
   'export BASALT_WEIGHT="/absolute/persistent/path/BASALT_WEIGHT"' \
   >> ~/.bashrc
@@ -152,7 +169,7 @@ source ~/.bashrc
 test -d "$BASALT_WEIGHT"
 ```
 
-Before appending, remove or update any older `BASALT_WEIGHT` line in `~/.bashrc`; keep exactly one authoritative export.
+If `grep` found an existing definition, edit that line instead of appending another one. Keep exactly one authoritative `BASALT_WEIGHT` export.
 
 Automatic mode performs a bounded reachability check, downloads concurrently from the official [PKU-EMBL/BASALT_WEIGHT](https://huggingface.co/PKU-EMBL/BASALT_WEIGHT) repository first, and falls back to the legacy Figshare archive when Hugging Face is unreachable. Adjust the check with `--hf-timeout SECONDS`. A local ZIP, a custom URL, and the documented Baidu Netdisk route are available when either service is unsuitable.
 
@@ -162,14 +179,24 @@ Set the CheckM2 database path if it is not already configured by your environmen
 
 ```bash
 checkm2 database --download
+checkm2 database --current
+```
+
+Only when automatic discovery is unavailable:
+
+```bash
 export CHECKM2DB=/absolute/path/to/CheckM2_database/uniref100.KO.1.dmnd
 ```
+
+If the export is required across logins, keep one validated absolute definition in `~/.bashrc`, following the same duplicate-check and scheduler precautions used for `BASALT_WEIGHT`.
 
 Verify the command and external tools before a production run:
 
 ```bash
 BASALT --help
-command -v checkm2 metabat2 SemiBin2 bowtie2 samtools spades.py
+command -v \
+  checkm2 metabat2 jgi_summarize_bam_contig_depths SemiBin2 \
+  bowtie2 samtools spades.py
 ```
 
 ## Quick start

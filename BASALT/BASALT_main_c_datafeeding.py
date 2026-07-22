@@ -19,6 +19,7 @@ from S4_Multiple_Assembly_Comparitor_multiple_processes_bwt_checkm import *
 from S5_Outlier_remover_DL_checkm import *
 from glob import glob
 from Cleanup import *
+from basalt_runtime import require_model_directory
 
 
 def data_feeding_main(assembly_list, datasets, num_threads, data_feeding_folder,
@@ -47,20 +48,7 @@ def data_feeding_main(assembly_list, datasets, num_threads, data_feeding_folder,
     continue_mode : str
         Either ``'last'`` to resume or ``'new'`` to start from scratch.
     """
-    #### Check existence of models
-    user_dir = os.path.expanduser('~')
-    # local_dir = f"{user_dir}/.cache/BASALT"
-    BASALT_WEIGHT = os.environ.get("BASALT_WEIGHT")
-    local_dir = BASALT_WEIGHT
-    os.chdir(local_dir)
-    model_list=glob(r'*_ensemble.csv')
-    os.chdir(pwd)
-    # print(model_list)
-    if len(model_list) == 5:
-        x=0
-    else:
-        print('BASALT models lacking. Start download the model')
-        os.system('BASALT_models_download.py')
+    require_model_directory()
 
     #### Program start
     last_step=0

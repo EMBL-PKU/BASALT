@@ -1,284 +1,422 @@
-#!/usr/bin/env python
-# -*- coding: UTF-8 -*-
+#!/usr/bin/env python3
 
-"""
-Step S1e: Integration of extra binners for BASALT.
+"""Adapters for optional BASALT candidate binners."""
 
-This module provides wrappers around external binning tools such as
-Metabinner and VAMB, and harmonises their outputs into BASALT's
-internal binset representation.
-"""
+from __future__ import annotations
 
-from lib2to3.fixes import fix_buffer
+import os
+import re
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+from typing import Dict, Iterable, List, Mapping, Sequence
+
 from Bio import SeqIO
-import sys, os, time
-from collections import Counter
-from multiprocessing import Pool
 
 
-def metabinner(assembly_file, depth_file, num_threads, ram, pwd, QC_software):
-    """
-    Run MetaBinner on a single assembly and depth profile.
-
-    Parameters
-    ----------
-    assembly_file : str
-        Assembly FASTA file.
-    depth_file : str
-        Coverage profile file.
-    num_threads : int
-        Number of threads to use.
-    ram : int
-        Available RAM in gigabytes (reserved for future use).
-    pwd : str
-        Working directory.
-    QC_software : {'checkm', 'checkm2'}
-        Quality control backend used for evaluating resulting bins.
-    """
-    condaenv=os.popen('conda info --envs').read()
-    a=condaenv.split('\n')
-    # print(str(a))
-    for item in a:
-        a=str(item).split('/')
-        # name=a[0].strip()
-        if 'BASALT' in item:
-            path='/'.join(a[1:len(a)])
-            path='/'+path+'/bin/'
-
-    os.system('cat '+str(depth_file)+' | cut -f -1,4- > '+str(assembly_file)+'_coverage_profile.tsv')
-    # os.system('python gen_kmer.py '+pwd+'/'+str(assembly_file)+' 1000 4')
-    os.system('python '+str(path)+'gen_kmer.py '+pwd+'/'+str(assembly_file)+' 1000 4')
-    assembly_name_list=assembly_file.split('.')
-    assembly_name_list.remove(assembly_name_list[-1])
-    assembly_name='.'.join(assembly_name_list)
-
-    kmer_file=str(assembly_name)+'_kmer_4_f1000.csv'
-    n, contig_id = 0, {}
-    for line in open(kmer_file,'r'):
-       n+=1
-       if n >= 2:
-           contig_id[str(line).split(',')[0]]=0
-           
-    fcovout=open(str(assembly_file)+'_coverage_profile2.tsv','w')
-    n=0
-    for line in open(str(assembly_file)+'_coverage_profile.tsv','r'):
-        n+=1
-        if n == 1:
-            fcovout.write(line)
-        else:
-            c_id=str(line).split('\t')[0]
-            if c_id in contig_id.keys():
-                fcovout.write(line)
-    fcovout.close()
-    os.system('mv '+str(assembly_file)+'_coverage_profile2.tsv '+str(assembly_file)+'_coverage_profile.tsv')
-    os.system(path+'/run_metabinner.sh -a '+pwd+'/'+str(assembly_file)+' -o '+pwd+'/'+str(assembly_file)+'_metabinner -d '+pwd+'/'+str(assembly_file)+'_coverage_profile.tsv -k '+pwd+'/'+str(assembly_name)+'_kmer_4_f1000.csv -t '+str(num_threads)+' -p '+path)
-    metabinner_bin_contig, mbn={}, {}
-    for line in open(pwd+'/'+str(assembly_file)+'_metabinner/metabinner_res/metabinner_result.tsv','r'):
-        bin_id=str(line).strip().split('\t')[1]
-        contig=str(line).strip().split('\t')[0]
-        metabinner_bin_contig[contig]=bin_id
-        mbn[str(assembly_file)+'_100_metabinner_genomes.'+str(bin_id)+'.fa']=1
-
-    for record in SeqIO.parse(assembly_file,'fasta'):
-        try:
-            fmbn=open(str(assembly_file)+'_100_metabinner_genomes.'+str(metabinner_bin_contig[record.id])+'.fa','a')
-            fmbn.write('>'+str(record.id)+'\n'+str(record.seq)+'\n')
-            fmbn.close()
-        except:
-            if str(record.id) in metabinner_bin_contig.keys():
-                fmbn=open(str(assembly_file)+'_100_metabinner_genomes.'+str(metabinner_bin_contig[record.id])+'.fa','w')
-                fmbn.write('>'+str(record.id)+'\n'+str(record.seq)+'\n')
-                fmbn.close()          
-    
-    os.system('mkdir '+str(assembly_file)+'_100_metabinner_genomes')
-    for item in mbn.keys():
-        # print(item)
-        os.system('mv '+str(item)+' '+pwd+'/'+str(assembly_file)+'_100_metabinner_genomes')
-    if QC_software == 'checkm':
-        os.system('checkm lineage_wf -t '+str(num_threads)+' -x fa '+str(assembly_file)+'_100_metabinner_genomes '+str(assembly_file)+'_100_metabinner_checkm')
-    elif QC_software == 'checkm2':
-        os.system('checkm2 predict -t '+str(num_threads)+' -i '+str(assembly_file)+'_100_metabinner_genomes  -x fa -o '+str(assembly_file)+'_100_metabinner_checkm')
-    os.system('rm -rf '+str(assembly_file)+'_metabinner '+str(assembly_file)+'_coverage_profile.tsv '+str(assembly_name)+'_kmer_4_f1000.csv')
-
-def vamb(assembly_file, datasets, num_threads, pwd, QC_software):
-    """
-    Run VAMB on a single assembly using mapped BAM files.
-
-    Compatible with VAMB 4.x and 5.x versions.
-
-    Parameters
-    ----------
-    assembly_file : str
-        Assembly FASTA file.
-    datasets : dict
-        Mapping dataset_id -> [R1, R2] reads used to construct BAMs.
-    num_threads : int
-        Number of threads to use.
-    pwd : str
-        Working directory.
-    QC_software : {'checkm', 'checkm2'}
-        Quality control backend for evaluating resulting bins.
-    """
-    assembly_num=str(assembly_file).split('_')[0]
-    for i in range(1, len(datasets)+1):
-        if i == 1:
-            bam_list=str(assembly_num)+'_DNA-'+str(i)+'.bam'
-        else:
-            bam_list+=' '+str(assembly_num)+'_DNA-'+str(i)+'.bam'
-
-    # VAMB 5.0 compatible command with explicit parameters
-    # --minfasta: minimum bin size (500kb)
-    # -p: number of threads (VAMB 5.0 uses -p instead of relying on system default)
-    os.system('vamb bin default --outdir '+str(assembly_file)+'_vamb --fasta '+str(assembly_file)+' --bamfiles '+str(bam_list)+' --minfasta 500000 -p '+str(num_threads))
-    # Fallback for VAMB 4.x if the above fails (will be caught by error handling)
-    # os.system('vamb --outdir '+str(assembly_file)+'_vamb --fasta '+str(assembly_file)+' --bamfiles '+str(bam_list)+' --minfasta 500000')
-
-    vamb_bin_contig, vbn={}, {}
-    for line in open(pwd+'/'+str(assembly_file)+'_vamb/clusters.tsv','r'):
-        bin_id=str(line).strip().split('\t')[0]
-        contig=str(line).strip().split('\t')[1]
-        vamb_bin_contig[contig]=bin_id
-        vbn[str(assembly_file)+'_100_vamb_genomes.'+str(bin_id)+'.fa']=1
-
-    for record in SeqIO.parse(assembly_file,'fasta'):
-        try:
-            fmbn=open(str(assembly_file)+'_100_vamb_genomes.'+str(vamb_bin_contig[record.id])+'.fa','a')
-            fmbn.write('>'+str(record.id)+'\n'+str(record.seq)+'\n')
-            fmbn.close()
-        except:
-            if str(record.id) in vamb_bin_contig.keys():
-                fmbn=open(str(assembly_file)+'_100_metabinner_genomes.'+str(vamb_bin_contig[record.id])+'.fa','w')
-                fmbn.write('>'+str(record.id)+'\n'+str(record.seq)+'\n')
-                fmbn.close()       
-
-    os.system('mkdir '+str(assembly_file)+'_100_vamb_genomes')
-    for item in vbn.keys():
-        # print(item)
-        os.system('mv '+str(item)+' '+pwd+'/'+str(assembly_file)+'_100_vamb_genomes')
-    
-    os.chdir(pwd+'/'+str(assembly_file)+'_100_vamb_genomes')
-    for root, dirs, files in os.walk(pwd+'/'+str(assembly_file)+'_100_vamb_genomes'):
-        for file in files:
-            bin_len=0
-            for record in SeqIO.parse(file,'fasta'):
-                bin_len+=len(record.seq)
-            if bin_len < 500000:
-                os.system('rm '+str(file))
-    os.chdir(pwd)
-
-    if QC_software == 'checkm':
-        os.system('checkm lineage_wf -t '+str(num_threads)+' -x fa '+str(assembly_file)+'_100_vamb_genomes '+str(assembly_file)+'_100_vamb_checkm')
-    elif QC_software == 'checkm2':
-        os.system('checkm2 predict -t '+str(num_threads)+' -i '+str(assembly_file)+'_100_vamb_genomes  -x fa -o '+str(assembly_file)+'_100_vamb_checkm')
-    # os.system('rm *.seed *.out *.err *.nto *.gff *.ffn *.faa *.ndb *.njs *.not *.ntf')
-    os.system('rm -rf '+str(assembly_file)+'_vamb')
+def _run(command: Sequence[object], cwd: Path | None = None) -> None:
+    """Run an external command and propagate a useful failure to BASALT."""
+    rendered = [str(item) for item in command]
+    print("CMD: {}".format(" ".join(rendered)))
+    try:
+        subprocess.run(rendered, cwd=cwd, check=True)
+    except FileNotFoundError as exc:
+        raise RuntimeError("Required command not found: {}".format(rendered[0])) from exc
+    except subprocess.CalledProcessError as exc:
+        raise RuntimeError(
+            "Command failed with exit status {}: {}".format(
+                exc.returncode, " ".join(rendered)
+            )
+        ) from exc
 
 
-def lorbin(assembly_file, datasets, num_threads, pwd, QC_software):
-    """
-    Run LorBin on a single assembly using mapped BAM files.
+def _required_file(path: Path, label: str) -> Path:
+    resolved = path.expanduser().resolve()
+    if not resolved.is_file():
+        raise RuntimeError("{} not found: {}".format(label, resolved))
+    return resolved
 
-    Parameters
-    ----------
-    assembly_file : str
-        Assembly FASTA file.
-    datasets : dict
-        Mapping dataset_id -> [R1, R2] reads used to construct BAMs.
-    num_threads : int
-        Number of threads to use.
-    pwd : str
-        Working directory.
-    QC_software : {'checkm', 'checkm2'}
-        Quality control backend for evaluating resulting bins.
-    """
-    assembly_num=str(assembly_file).split('_')[0]
-    for i in range(1, len(datasets)+1):
-        if i == 1:
-            bam_list=str(assembly_num)+'_DNA-'+str(i)+'.bam'
-        else:
-            bam_list+=' '+str(assembly_num)+'_DNA-'+str(i)+'.bam'
 
-    lorbin_genome = str(assembly_file) + '_100_LorBin_genomes'
+def _safe_cluster_name(value: str) -> str:
+    """Convert an external cluster identifier into a safe filename component."""
+    cleaned = re.sub(r"[^A-Za-z0-9_.-]+", "_", value.strip())
+    return cleaned or "unlabelled"
 
-    bam_list = str(bam_list).split()
-    bam_abs_list = [os.path.join(pwd, b) for b in bam_list]
-    bam_abs = ' '.join(bam_abs_list)
 
-    # 多样本时加 --multi
-    multi_flag = ''
-    if len(bam_list) > 1:
-        multi_flag = ' --multi'
+def _write_assigned_bins(
+    assembly: Path,
+    assignments: Mapping[str, str],
+    output_dir: Path,
+    prefix: str,
+    minimum_size: int = 0,
+) -> List[Path]:
+    """Materialize cluster assignments as BASALT-compatible FASTA files."""
+    if output_dir.exists():
+        raise RuntimeError(
+            "Optional-binner output already exists: {}. Remove the incomplete "
+            "directory or resume from a clean run directory.".format(output_dir)
+        )
+    output_dir.mkdir(parents=True)
 
-    cmd = (
-        'LorBin bin'
-        ' -o ' + lorbin_genome +
-        ' -fa ' + str(assembly_file) +
-        ' -b ' + bam_abs +
-        '--num_process'+ num_threads + 
-        multi_flag
+    output_paths: Dict[str, Path] = {}
+    with assembly.open("r", encoding="utf-8") as assembly_handle:
+        for record in SeqIO.parse(assembly_handle, "fasta"):
+            cluster = assignments.get(record.id)
+            if cluster is None:
+                continue
+            safe_cluster = _safe_cluster_name(cluster)
+            target = output_paths.setdefault(
+                safe_cluster, output_dir / "{}.{}.fa".format(prefix, safe_cluster)
+            )
+            with target.open("a", encoding="utf-8") as output:
+                output.write(">{}\n{}\n".format(record.id, record.seq))
+
+    kept: List[Path] = []
+    for target in sorted(output_paths.values()):
+        with target.open("r", encoding="utf-8") as target_handle:
+            sequence_length = sum(
+                len(record.seq) for record in SeqIO.parse(target_handle, "fasta")
+            )
+        if sequence_length < minimum_size:
+            target.unlink()
+        elif target.stat().st_size > 0:
+            kept.append(target)
+
+    if not kept:
+        shutil.rmtree(output_dir)
+        raise RuntimeError(
+            "The optional binner produced no non-empty FASTA bins meeting the "
+            "minimum size of {} bp.".format(minimum_size)
+        )
+    return kept
+
+
+def _run_quality_check(
+    bin_dir: Path,
+    output_prefix: Path,
+    num_threads: int,
+    qc_software: str,
+) -> None:
+    if qc_software == "checkm":
+        _run(
+            [
+                "checkm",
+                "lineage_wf",
+                "-t",
+                num_threads,
+                "-x",
+                "fa",
+                bin_dir,
+                output_prefix,
+            ]
+        )
+    elif qc_software == "checkm2":
+        _run(
+            [
+                "checkm2",
+                "predict",
+                "-t",
+                num_threads,
+                "-i",
+                bin_dir,
+                "-x",
+                "fa",
+                "-o",
+                output_prefix,
+            ]
+        )
+    else:
+        raise ValueError("Unsupported quality-control backend: {}".format(qc_software))
+
+
+def _short_read_bams(
+    assembly_file: str,
+    datasets: Mapping[str, Sequence[str]],
+    workdir: Path,
+) -> List[Path]:
+    """Return the coordinate-sorted BAM files generated by BASALT mapping."""
+    assembly_group = Path(assembly_file).name.split("_", 1)[0]
+    bams = [
+        workdir / "{}_DNA-{}_sorted.bam".format(assembly_group, index)
+        for index in range(1, len(datasets) + 1)
+    ]
+    missing = [str(path) for path in bams if not path.is_file()]
+    if missing:
+        raise RuntimeError(
+            "Optional binner requires BASALT's coordinate-sorted BAM files; "
+            "missing: {}".format(", ".join(missing))
+        )
+    return [path.resolve() for path in bams]
+
+
+def _metabinner_executable() -> Path:
+    configured = os.environ.get("METABINNER_HOME")
+    candidates: List[Path] = []
+    if configured:
+        candidates.append(Path(configured).expanduser() / "run_metabinner.sh")
+    discovered = shutil.which("run_metabinner.sh")
+    if discovered:
+        candidates.append(Path(discovered))
+    candidates.append(Path(sys.executable).parent / "run_metabinner.sh")
+
+    for candidate in candidates:
+        if candidate.is_file() and os.access(candidate, os.X_OK):
+            return candidate.resolve()
+    raise RuntimeError(
+        "An executable run_metabinner.sh was not found. Add it to PATH or set "
+        "METABINNER_HOME to the pinned MetaBinner installation directory."
     )
 
-    print('Starting LorBin autobinner')
-    print(cmd)
-    os.system(cmd)
-    print('LorBin binning finished for ' + lorbin_genome)
 
-    # 规范化 bin 文件名为： <assembly_file>_100_LorBin_genomes.N.fa
-    bin_index = 0
-    outdir = os.path.join(pwd, lorbin_genome)
-    for root, dirs, files in os.walk(outdir):
-        for file in files:
-            if file.endswith('.fa') or file.endswith('.fna') or file.endswith('.fasta'):
-                bin_index += 1
-                old_path = os.path.join(root, file)
-                new_name = lorbin_genome + '.' + str(bin_index) + '.fa'
-                new_path = os.path.join(outdir, new_name)
-                if old_path != new_path:
-                    os.system('mv ' + old_path + ' ' + new_path)
-    os.chdir(pwd)
+def metabinner(
+    assembly_file: str,
+    depth_file: str,
+    num_threads: int,
+    ram: int,
+    pwd: str,
+    QC_software: str,
+) -> None:
+    """Run MetaBinner and normalize its cluster assignments for BASALT."""
+    del ram  # retained in the public adapter signature for compatibility
+    workdir = Path(pwd).resolve()
+    assembly = _required_file(workdir / assembly_file, "Assembly")
+    depth = _required_file(workdir / depth_file, "Depth profile")
+    assembly_label = Path(assembly_file).name
+    assembly_stem = Path(assembly_label).stem
+    coverage_profile = workdir / "{}_coverage_profile.tsv".format(assembly_label)
+    filtered_profile = coverage_profile.with_suffix(".filtered.tsv")
 
-    if QC_software == 'checkm':
-        os.system('checkm lineage_wf -t '+str(num_threads)+' -x fa '+str(assembly_file)+'_100_lorbin_genomes '+str(assembly_file)+'_100_lorbin_checkm')
-    elif QC_software == 'checkm2':
-        os.system('checkm2 predict -t '+str(num_threads)+' -i '+str(assembly_file)+'_100_lorbin_genomes  -x fa -o '+str(assembly_file)+'_100_lorbin_checkm')
+    with depth.open("r", encoding="utf-8") as source, coverage_profile.open(
+        "w", encoding="utf-8"
+    ) as output:
+        for line in source:
+            fields = line.rstrip("\n").split("\t")
+            selected = fields[:1] + fields[3:] if len(fields) >= 4 else fields
+            output.write("\t".join(selected) + "\n")
+
+    gen_kmer = _required_file(
+        Path(sys.executable).parent / "gen_kmer.py", "Installed gen_kmer.py"
+    )
+    _run([sys.executable, gen_kmer, assembly, 1000, 4], cwd=workdir)
+    kmer_file = _required_file(
+        workdir / "{}_kmer_4_f1000.csv".format(assembly_stem), "K-mer profile"
+    )
+
+    with kmer_file.open("r", encoding="utf-8") as source:
+        next(source, None)
+        retained_contigs = {
+            line.split(",", 1)[0].strip() for line in source if line.strip()
+        }
+    with coverage_profile.open("r", encoding="utf-8") as source, filtered_profile.open(
+        "w", encoding="utf-8"
+    ) as output:
+        header = next(source, None)
+        if header is not None:
+            output.write(header)
+        for line in source:
+            if line.split("\t", 1)[0].strip() in retained_contigs:
+                output.write(line)
+    filtered_profile.replace(coverage_profile)
+
+    executable = _metabinner_executable()
+    raw_output = workdir / "{}_metabinner".format(assembly_label)
+    _run(
+        [
+            executable,
+            "-a",
+            assembly,
+            "-o",
+            raw_output,
+            "-d",
+            coverage_profile,
+            "-k",
+            kmer_file,
+            "-t",
+            num_threads,
+            "-p",
+            str(executable.parent) + os.sep,
+        ],
+        cwd=workdir,
+    )
+
+    assignment_file = _required_file(
+        raw_output / "metabinner_res" / "metabinner_result.tsv",
+        "MetaBinner assignment table",
+    )
+    assignments: Dict[str, str] = {}
+    with assignment_file.open("r", encoding="utf-8") as source:
+        for line in source:
+            fields = line.rstrip("\n").split("\t")
+            if len(fields) >= 2:
+                assignments[fields[0]] = fields[1]
+
+    bin_name = "{}_100_metabinner_genomes".format(assembly_label)
+    bin_dir = workdir / bin_name
+    _write_assigned_bins(assembly, assignments, bin_dir, bin_name)
+    _run_quality_check(
+        bin_dir,
+        workdir / "{}_100_metabinner_checkm".format(assembly_label),
+        num_threads,
+        QC_software,
+    )
+
+    shutil.rmtree(raw_output, ignore_errors=True)
+    coverage_profile.unlink(missing_ok=True)
+    kmer_file.unlink(missing_ok=True)
 
 
+def _read_vamb_assignments(output_dir: Path) -> Dict[str, str]:
+    candidates = [
+        output_dir / "vae_clusters_unsplit.tsv",
+        output_dir / "clusters.tsv",
+    ]
+    table = next((path for path in candidates if path.is_file()), None)
+    if table is None:
+        raise RuntimeError(
+            "VAMB did not produce vae_clusters_unsplit.tsv or clusters.tsv in {}".format(
+                output_dir
+            )
+        )
 
-def extra_binner(binner, datasets, assembly_file, depth_file, num_threads, ram, pwd, QC_software):
-    """
-    Dispatcher function to select and run the appropriate extra binner.
+    assignments: Dict[str, str] = {}
+    with table.open("r", encoding="utf-8") as source:
+        for line in source:
+            fields = line.rstrip("\n").split("\t")
+            if len(fields) < 2 or fields[0] in {"clustername", "cluster"}:
+                continue
+            assignments[fields[1]] = fields[0]
+    return assignments
 
-    Supports MetaBinner ('m'), VAMB ('v') and LorBin ('l'), and returns
-    a list of new binset folder names produced by the selected tools.
-    """
-    extra_bin_folder =[]
-    
-    # MetaBinner
-    if binner == 'm':
-        metabinner(assembly_file, depth_file, num_threads, ram, pwd, QC_software)
-        extra_bin_folder.append(str(assembly_file) + '_100_metabinner_genomes')
-        
-    # VAMB
-    elif binner == 'v':
+
+def vamb(
+    assembly_file: str,
+    datasets: Mapping[str, Sequence[str]],
+    num_threads: int,
+    pwd: str,
+    QC_software: str,
+) -> None:
+    """Run the VAMB 5 command interface using BASALT's sorted BAM files."""
+    workdir = Path(pwd).resolve()
+    assembly = _required_file(workdir / assembly_file, "Assembly")
+    bams = _short_read_bams(assembly_file, datasets, workdir)
+    assembly_label = Path(assembly_file).name
+    raw_output = workdir / "{}_vamb".format(assembly_label)
+    _run(
+        [
+            "vamb",
+            "bin",
+            "default",
+            "--outdir",
+            raw_output,
+            "--fasta",
+            assembly,
+            "--bamfiles",
+            *bams,
+            "--minfasta",
+            500000,
+            "-p",
+            num_threads,
+        ],
+        cwd=workdir,
+    )
+
+    assignments = _read_vamb_assignments(raw_output)
+    bin_name = "{}_100_vamb_genomes".format(assembly_label)
+    bin_dir = workdir / bin_name
+    _write_assigned_bins(
+        assembly, assignments, bin_dir, bin_name, minimum_size=500000
+    )
+    _run_quality_check(
+        bin_dir,
+        workdir / "{}_100_vamb_checkm".format(assembly_label),
+        num_threads,
+        QC_software,
+    )
+    shutil.rmtree(raw_output, ignore_errors=True)
+
+
+def _fasta_files(directory: Path) -> Iterable[Path]:
+    for path in sorted(directory.rglob("*")):
+        if path.is_file() and path.suffix.lower() in {".fa", ".fna", ".fasta"}:
+            yield path
+
+
+def lorbin(
+    assembly_file: str,
+    datasets: Mapping[str, Sequence[str]],
+    num_threads: int,
+    pwd: str,
+    QC_software: str,
+) -> None:
+    """Run the BASALT-compatible LorBin fork and normalize its FASTA bins."""
+    workdir = Path(pwd).resolve()
+    assembly = _required_file(workdir / assembly_file, "Assembly")
+    bams = _short_read_bams(assembly_file, datasets, workdir)
+    assembly_label = Path(assembly_file).name
+    raw_output = workdir / "{}_lorbin_raw".format(assembly_label)
+    command: List[object] = [
+        "LorBin",
+        "bin",
+        "-o",
+        raw_output,
+        "-fa",
+        assembly,
+        "-b",
+        *bams,
+        "--num_process",
+        num_threads,
+    ]
+    if len(bams) > 1:
+        command.append("--multi")
+    _run(command, cwd=workdir)
+
+    source_bins = list(_fasta_files(raw_output))
+    if not source_bins:
+        raise RuntimeError("LorBin produced no FASTA bins in {}".format(raw_output))
+
+    bin_name = "{}_100_lorbin_genomes".format(assembly_label)
+    bin_dir = workdir / bin_name
+    if bin_dir.exists():
+        raise RuntimeError("Optional-binner output already exists: {}".format(bin_dir))
+    bin_dir.mkdir(parents=True)
+    for index, source in enumerate(source_bins, start=1):
+        target = bin_dir / "{}.{}.fa".format(bin_name, index)
+        shutil.copy2(source, target)
+
+    _run_quality_check(
+        bin_dir,
+        workdir / "{}_100_lorbin_checkm".format(assembly_label),
+        num_threads,
+        QC_software,
+    )
+    shutil.rmtree(raw_output, ignore_errors=True)
+
+
+def extra_binner(
+    binner: str,
+    datasets: Mapping[str, Sequence[str]],
+    assembly_file: str,
+    depth_file: str,
+    num_threads: int,
+    ram: int,
+    pwd: str,
+    QC_software: str,
+) -> List[str]:
+    """Dispatch one optional adapter and return its normalized output folder."""
+    if binner == "m":
+        metabinner(
+            assembly_file, depth_file, num_threads, ram, pwd, QC_software
+        )
+        folder = "{}_100_metabinner_genomes".format(Path(assembly_file).name)
+    elif binner == "v":
         vamb(assembly_file, datasets, num_threads, pwd, QC_software)
-        extra_bin_folder.append(str(assembly_file) + '_100_vamb_genomes')
-
-    elif binner == 'l':
+        folder = "{}_100_vamb_genomes".format(Path(assembly_file).name)
+    elif binner == "l":
         lorbin(assembly_file, datasets, num_threads, pwd, QC_software)
-        extra_bin_folder.append(str(assembly_file) + '_100_lorbin_genomes')
-
-    # Cleanup of common temporary files generated by these tools
-    os.system('rm *.seed *.out *.err *.nto *.gff *.ffn *.faa *.ndb *.njs *.not *.ntf 2>/dev/null')
-    
-    return extra_bin_folder
-
-if __name__ == '__main__': 
-    num_threads=20
-    ram=250
-    pwd=os.getcwd()
-    assembly_file='1_assembly_sample1.fa'
-    depth_file='1_assembly.depth.txt'
-    datasets={'1':['sample1.R1.fq','sample1.R2.fq'], '2':['sample2.R1.fq','sample2.R2.fq']}
-    binner='v' ### 'm': metabinner; 'v': vamb
-    QC_software='checkm2' ### checkm or checkm2
-    extra_binner(binner, datasets, assembly_file, depth_file, num_threads, ram, pwd, QC_software)
+        folder = "{}_100_lorbin_genomes".format(Path(assembly_file).name)
+    else:
+        raise ValueError(
+            "Unknown extra binner {!r}; expected m, v, or l.".format(binner)
+        )
+    return [folder]

@@ -80,6 +80,7 @@ class MyDataSet(Dataset):
             labels, datas = [], []
             lines = read_raw_data(split)
             self.lines = lines
+            temp_labels, temp_datas = [], []
             for i, line in tqdm(enumerate(lines)):
                 l = line.split('\t')
                 if len(l) == 1:
@@ -125,6 +126,7 @@ class MyDataSet_(Dataset):
         labels, datas = [], []
         lines = read_raw_data(split)
         self.lines = lines
+        temp_labels, temp_datas = [], []
         for i, line in tqdm(enumerate(lines)):
             l = line.split('\t')
             if len(l) == 1:
@@ -170,6 +172,7 @@ class MyDataSet_test(Dataset):
         datas = []
         lines = read_raw_data(split)
         self.lines = lines
+        temp_labels, temp_datas = [], []
         for i, line in tqdm(enumerate(lines)):
             l = line.split('\t')
             if len(l) == 1:

@@ -28,12 +28,12 @@ dependencies:
   - samtools
   - racon
   - pplacer
-  - pilon
   - minimap2
   - miniasm
   - idba
   - hmmer
   - entrez-direct
+  - unzip
 
   # Python runtime. Keep the scientific stack in the Conda transaction so a
   # second package manager cannot replace it with incompatible GPU wheels.

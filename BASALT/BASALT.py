@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 
 """
@@ -13,7 +13,20 @@ import time
 import sys
 import os
 import argparse
-from glob import glob
+
+
+def positive_integer(value):
+    parsed = int(value)
+    if parsed <= 0:
+        raise argparse.ArgumentTypeError("must be a positive integer")
+    return parsed
+
+
+def percentage(value):
+    parsed = int(value)
+    if not 0 <= parsed <= 100:
+        raise argparse.ArgumentTypeError("must be between 0 and 100")
+    return parsed
 
 
 # ---------------------------------------------------------------------------
@@ -30,29 +43,29 @@ parser.add_argument('-hf', '--hifi', type=str, dest='hifi_datasets',
                     help='Hifi dataset. List of hifi, e.g.: hf1.fq,hf2.fq')
 # parser.add_argument('-c','--HIC', type=str, dest='Hi_C_dataset',
                     # help='List of Hi-C dataset(s), e.g.: hc1.fq,hc2.fq')
-parser.add_argument('-t','--threads', type=int, dest='threads', default=4,
+parser.add_argument('-t','--threads', type=positive_integer, dest='threads', default=4,
                     help='Number of threads, e.g.: 64')
-parser.add_argument('-m','--ram', type=int, dest='ram', default=32,
+parser.add_argument('-m','--ram', type=positive_integer, dest='ram', default=32,
                     help='Number of ram, minimum ram suggested: 32G')
 parser.add_argument('-e','--extra_binner', type=str, dest='extra_binner',
                     help='Extra binner for binning: m: metabinner, v: vamb, l: lorbin; for instance: -e m, means BASALT will use metabinner for binning besides metabat2, maxbin2, and concoct')
 parser.add_argument('-o','--out', type=str, dest='output_folder_name', default='Final_binset',
                     help='Name of the output folder. For binning, E.g. -o Anammox. BASALT would put those bins into folder Anammox_final_binset; for data feeding, e.g. -o Anammox; output files will under the folder of Anammox_data_feeded')
-parser.add_argument('-q','--quality-check', type=str, dest='quality_check', default='checkm2', 
+parser.add_argument('-q','--quality-check', choices=('checkm2', 'checkm'), dest='quality_check', default='checkm2',
                     help='Chance checkm version, default: checkm2; you may use: \'-q checkm\' to specify checkm for quality check when running BASALT')
-parser.add_argument('--min-cpn', type=int, dest='Min_completeness', default=35,
+parser.add_argument('--min-cpn', type=percentage, dest='Min_completeness', default=35,
                     help='Min completeness of kept bins (default: 35)')
-parser.add_argument('--max-ctn', type=int, dest='Max_contamination', default=20,
+parser.add_argument('--max-ctn', type=percentage, dest='Max_contamination', default=20,
                     help='Max contamination of kept bins (default: 20)')
-parser.add_argument('--mode', type=str, dest='running_mode', default='continue',
+parser.add_argument('--mode', choices=('new', 'continue'), dest='running_mode', default='continue',
                     help='Start a new project (new) or continue to run (continue). e.g. --mode continue / --mode new')
-parser.add_argument('--module', type=str, dest='functional_module', default='all',
+parser.add_argument('--module', choices=('autobinning', 'refinement', 'reassembly', 'all'), dest='functional_module', default='all',
                     help='Modules for binning. Four modules: 1. autobinning; 2. refinement; 3. reassembly; 4. all. Default will run all modules. But you could set the only perform modle. e.g. --module reassembly. In the module, ')
 # parser.add_argument('--autopara', type=str, dest='autobining_parameters', default='more-sensitive',
 #                     help='Three parameters to chose: 1. more-sensitive; 2. sensitive; 3. quick. Default: more-sensitive. e.g. --autopara sensitive')
-parser.add_argument('--refinepara', type=str, dest='refinement_paramter', default='quick',
+parser.add_argument('--refinepara', choices=('quick', 'deep'), dest='refinement_paramter', default='quick',
                     help='Two refinement parameters to chose: 1. deep; 2. quick. Default: quick. e.g. --refpara deep')
-parser.add_argument('--sensitive', type=str, dest='binning_sensitive', default='sensitive',
+parser.add_argument('--sensitive', choices=('quick', 'sensitive', 'more-sensitive'), dest='binning_sensitive', default='sensitive',
                     help='Three parameters to chose: 1. quick; 2. sensitive; 3. more-sensitive. Default: sensitive. If you want to change the sensitive, use: e.g. --sensitive sensitive')
 # parser.add_argument('--hybrid', type=str, dest='hybrid_reassembly', default='no',
 #                     help='Use hybrid re-assembly. e.g. --hybrid y / --hybrid n; defalt no')
@@ -66,7 +79,7 @@ parser.add_argument('--sensitive', type=str, dest='binning_sensitive', default='
 #                     help='Hybrid data, including both HTS and ont/pb datasets')
 parser.add_argument('-d','--data-feeding-folder', type=str, dest='data_feeding_folder',
                     help='List of folder name of extra binset(s) for data feeding, e.g.: -d binset1_folder_name,binset2_folder_name')
-parser.add_argument('--binset-index', type=str, dest='extra_binset_start_index', default=500,
+parser.add_argument('--binset-index', type=positive_integer, dest='extra_binset_start_index', default=500,
                     help='Optional parameter for data feeding. The start index of the extra binset, e.g.: -bi 5. BASALT already set a default index, but if you already had 4 assemblies, the binset start index could be 5')
 # parser.add_argument('--only-refinement', action='store_true', dest='only_refinement',
 #                     help='Only carry out refinement, e.g.: --only-refinement')
@@ -105,78 +118,38 @@ binsets_list=args.binsets_list
 # ---------------------------------------------------------------------------
 # Parse and normalize input lists
 # ---------------------------------------------------------------------------
-try:
-    datasets_list=sr_datasets.split('/')
-    datasets, n = {}, 0
-    for item in datasets_list:
-        n+=1
-        datasets[str(n)]=[]
-        pr=str(item).strip().split(',')
-        datasets[str(n)].append(pr[0].strip())
-        datasets[str(n)].append(pr[1].strip())
-except:
-    datasets={}
+def comma_list(value):
+    return [item.strip() for item in value.split(',') if item.strip()] if value else []
 
-try:
-    assembly_list=assemblies.split(',')
-except:
-    assembly_list=[]
 
-try:
-    lr_list2=long_reads_list.split(',')
-    lr_list=[]
-    for item in lr_list2:
-        lr_list.append(item.strip())
-except:
-    lr_list=[]
+assembly_list = comma_list(assemblies)
+lr_list = comma_list(long_reads_list)
+hifi_list = comma_list(hifi_list)
+hic_list = []  # Hi-C is not exposed by the current CLI.
+eb_list = comma_list(extrabinner)
+data_feeding_folder = comma_list(data_feeding_folder)
+coverage_list = comma_list(coverage_list)
+binsets_list = comma_list(binsets_list)
 
-try:
-    hifi_list2=hifi_list.split(',')
-    hifi_list=[]
-    for item in hifi_list2:
-        hifi_list.append(item.strip())
-except:
-    hifi_list=[]
+invalid_binners = sorted(set(eb_list) - {'m', 'v', 'l'})
+if invalid_binners:
+    parser.error(
+        "--extra_binner accepts only comma-separated m, v, or l values; got {}"
+        .format(','.join(invalid_binners))
+    )
 
-try:
-    hic_list2=Hi_C_reads_list.split(',')
-    hic_list=[]
-    for item in hic_list2:
-        hic_list.append(item.strip())
-except:
-    hic_list=[]
+datasets = {}
+if sr_datasets:
+    for index, sample in enumerate(sr_datasets.split('/'), start=1):
+        mates = [mate.strip() for mate in sample.split(',')]
+        if len(mates) != 2 or not all(mates):
+            parser.error(
+                "--shortreads requires R1,R2 for each sample and '/' between samples"
+            )
+        datasets[str(index)] = mates
 
-try:
-    eb_list2=extrabinner.split(',')
-    eb_list=[]
-    for item in eb_list2:
-        eb_list.append(item.strip())
-except:
-    eb_list=[]
-
-try:
-    data_feeding_folder2=data_feeding_folder.split(',')
-    data_feeding_folder=[]
-    for item in data_feeding_folder2:
-        data_feeding_folder.append(item.strip())
-except:
-    data_feeding_folder=[]
-
-try:
-    coverage_list2=coverage_list.split(',')
-    coverage_list=[]
-    for item in coverage_list2:
-        coverage_list.append(item.strip())
-except:
-    coverage_list=[]
-
-try:
-    binsets_list2=binsets_list.split(',')
-    binsets_list=[]
-    for item in binsets_list2:
-        binsets_list.append(item.strip())
-except:
-    binsets_list=[]
+if any(binner in {'v', 'l'} for binner in eb_list) and not datasets:
+    parser.error("VAMB and LorBin adapters require paired short reads for BAM coverage")
 
 
 # ---------------------------------------------------------------------------
@@ -230,6 +203,36 @@ def main():
         writing results to the specified output folder.
     """
     global output_folder
+    if data_feeding_folder:
+        if not datasets:
+            parser.error("data feeding requires paired short reads via --shortreads")
+    elif binsets_list:
+        if not assembly_list or not coverage_list or not datasets:
+            parser.error(
+                "--binsets-list requires matching --assemblies, --coverage-list, "
+                "and --shortreads inputs"
+            )
+        if not (
+            len(binsets_list) == len(assembly_list) == len(coverage_list)
+        ):
+            parser.error(
+                "--binsets-list, --assemblies, and --coverage-list must contain "
+                "the same number of entries"
+            )
+    elif refinement_binset:
+        if not assembly_list or not coverage_list or not datasets:
+            parser.error(
+                "--refinement-binset requires --assemblies, --coverage-list, "
+                "and paired --shortreads"
+            )
+    else:
+        if not assembly_list:
+            parser.error("a normal BASALT run requires at least one assembly")
+        if not datasets and not lr_list and not hifi_list:
+            parser.error(
+                "a normal BASALT run requires short reads, long reads, or HiFi reads"
+            )
+
     # Main execution: select quality check implementation and functional module
     if QC_software == 'checkm2':
         if len(data_feeding_folder) != 0:

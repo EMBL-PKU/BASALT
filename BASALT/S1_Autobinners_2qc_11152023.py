@@ -528,7 +528,6 @@ def mapping_hifi_minimap(assembly, group, long_read_split_fa, num_threads, pwd):
     #             break
     # except:
     #     os.system('jgi_summarize_bam_contig_depths --outputDepth '+str(group)+'_assembly.depth.txt '+str(bam_sorted))
-    # ###os.system('/home/emma/software/metabat/jgi_summarize_bam_contig_depths --outputDepth '+str(group)+'_assembly.depth.txt '+str(bam_sorted))
 
     # n=0
     # for line in open(str(group)+'_assembly.depth.txt', 'r'):
@@ -744,7 +743,6 @@ def maxbin2(assembly_file, pwd, depth_file, threshold, Coverage_list_file, num_t
     os.system('cp '+str(assembly_file)+' Coverage_list* '+str(pwd)+'/'+str(maxbin2_genome))
     os.chdir(pwd+ '/'+str(maxbin2_genome))
     os.system('run_MaxBin.pl -abund_list '+Coverage_list_file+' -thread '+str(num_threads)+' -contig '+str(assembly_file)+' -out '+str(maxbin2_genome)+' -prob_threshold '+str(threshold))
-    ###os.system('perl '+str(pwd)+'/home/emma/MaxBin-2.2.7/run_MaxBin.pl -abund_list '+Coverage_list_file+' -thread '+str(num_threads)+' -contig '+str(assembly_file)+' -out '+str(maxbin2_genome)+' -prob_threshold '+str(threshold))
 
 def concoct_mod_file(assembly_file, depth_file):
     """
@@ -1649,7 +1647,6 @@ def autobinner_main(assembly_list, datasets, lr, hifi_list, insert_size, num_thr
                                 break
                     except:
                         os.system('jgi_summarize_bam_contig_depths --outputDepth '+str(group)+'_assembly.depth.txt '+str(bam_sorted))
-                    ###os.system('/home/emma/software/metabat/jgi_summarize_bam_contig_depths --outputDepth '+str(group)+'_assembly.depth.txt '+str(bam_sorted))    
                     # logfile.close()
                     depth_file_list.append(str(group)+'_assembly.depth.txt')
                 else:

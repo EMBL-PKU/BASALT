@@ -23,12 +23,16 @@ The complete download is approximately 967 MB. Preserve the Figshare version and
 Follow [Installation](installation.md), then verify:
 
 ```bash
-conda activate basalt
+eval "$(micromamba shell hook --shell bash)"
+micromamba activate basalt
+# Conda alternative: conda activate basalt
 BASALT --help
 test -n "$BASALT_WEIGHT"
 test -d "$BASALT_WEIGHT"
 command -v checkm2 metabat2 SemiBin2 bowtie2 samtools spades.py
 ```
+
+For activation-free execution, prefix environment commands with `micromamba run -n basalt`. The remaining commands in this tutorial assume an active `basalt` environment.
 
 ## 2. Download and inspect the demo
 
@@ -163,11 +167,13 @@ A checksum mismatch does not by itself establish a regression. FASTA ordering, i
 
 set -u
 
-source /path/to/conda.sh
-conda activate basalt
+export MAMBA_ROOT_PREFIX=/absolute/path/to/micromamba-root
+export BASALT_WEIGHT=/absolute/path/to/BASALT_WEIGHT
+export CHECKM2DB=/absolute/path/to/uniref100.KO.1.dmnd
+MICROMAMBA_BIN=/absolute/path/to/micromamba
 cd /project/basalt_demo/run
 
-BASALT \
+"$MICROMAMBA_BIN" run -n basalt BASALT \
   -a assembly.fasta \
   -s short_R1.fastq,short_R2.fastq \
   -l long_reads.fastq \
@@ -180,18 +186,22 @@ BASALT \
   -o demo_basalt
 ```
 
-`set -u` detects unset shell variables but does not change BASALT's handling of external-command failures. Perform the completion audit after the scheduler job ends.
+Replace every placeholder with a validated site path. Conda users can source the site `conda.sh`, activate `basalt`, and run `BASALT` directly instead. `set -u` detects unset shell variables but does not change BASALT's handling of external-command failures. Perform the completion audit after the scheduler job ends.
 
 ## Archive the tutorial result
 
 ```bash
-conda env export --no-builds > basalt-environment.yml
+micromamba env export -n basalt > basalt-environment.yml
+# Conda alternative: conda env export -n basalt --no-builds > basalt-environment.yml
 git -C /path/to/BASALT rev-parse HEAD > basalt-git-commit.txt
 
-find "$BASALT_WEIGHT" -type f -print0 \
-  | sort -z \
-  | xargs -0 sha256sum \
-  > basalt-models.sha256
+(
+  cd "$BASALT_WEIGHT"
+  find . -type f \
+    \( -name '*.pth' -o -name '*_ensemble.csv' \) -print0 \
+    | sort -z \
+    | xargs -0 sha256sum
+) > basalt-models.sha256
 
 tar -czf demo-provenance.tar.gz \
   BASALT_command.txt \

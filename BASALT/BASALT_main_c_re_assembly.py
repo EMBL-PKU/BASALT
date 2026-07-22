@@ -19,6 +19,7 @@ from S9p_Hybrid_Reassembly_checkm import *
 from S10_OLC_new_checkm import *
 from glob import glob
 from Cleanup import *
+from basalt_runtime import require_model_directory
 
 
 def BASALT_main_c_re_assembly(assembly_list, datasets, num_threads, lr_list, hifi_list,
@@ -35,20 +36,7 @@ def BASALT_main_c_re_assembly(assembly_list, datasets, num_threads, lr_list, hif
     ### Record the last accomplished step
     pwd=os.getcwd()
 
-    #### Check existence of models
-    user_dir = os.path.expanduser('~')
-    # local_dir = f"{user_dir}/.cache/BASALT"
-    BASALT_WEIGHT = os.environ.get("BASALT_WEIGHT")
-    local_dir = BASALT_WEIGHT
-    os.chdir(local_dir)
-    model_list=glob(r'*_ensemble.csv')
-    os.chdir(pwd)
-    # print(model_list)
-    if len(model_list) == 5:
-        x=0
-    else:
-        print('BASALT models lacking. Start download the model')
-        os.system('BASALT_models_download.py')
+    require_model_directory()
 
     #### Program start
     last_step=0

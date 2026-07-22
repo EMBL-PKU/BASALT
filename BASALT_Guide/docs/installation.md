@@ -19,11 +19,12 @@ macOS and Windows are not supported as native execution platforms. Use a Linux h
 ### 1. Clone the repository
 
 ```bash
-git clone --depth 1 https://github.com/PKU-EMBL/BASALT.git
+git clone --branch V1.2.2 --depth 1 \
+  https://github.com/PKU-EMBL/BASALT.git BASALT
 cd BASALT
 ```
 
-The shallow clone downloads only the current revision and is sufficient for an installation. Omit `--depth 1` when the full history is required for development or historical comparison.
+This shallow clone is fixed to the v1.2.2 release instead of following the moving `master` branch. Omit `--branch V1.2.2` and `--depth 1` only when the development branch and full history are intentionally required.
 
 Record the version you installed:
 
@@ -63,6 +64,54 @@ micromamba run -n basalt bash install.sh
 
 The script copies the BASALT programs into `$CONDA_PREFIX/bin` and creates the `BASALT` launcher. Re-run the installer after updating the repository because this is a copied installation, not an editable package.
 
+#### File permissions
+
+Use `bash install.sh` exactly as shown above. The source `install.sh` file can remain mode `0644` because Bash reads it directly; it does not need `chmod +x`.
+
+The installer requires a user-writable `$CONDA_PREFIX/bin`. It assigns mode `0755` to the installed Python and Perl executables and the generated `BASALT` launcher. The platform-compatible `jgi_summarize_bam_contig_depths` executable comes from the MetaBAT 2 Conda package; the installer verifies that it exists and is executable instead of overwriting it with a bundled Linux binary. Mode `0755` gives the owner read, write, and execute permission while group and other users receive only read and execute permission.
+
+`chmod +x FILE` adds execute permission to a file; it is not the same operation as `chmod 777 FILE`. Mode `0777` makes a file writable by every local user and permits code or launcher replacement. Never run `sudo chmod -R 777` on the BASALT repository, a Conda/Micromamba environment, model weights, databases, or an analysis directory.
+
+Before installation, the following checks should report a writable environment owned by the current user:
+
+```bash
+printf 'user: %s\nenvironment: %s\n' "$(id -un)" "$CONDA_PREFIX"
+ls -ld "$CONDA_PREFIX" "$CONDA_PREFIX/bin"
+test -w "$CONDA_PREFIX/bin" && echo 'environment bin is writable'
+```
+
+After installation, inspect the actual modes and test the launcher:
+
+```bash
+stat -c '%A %a %U:%G %n' \
+  "$CONDA_PREFIX/bin/BASALT" \
+  "$CONDA_PREFIX/bin/BASALT.py" \
+  "$CONDA_PREFIX/bin/jgi_summarize_bam_contig_depths"
+BASALT --help
+```
+
+If `$CONDA_PREFIX/bin` is not writable, create a user-owned environment or ask the system administrator to correct ownership or group access. Do not compensate with `sudo` or world-writable permissions. For an intentionally shared environment, the administrator should configure a controlled Unix group, setgid directories, or access-control lists according to site policy. See [Permission troubleshooting](faq.md#permission-denied-or-should-i-run-chmod-777).
+
+Choose one command mode before continuing. The remaining unprefixed commands on this page assume that the environment is active:
+
+```bash
+# Micromamba
+eval "$(micromamba shell hook --shell bash)"
+micromamba activate basalt
+
+# Conda alternative
+# conda activate basalt
+```
+
+Activation is optional. For scripts, schedulers, or shells where activation is undesirable, prefix every environment command explicitly, for example:
+
+```bash
+micromamba run -n basalt BASALT --help
+micromamba run -n basalt checkm2 database --current
+```
+
+Conda users can use the corresponding `conda run -n basalt COMMAND` form.
+
 Optional extra binners are not part of the base installation. In particular, `-e l` uses the [PKU-EMBL/LorBin-BASALT-Extrabinner](https://github.com/PKU-EMBL/LorBin-BASALT-Extrabinner) in-house fork, which must be installed and validated separately. Do not add it to the portable BASALT environment YAML without re-solving and testing the complete stack; follow the pinned-source procedure in [Extra binners](extra-binners.md#lorbin).
 
 ### 4. Download the trained models
@@ -70,41 +119,58 @@ Optional extra binners are not part of the base installation. In particular, `-e
 Choose a persistent absolute model directory outside temporary or run-specific storage, and keep the path free of shell metacharacters. Automatic mode first uses the official [PKU-EMBL/BASALT_WEIGHT repository](https://huggingface.co/PKU-EMBL/BASALT_WEIGHT), whose client supports concurrent and resumable downloads, and then falls back to the legacy Figshare ZIP:
 
 ```bash
+MODEL_DIR=/absolute/persistent/path/BASALT_WEIGHT
 micromamba run -n basalt \
   BASALT_models_download.py \
   --source auto \
-  --path /absolute/persistent/path/BASALT_WEIGHT
+  --path "$MODEL_DIR"
 ```
 
 Conda users can replace `micromamba run` with `conda run`. A public Hugging Face repository does not require login. The downloader pins the model revision associated with this BASALT release instead of following a moving `main` branch. Automatic mode bounds its Hugging Face reachability check at 15 seconds before falling back to Figshare; use `--hf-timeout SECONDS` to adjust that check for the site network. To force one source or use a file obtained through another route:
 
+Set `MODEL_DIR` as shown above before running any alternative command.
+
 ```bash
 # Official Hugging Face only
-BASALT_models_download.py --source huggingface --path "$BASALT_WEIGHT"
+micromamba run -n basalt \
+  BASALT_models_download.py --source huggingface --path "$MODEL_DIR"
 
 # Existing ZIP, including a manually downloaded Baidu Netdisk copy
-BASALT_models_download.py --source archive \
+micromamba run -n basalt BASALT_models_download.py --source archive \
   --archive /path/to/BASALT.zip \
-  --path "$BASALT_WEIGHT"
+  --path "$MODEL_DIR"
 
 # Site-operated object storage or another trusted URL
-BASALT_models_download.py --source url \
+micromamba run -n basalt BASALT_models_download.py --source url \
   --url https://example.org/BASALT.zip \
-  --path "$BASALT_WEIGHT"
+  --path "$MODEL_DIR"
 ```
 
-The downloader checks both the five top-level `*_ensemble.csv` descriptors and their corresponding checkpoint directories. Verify the result independently:
+The downloader checks the five top-level `*_ensemble.csv` descriptors, their corresponding directories, every referenced checkpoint file, and archive/descriptor path safety. Verify the result independently:
 
 ```bash
-find /absolute/persistent/path/BASALT_WEIGHT \
-  -maxdepth 1 -name '*_ensemble.csv' | wc -l
+find "$MODEL_DIR" -maxdepth 1 -name '*_ensemble.csv' | wc -l
 ```
 
 Expected output: `5`.
 
-After verification, place one authoritative export in `~/.bashrc` so interactive logins and Bash-based batch jobs resolve the same models:
+For a production analysis, preserve a deterministic local inventory after the download:
 
 ```bash
+(
+  cd "$MODEL_DIR"
+  find . -type f \
+    \( -name '*.pth' -o -name '*_ensemble.csv' \) -print0 \
+    | sort -z \
+    | xargs -0 sha256sum
+) > BASALT_WEIGHT.sha256
+```
+
+After verification, inspect `~/.bashrc` before placing one authoritative export so interactive logins and Bash-based batch jobs resolve the same models:
+
+```bash
+grep -n '^export BASALT_WEIGHT=' ~/.bashrc || true
+# If no current definition was printed, append one:
 printf '%s\n' \
   'export BASALT_WEIGHT="/absolute/persistent/path/BASALT_WEIGHT"' \
   >> ~/.bashrc
@@ -114,7 +180,7 @@ test -d "$BASALT_WEIGHT"
 find "$BASALT_WEIGHT" -maxdepth 1 -name '*_ensemble.csv' | wc -l
 ```
 
-Before appending, search `~/.bashrc` for an older `BASALT_WEIGHT` definition and update or remove it; multiple exports make interactive and scheduled runs difficult to audit. Some schedulers do not source `~/.bashrc` for non-interactive jobs. In that case, source it explicitly in the job script or export the same absolute path there.
+If `grep` found an existing definition, edit that line instead of appending another one. Multiple exports make interactive and scheduled runs difficult to audit. Some schedulers do not source `~/.bashrc` for non-interactive jobs. In that case, source it explicitly in the job script or export the same absolute path there.
 
 ### 5. Configure CheckM2
 
@@ -122,6 +188,7 @@ CheckM2 is the default quality-control backend:
 
 ```bash
 checkm2 database --download
+checkm2 database --current
 ```
 
 If CheckM2 does not discover the database automatically, set the path to its DIAMOND database:
@@ -129,6 +196,8 @@ If CheckM2 does not discover the database automatically, set the path to its DIA
 ```bash
 export CHECKM2DB=/absolute/path/to/CheckM2_database/uniref100.KO.1.dmnd
 ```
+
+Only set `CHECKM2DB` when `checkm2 database --current` cannot locate the database. If the variable is required for every login, inspect `~/.bashrc` for an older definition and retain one validated absolute export. Batch schedulers may require the same export in the job script because non-interactive jobs do not always source `~/.bashrc`.
 
 The legacy CheckM backend is selected with `-q checkm`. CheckM can impose a different Python and dependency stack from the maintained CheckM2 route. Validate it in a compatible environment or container, install its database, and set the location required by that installation, commonly `CHECKM_DATA_PATH`.
 
@@ -138,7 +207,8 @@ The legacy CheckM backend is selected with `-q checkm`. CheckM can impose a diff
 BASALT --help
 
 command -v \
-  BASALT checkm2 metabat2 SemiBin2 bowtie2 bwa samtools \
+  BASALT checkm2 metabat2 jgi_summarize_bam_contig_depths \
+  SemiBin2 bowtie2 bwa samtools \
   minimap2 spades.py unicycler blastn makeblastdb
 ```
 
@@ -198,10 +268,11 @@ python3 BASALT_setup_China_mainland.py \
   --manager micromamba \
   --bootstrap-micromamba \
   --mirror auto \
-  --env-name basalt
+  --env-name basalt \
+  --model-dir /absolute/persistent/path/BASALT_WEIGHT
 ```
 
-The bootstrapped binary is placed at `~/.local/bin/micromamba`; the installer does not initialize or edit the shell. It also does not run `conda config`, edit `~/.condarc`, edit pip configuration, or change environment files to mode `777`. Activate later with the path printed at completion, or continue using `micromamba run -n basalt COMMAND`.
+The bootstrapped binary is placed at `~/.local/bin/micromamba`; the installer does not initialize or edit the shell. It also does not run `conda config`, edit `~/.condarc`, edit pip configuration, or change environment files to mode `777`. Activate later with the path printed at completion, or continue using `micromamba run -n basalt COMMAND`. After the models have been validated, configure the selected absolute `BASALT_WEIGHT` path once in `~/.bashrc` as described above.
 
 Inspect the exact commands without changing the system:
 
@@ -251,7 +322,7 @@ python3 BASALT_setup_China_mainland.py \
 The same local archive works independently of the installer:
 
 ```bash
-BASALT_models_download.py \
+micromamba run -n basalt BASALT_models_download.py \
   --source archive \
   --archive /absolute/path/BASALT.zip \
   --path /persistent/path/BASALT_WEIGHT
@@ -259,15 +330,16 @@ BASALT_models_download.py \
 
 Use `--hf-endpoint` only for a trusted Hugging Face-compatible service operated or approved by your institution, and retain the pinned `--revision` plus model-file checksums in the run record. `--hf-timeout` controls the initial reachability check. Proxy variables such as `HTTPS_PROXY` are inherited automatically.
 
-After installation, export the final environment, record the selected mirror, and verify every external executable. Database downloads are separate from package and model installation; run `checkm2 database --download` through the network route approved for the compute site.
+After installation, export the final environment, record the selected mirror, and verify every external executable. Database downloads are separate from package and model installation; run `micromamba run -n basalt checkm2 database --download` through the network route approved for the compute site.
 
 ## Updating BASALT
 
-The installer copies scripts into the environment. Update and reinstall them explicitly:
+Release installations are pinned tags. For a future release, a fresh shallow clone into a new directory is safer than changing the code underneath an existing run. Replace `NEXT_TAG` only with a published BASALT tag:
 
 ```bash
-cd /path/to/BASALT
-git pull --ff-only
+git clone --branch NEXT_TAG --depth 1 \
+  https://github.com/PKU-EMBL/BASALT.git BASALT-NEXT_TAG
+cd BASALT-NEXT_TAG
 git rev-parse HEAD
 python3 BASALT_setup_China_mainland.py \
   --source-dir . \
@@ -276,7 +348,7 @@ python3 BASALT_setup_China_mainland.py \
   --model-source none
 ```
 
-Start new analyses in a new working directory after an update. Resuming a checkpoint with different code, model weights, databases, or external-tool versions weakens reproducibility and may produce incompatible intermediates.
+The installer copies scripts into the selected environment, so rerunning the installer is required after changing releases. A development checkout of `master` can instead use `git pull --ff-only`, but it is not a fixed release. Start new analyses in a new working directory after an update. Resuming a checkpoint with different code, model weights, databases, or external-tool versions weakens reproducibility and may produce incompatible intermediates.
 
 ## Next step
 

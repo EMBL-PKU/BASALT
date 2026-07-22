@@ -28,7 +28,7 @@ def resolve_target_dir(path: Optional[str] = None) -> Path:
 
 
 def validate_models(target_dir: Path) -> list[Path]:
-    """Validate the five top-level ensemble descriptors and checkpoint folders."""
+    """Validate ensemble descriptors, checkpoint folders, and referenced files."""
     descriptors = sorted(target_dir.glob("*_ensemble.csv"))
     if len(descriptors) != EXPECTED_MODELS:
         raise RuntimeError(
@@ -45,6 +45,38 @@ def validate_models(target_dir: Path) -> list[Path]:
         raise RuntimeError(
             "Missing model checkpoint directories: {}".format(
                 ", ".join(missing_directories)
+            )
+        )
+
+    missing_checkpoints = []
+    unsafe_checkpoints = []
+    for descriptor in descriptors:
+        checkpoint_dir = descriptor.with_suffix("").resolve()
+        entries = [
+            line.strip()
+            for line in descriptor.read_text(encoding="utf-8").splitlines()
+            if line.strip()
+        ]
+        if not entries:
+            missing_checkpoints.append("{} (empty descriptor)".format(descriptor.name))
+            continue
+        for entry in entries:
+            checkpoint = (checkpoint_dir / entry).resolve()
+            if checkpoint_dir not in checkpoint.parents:
+                unsafe_checkpoints.append("{}/{}".format(checkpoint_dir.name, entry))
+            elif not checkpoint.is_file():
+                missing_checkpoints.append("{}/{}".format(checkpoint_dir.name, entry))
+    if unsafe_checkpoints:
+        raise RuntimeError(
+            "Unsafe checkpoint paths in model descriptors: {}".format(
+                ", ".join(unsafe_checkpoints[:10])
+            )
+        )
+    if missing_checkpoints:
+        raise RuntimeError(
+            "Missing model checkpoint files: {}".format(
+                ", ".join(missing_checkpoints[:10])
+                + (" ..." if len(missing_checkpoints) > 10 else "")
             )
         )
     return descriptors

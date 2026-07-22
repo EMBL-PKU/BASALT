@@ -738,7 +738,17 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             print("Activate: conda activate {}".format(args.env_name))
         if args.model_source != "none":
             print('Set models: export BASALT_WEIGHT="{}"'.format(model_dir))
-        print("Download CheckM2 database: checkm2 database --download")
+        print(
+            "Download CheckM2 database: {}".format(
+                quote_command(
+                    manager_run(
+                        executable,
+                        args.env_name,
+                        ["checkm2", "database", "--download"],
+                    )
+                )
+            )
+        )
         return 0
     except InstallationError as exc:
         print("\nERROR: {}".format(exc), file=sys.stderr)

@@ -1,5 +1,7 @@
 # Study design patterns
 
+Commands beginning with `BASALT` assume that the validated `basalt` environment is active. Use `micromamba run -n basalt BASALT` instead when activation is undesirable.
+
 BASALT can compare candidate bins recovered from several assemblies. This makes the assembly plan part of the scientific method rather than a file-management detail. The patterns below adapt the useful study-design material from the former Chinese manual to the current BASALT command line.
 
 :::{admonition} Design principle

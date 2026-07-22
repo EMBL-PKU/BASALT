@@ -40,6 +40,8 @@ This strategy is most informative when samples share substantial genomic content
 
 Choose the route that matches the decision you need to make. Commands and defaults on this site are checked against the current repository.
 
+Examples beginning with `BASALT` assume that the `basalt` environment is active. For activation-free Micromamba execution, replace `BASALT` with `micromamba run -n basalt BASALT`.
+
 ::::{grid} 1 2 3 3
 :gutter: 3
 

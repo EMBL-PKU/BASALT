@@ -1,5 +1,7 @@
 # Command-line reference
 
+The examples on this page assume that the `basalt` environment is active. Micromamba users who do not activate environments can replace the first `BASALT` token in any example with `micromamba run -n basalt BASALT`; Conda users can use `conda run -n basalt BASALT`.
+
 This page documents the Conda-based BASALT CLI in this repository. BASALT-Air has a different path model and sample delimiter.
 
 ## Command structure

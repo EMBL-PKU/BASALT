@@ -1836,30 +1836,20 @@ def Contig_retrieve_within_group(assemblies_list, binset, outlier_remover_folder
 
                     bin_remove={}
                     for bin_name in bin_re.keys():
-                        if len(bin_re[bin_name]) >= 2:
-                            for i in range(1, len(bin_re[bin_name])):
-                                i0=i-1
-                                if cutoff0 < cutoff1:
-                                    cutoff0=bin_re_list[bin_name][i0]
-                                    cutoff1=bin_re_list[bin_name][i]
-                                else:
-                                    cutoff0=bin_re_list[bin_name][i]
-                                    cutoff1=bin_re_list[bin_name][i0]
-
-                                bin0=bin_re[bin_name][cutoff0]
-                                bin1=bin_re[bin_name][cutoff1]
-
-                            bin0_id={}
-                            for record in SeqIO.parse(bin0, 'fasta'):
-                                bin0_id[record.id]=''
-
-                            xxx = 0
-                            for record in SeqIO.parse(bin1, 'fasta'):
-                                if record.id not in bin0_id.keys():
-                                    xxx=1
-
-                        if xxx == 0:
-                            bin_remove[bin1]=''
+                        ordered_cutoffs = sorted(bin_re_list[bin_name])
+                        for cutoff0, cutoff1 in zip(
+                            ordered_cutoffs, ordered_cutoffs[1:]
+                        ):
+                            bin0=bin_re[bin_name][cutoff0]
+                            bin1=bin_re[bin_name][cutoff1]
+                            bin0_id={
+                                record.id for record in SeqIO.parse(bin0, 'fasta')
+                            }
+                            if all(
+                                record.id in bin0_id
+                                for record in SeqIO.parse(bin1, 'fasta')
+                            ):
+                                bin_remove[bin1]=''
 
                     for item in bin_remove.keys():
                         os.system('rm '+item)

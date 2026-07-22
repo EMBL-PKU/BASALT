@@ -55,7 +55,8 @@ git -C /path/to/BASALT rev-parse HEAD > basalt-git-commit.txt
 # Required when the LorBin adapter (`-e l`) contributed candidates:
 git -C /path/to/LorBin-BASALT-Extrabinner rev-parse HEAD \
   > lorbin-basalt-git-commit.txt
-conda env export --no-builds > basalt-environment.yml
+micromamba env export -n basalt > basalt-environment.yml
+# Conda alternative: conda env export -n basalt --no-builds > basalt-environment.yml
 
 {
   python --version
@@ -69,7 +70,13 @@ conda env export --no-builds > basalt-environment.yml
 } > software-versions.txt 2>&1
 
 sha256sum input/* > input.sha256
-sha256sum "$BASALT_WEIGHT"/* > basalt-models.sha256
+(
+  cd "$BASALT_WEIGHT"
+  find . -type f \
+    \( -name '*.pth' -o -name '*_ensemble.csv' \) -print0 \
+    | sort -z \
+    | xargs -0 sha256sum
+) > basalt-models.sha256
 ```
 
 Some tools print versions only through help output or stderr. Inspect `software-versions.txt` rather than assuming every command succeeded.

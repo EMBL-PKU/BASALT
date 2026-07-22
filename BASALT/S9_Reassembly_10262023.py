@@ -436,7 +436,6 @@ def reassembly(bin_seq, reassembly_bin_folder, num_threads, bins_seq_folder,
         if xxxx >= 2:
             os.system('mv '+str(item)+'_spades_reassembly/'+str(item)+'_SPAdes_re-assembly_contigs.fa '+str(reassembly_bin_folder)+'/'+str(item)+'_SPAdes_re-assembly_contigs.fa')
         ### os.system('cp '+str(item)+'_spades_reassembly/mismatch_corrector/contigs/corrected_contigs.fasta '+str(reassembly_bin_folder)+'/'+str(item)+'_SPAdes_re-assembly_corrected_contigs.fa')
-        ### os.system('/home/emma/MEGAHIT-1.2.2-beta-Linux-static/bin/megahit -1 '+str(bin_seq[item][0])+' -2 '+str(bin_seq[item][1])+' -o '+str(item)+'_megahit_reassembly --min-contig-len 1000 -t '+str(num_threads))
 	    ### os.system('mv '+str(item)+'_megahit_reassembly/final.contigs.fa '+str(reassembly_bin_folder)+'/'+str(item)+'_megahit_re-assembly_contigs.fa')
 
         os.system('fq2fa --merge --filter '+str(bin_seq[item][0])+' '+str(bin_seq[item][1])+' idba.fa')
@@ -496,11 +495,6 @@ def reassembly_lr(bin_seq, bin_lr, reassembly_bin_folder, num_threads,
         Writes hybrid reassembled contig FASTA files into
         ``reassembly_bin_folder``.
     """
-    try:
-        os.system('java -Xmx'+str(ram)+'G -jar pilon-1.23.jar')
-    except:
-        print('pilon running in default ram')
-
     num_project=1
     if num_threads >= 40:
         if num_threads < 60:
@@ -540,11 +534,6 @@ def reassembly_lr(bin_seq, bin_lr, reassembly_bin_folder, num_threads,
                 pool.apply_async(unicycler_mul, args=(item, pwd, sr_folder, bin_seq, bin_lr, t_p_p, reassembly_bin_folder, bins_seq_folder))
         pool.close()
         pool.join()
-
-        os.system('mv '+item+' '+str(bins_seq_folder))
-    # os.chdir(str(pwd))
-    os.system('rm -rf '+str(item)+'_unicycler_reassembly')
-    # os.system('rm -rf '+str(item)+'_flye_reassembly')
 
 def bin_comparison(paired_bins, bin_checkm):
     pwd=os.getcwd()

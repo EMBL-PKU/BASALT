@@ -130,7 +130,6 @@ def assembly_mul(bins_seq_folder, bin_seq, item, reassembly_bin_folder,
     if xxxx >= 2:
         os.system('mv '+str(item)+'_SPAdes_re-assembly_contigs.fa '+str(reassembly_bin_folder)+'/'+str(item)+'_SPAdes_re-assembly_contigs.fa')
     ### os.system('cp '+str(item)+'_spades_reassembly/mismatch_corrector/contigs/corrected_contigs.fasta '+str(reassembly_bin_folder)+'/'+str(item)+'_SPAdes_re-assembly_corrected_contigs.fa')
-    ### os.system('/home/emma/MEGAHIT-1.2.2-beta-Linux-static/bin/megahit -1 '+str(bin_seq[item][0])+' -2 '+str(bin_seq[item][1])+' -o '+str(item)+'_megahit_reassembly --min-contig-len 1000 -t '+str(num_threads))
     ### os.system('mv '+str(item)+'_megahit_reassembly/final.contigs.fa '+str(reassembly_bin_folder)+'/'+str(item)+'_megahit_re-assembly_contigs.fa')
 
     os.system('fq2fa --merge --filter '+str(pwd)+'/'+str(bins_seq_folder)+'/'+str(bin_seq[item][0])+' '+str(pwd)+'/'+str(bins_seq_folder)+'/'+str(bin_seq[item][1])+' '+str(item)+'_idba.fa')

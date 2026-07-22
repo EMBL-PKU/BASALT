@@ -1407,11 +1407,13 @@ def finding_similar_bins(target_bin_folder, bin_comparison_folder):
 
 def mapping(total_fa, datasets_list, fq, num_threads):
     os.system('bowtie2-build '+str(total_fa)+' '+str(total_fa))
+    from S9_Reassembly_checkm import parse_sam
+    pair = {bin_id: {} for bin_id in fq}
     n = 0
     for item in datasets_list.keys():
         n+=1
         os.system('bowtie2 -p '+str(num_threads)+' -x '+str(total_fa)+' -1 '+str(datasets_list[item][0])+' -2 '+str(datasets_list[item][1])+' -S '+str(item)+'.sam -q --no-unal')
-        parse_sam(str(item)+'.sam', fq, n)
+        parse_sam(str(item)+'.sam', fq, pair, n)
 
 def reassembly_paired_bins(target_bin_folder, reassembly_binset_folder, orig_binset):
     pwd=os.getcwd()

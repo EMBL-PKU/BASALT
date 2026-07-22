@@ -2,6 +2,8 @@
 
 BASALT can add candidate bins from MetaBinner, VAMB, or LorBin to the default candidate pool. These adapters are optional and have independent dependencies, interfaces, and failure modes.
 
+Unless an example explicitly uses `micromamba run`, commands beginning with `BASALT` assume that the validated `basalt` environment is active.
+
 | Flag | Adapter | Intended evidence source |
 |---|---|---|
 | `-e m` | MetaBinner | Sequence composition and abundance profiles |
@@ -49,7 +51,15 @@ BASALT \
   -t 32 -m 128 --mode new -o study_metabinner
 ```
 
-Verify the MetaBinner installation outside BASALT before using this route. The adapter currently discovers installation paths through the active Conda environments, which may be site-dependent.
+Verify the MetaBinner installation outside BASALT before using this route. The adapter resolves `run_metabinner.sh` from `PATH`; alternatively, set `METABINNER_HOME` to the absolute directory that contains the script. Pin and record the MetaBinner source revision because it is not part of the validated base environment.
+
+```bash
+test -x "$METABINNER_HOME/run_metabinner.sh" \
+  || chmod u+x "$METABINNER_HOME/run_metabinner.sh"
+bash -n "$METABINNER_HOME/run_metabinner.sh"
+```
+
+Use `chmod u+x` only on a script you own and have verified. It does not require `chmod 777`.
 
 ## VAMB
 
@@ -64,7 +74,7 @@ micromamba run -n basalt-vamb \
 micromamba run -n basalt-vamb vamb --help
 ```
 
-The safest route is to run VAMB independently, retain its version and environment export, and import its FASTA bins through [data feeding](#manual-recovery-through-data-feeding). The direct `-e v` adapter requires a validated `vamb` executable on the BASALT process `PATH`; a separately activated environment is not automatically visible. Do not expose it by installing or upgrading packages inside the validated `basalt` environment. If a site administrator provides a wrapper to the isolated executable, test that wrapper on a small dataset and record it as part of the workflow.
+The safest route is to run VAMB independently, retain its version and environment export, and import its FASTA bins through [data feeding](#manual-recovery-through-data-feeding). The direct `-e v` adapter requires a validated `vamb` executable on the BASALT process `PATH`; a separately activated environment is not automatically visible. The adapter passes BASALT's coordinate-sorted BAM files to `vamb bin default` and reads the VAMB 5 `vae_clusters_unsplit.tsv` result (with `clusters.tsv` retained only as a compatibility fallback). Do not expose VAMB by installing or upgrading packages inside the validated `basalt` environment. If a site administrator provides a wrapper to the isolated executable, test that wrapper on a small dataset and record it as part of the workflow.
 
 Run the adapter:
 
@@ -132,7 +142,7 @@ BASALT \
   -t 32 -m 128 --mode new -o study_lorbin
 ```
 
-The adapter invokes the fork's `LorBin bin` command, then normalizes returned FASTA files into the BASALT candidate-bin naming scheme. Confirm that `Basalt_log.txt` records successful completion and that the corresponding `*_LorBin_genomes/` directory contains non-empty FASTA files. A final BASALT result is not evidence that LorBin succeeded because optional-binner failures are warning-only.
+The adapter invokes the fork's `LorBin bin` command with BASALT's coordinate-sorted BAM files, then normalizes returned FASTA files into the BASALT candidate-bin naming scheme. Confirm that `Basalt_log.txt` records successful completion and that the corresponding `*_100_lorbin_genomes/` directory contains non-empty FASTA files. A final BASALT result is not evidence that LorBin succeeded because optional-binner failures are warning-only.
 
 ### Report the implementation
 
